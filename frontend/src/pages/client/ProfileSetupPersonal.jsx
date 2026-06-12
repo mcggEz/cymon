@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Button from '../../components/ui/Button'
 import ProfileSetupLayout from './ProfileSetupLayout'
+import { supabase, supabaseConfigured } from '../../lib/supabase'
 
 const CameraIcon = () => (
   <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
@@ -27,6 +29,61 @@ const SectionDivider = ({ label }) => (
 
 function ProfileSetupPersonal() {
   const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [notice, setNotice] = useState(null)
+
+  const handleNext = async () => {
+    setError(null)
+    setNotice(null)
+
+    if (!email || !password) {
+      setError('Email and password are required.')
+      return
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    setSubmitting(true)
+    const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || email
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          role: 'client',
+          display_name: displayName,
+        },
+      },
+    })
+    setSubmitting(false)
+
+    if (signUpError) {
+      setError(signUpError.message)
+      return
+    }
+
+    if (data.session) {
+      navigate('/setup/guardian')
+    } else {
+      setNotice(
+        'Account created. Check your email to confirm your address, then log in to continue.'
+      )
+    }
+  }
+
   return (
     <ProfileSetupLayout current={1}>
       <h1 className="text-3xl font-bold text-purple-800">Personal Information</h1>
@@ -34,7 +91,50 @@ function ProfileSetupPersonal() {
         Tell us about the child being enrolled
       </p>
 
-      <div className="mt-6 flex items-center gap-4">
+      {!supabaseConfigured ? (
+        <div className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Supabase not configured. Create <code>frontend/.env</code> from{' '}
+          <code>.env.example</code> and restart the dev server.
+        </div>
+      ) : null}
+
+      <SectionDivider label="ACCOUNT" />
+
+      <div className="grid grid-cols-1 gap-4">
+        <Input
+          label="Email Address"
+          type="email"
+          autoComplete="email"
+          tone="purple"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            tone="purple"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Input
+            label="Confirm Password"
+            type="password"
+            autoComplete="new-password"
+            tone="purple"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+          />
+        </div>
+      </div>
+
+      <SectionDivider label="CHILD'S INFORMATION" />
+
+      <div className="flex items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-purple-700">
           <CameraIcon />
         </div>
@@ -45,9 +145,19 @@ function ProfileSetupPersonal() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Input label="First Name" tone="purple" />
+        <Input
+          label="First Name"
+          tone="purple"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
         <Input label="Middle Name" tone="purple" />
-        <Input label="Last Name" tone="purple" />
+        <Input
+          label="Last Name"
+          tone="purple"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+        />
         <Input label="Nick Name" tone="purple" />
         <Input label="Date of Birth" type="date" tone="purple" />
         <Select label="Sex" placeholder="Select">
@@ -71,13 +181,26 @@ function ProfileSetupPersonal() {
         </div>
       </div>
 
+      {error ? (
+        <div className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      {notice ? (
+        <div className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {notice}
+        </div>
+      ) : null}
+
       <Button
         className="mt-8"
         fullWidth
         size="lg"
-        onClick={() => navigate('/setup/guardian')}
+        onClick={handleNext}
+        disabled={submitting}
       >
-        Next: Guardian Info →
+        {submitting ? 'Creating account…' : 'Next: Guardian Info →'}
       </Button>
     </ProfileSetupLayout>
   )
