@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Two sibling workspaces at the repo root, each with its own `package.json` — no root package manifest or workspace config. Run commands from inside the workspace they target.
 
 - `frontend/` — React 19 + Vite 8 SPA, styled with Tailwind CSS v4 (via `@tailwindcss/vite`, loaded in `src/index.css` with `@import "tailwindcss";` — no `tailwind.config.js`).
+- `docs/designs/` — Figma exports for UI work. Drop PNG/JPG/SVG here, one screen per file, kebab-case name. Pair a mobile + desktop export for responsive screens. Export at 2x for legible text.
 - `backend/` — Express 5 server entry point is `index.js`. Listens on `process.env.PORT` (defaults to `4000`). CORS allows `process.env.CORS_ORIGIN` (defaults to `http://localhost:5173`).
 
 The two sides talk via a Vite dev-server proxy: `/api/*` on the frontend (`:5173`) is forwarded to the backend (`:4000`). Call the API from the frontend with plain `fetch('/api/...')` — never hard-code `localhost:4000` in the frontend.
