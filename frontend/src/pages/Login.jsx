@@ -4,7 +4,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
 import SegmentedControl from '../components/ui/SegmentedControl'
-import { supabase, supabaseConfigured } from '../lib/supabase'
+import { useAuth } from '../auth/useAuth'
 
 const BrandMark = ({ className = '' }) => (
   <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
@@ -31,6 +31,7 @@ const Butterfly = ({ className = '' }) => (
 
 function Login() {
   const navigate = useNavigate()
+  const { signIn, signOut } = useAuth()
   const [role, setRole] = useState('client')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -50,38 +51,19 @@ function Login() {
     if (submitting) return
     setError(null)
     setSubmitting(true)
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (signInError) {
-      setError(signInError.message)
+    try {
+      const { profile } = await signIn(email, password)
+      if (role === 'client' && profile.role !== 'client') {
+        signOut()
+        setError(`This account is registered as ${profile.role}, not client.`)
+        return
+      }
+      navigate(destinationFor(profile.role))
+    } catch (err) {
+      setError(err.message)
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single()
-
-    if (profileError || !profile) {
-      setError('Could not load your profile. Contact your administrator.')
-      await supabase.auth.signOut()
-      setSubmitting(false)
-      return
-    }
-
-    if (role === 'client' && profile.role !== 'client') {
-      setError(`This account is registered as ${profile.role}, not client.`)
-      await supabase.auth.signOut()
-      setSubmitting(false)
-      return
-    }
-
-    setSubmitting(false)
-    navigate(destinationFor(profile.role))
   }
 
   return (
@@ -168,13 +150,6 @@ function Login() {
               Forgot Password?
             </a>
           </div>
-
-          {!supabaseConfigured ? (
-            <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Supabase not configured. Create <code>frontend/.env</code> from{' '}
-              <code>.env.example</code> and restart the dev server.
-            </div>
-          ) : null}
 
           {error ? (
             <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">

@@ -1,53 +1,59 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { useCallback, useEffect, useState } from 'react'
 import { AuthContext } from './AuthContext'
-
-async function fetchProfile(userId) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, role, display_name, email, clinic_id')
-    .eq('id', userId)
-    .single()
-  if (error) {
-    console.error('Failed to load profile', error)
-    return null
-  }
-  return data
-}
+import { api, getStoredSession, setStoredSession } from '../lib/api'
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null)
+  const initialSession = getStoredSession()
+  const [session, setSession] = useState(initialSession)
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(initialSession?.access_token))
 
   useEffect(() => {
+    if (!session?.access_token) return
     let active = true
-
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!active) return
-      setSession(data.session)
-      if (data.session?.user) {
-        setProfile(await fetchProfile(data.session.user.id))
-      }
-      setLoading(false)
-    })
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, next) => {
-      if (!active) return
-      setSession(next)
-      setProfile(next?.user ? await fetchProfile(next.user.id) : null)
-    })
-
+    api
+      .me()
+      .then((data) => {
+        if (!active) return
+        setProfile(data.profile)
+      })
+      .catch(() => {
+        if (!active) return
+        setStoredSession(null)
+        setSession(null)
+        setProfile(null)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
     return () => {
       active = false
-      sub.subscription.unsubscribe()
     }
+  }, [session?.access_token])
+
+  const signIn = useCallback(async (email, password) => {
+    const data = await api.login({ email, password })
+    setStoredSession(data.session)
+    setSession(data.session)
+    setProfile(data.profile)
+    return data
   }, [])
 
-  const signIn = (email, password) =>
-    supabase.auth.signInWithPassword({ email, password })
+  const signUp = useCallback(async (payload) => {
+    const data = await api.signup(payload)
+    if (data.session) {
+      setStoredSession(data.session)
+      setSession(data.session)
+      setProfile(data.profile)
+    }
+    return data
+  }, [])
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = useCallback(() => {
+    setStoredSession(null)
+    setSession(null)
+    setProfile(null)
+  }, [])
 
   return (
     <AuthContext.Provider
@@ -57,6 +63,7 @@ export function AuthProvider({ children }) {
         profile,
         loading,
         signIn,
+        signUp,
         signOut,
       }}
     >
@@ -64,4 +71,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   )
 }
-

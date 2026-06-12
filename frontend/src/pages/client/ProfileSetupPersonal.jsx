@@ -4,7 +4,7 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Button from '../../components/ui/Button'
 import ProfileSetupLayout from './ProfileSetupLayout'
-import { supabase, supabaseConfigured } from '../../lib/supabase'
+import { useAuth } from '../../auth/useAuth'
 
 const CameraIcon = () => (
   <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
@@ -29,6 +29,7 @@ const SectionDivider = ({ label }) => (
 
 function ProfileSetupPersonal() {
   const navigate = useNavigate()
+  const { signUp } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -58,29 +59,19 @@ function ProfileSetupPersonal() {
     setSubmitting(true)
     const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || email
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          role: 'client',
-          display_name: displayName,
-        },
-      },
-    })
-    setSubmitting(false)
-
-    if (signUpError) {
-      setError(signUpError.message)
-      return
-    }
-
-    if (data.session) {
-      navigate('/setup/guardian')
-    } else {
-      setNotice(
-        'Account created. Check your email to confirm your address, then log in to continue.'
-      )
+    try {
+      const data = await signUp({ email, password, displayName, role: 'client' })
+      if (data.session) {
+        navigate('/setup/guardian')
+      } else {
+        setNotice(
+          'Account created. Check your email to confirm your address, then log in to continue.'
+        )
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -90,13 +81,6 @@ function ProfileSetupPersonal() {
       <p className="mt-1 text-sm text-slate-600">
         Tell us about the child being enrolled
       </p>
-
-      {!supabaseConfigured ? (
-        <div className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Supabase not configured. Create <code>frontend/.env</code> from{' '}
-          <code>.env.example</code> and restart the dev server.
-        </div>
-      ) : null}
 
       <SectionDivider label="ACCOUNT" />
 
