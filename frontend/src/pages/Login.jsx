@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
@@ -28,6 +29,7 @@ const Butterfly = ({ className = '' }) => (
 )
 
 function Login() {
+  const navigate = useNavigate()
   const [role, setRole] = useState('client')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,11 +37,19 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log('login attempt', { role, email, password, remember })
+    const dest =
+      role === 'admin'
+        ? '/admin'
+        : role === 'psychometrician'
+          ? '/psychometrician'
+          : role === 'clinician'
+            ? '/psychologist'
+            : '/client'
+    navigate(dest)
   }
 
   return (
-    <main className="min-h-dvh bg-[#efeaf7] flex flex-col items-center p-4 min-[360px]:p-6 sm:p-10">
+    <main className="h-dvh overflow-hidden bg-[#efeaf7] flex flex-col items-center justify-center p-4 min-[360px]:p-6 sm:p-10">
       <header className="flex items-center gap-3 py-4 min-[360px]:py-6 sm:py-8 text-purple-700">
         <BrandMark className="h-8 w-8 min-[360px]:h-10 min-[360px]:w-10" />
         <div className="leading-tight">
@@ -84,8 +94,10 @@ function Login() {
             value={role}
             onChange={setRole}
             options={[
-              { value: 'client', label: 'Client Login' },
+              { value: 'client', label: 'Client' },
               { value: 'clinician', label: 'Clinician' },
+              { value: 'psychometrician', label: 'RPm' },
+              { value: 'admin', label: 'Admin' },
             ]}
           />
 
@@ -127,12 +139,13 @@ function Login() {
 
           <p className="text-center text-sm text-slate-600">
             Don&apos;t have an Account?{' '}
-            <a
-              href="#register"
+            <button
+              type="button"
+              onClick={() => navigate('/setup/personal')}
               className="font-medium text-purple-700 hover:text-purple-900"
             >
               Register
-            </a>
+            </button>
           </p>
         </form>
       </section>
