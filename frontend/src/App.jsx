@@ -14,6 +14,7 @@ import Announcement from './pages/client/Announcement'
 import Appointments from './pages/client/Appointments'
 import Waivers from './pages/client/Waivers'
 import WaiverDetail from './pages/client/WaiverDetail'
+import RequireAuth from './auth/RequireAuth'
 
 import PsychologistLayout from './pages/staff/PsychologistLayout'
 import Approvals from './pages/staff/psychologist/Approvals'
@@ -48,7 +49,14 @@ function App() {
         <Route path="/setup/guardian" element={<ProfileSetupGuardian />} />
         <Route path="/setup/clinical" element={<ProfileSetupClinical />} />
 
-        <Route path="/client" element={<ClientLayout />}>
+        <Route
+          path="/client"
+          element={
+            <RequireAuth roles={['client']}>
+              <ClientLayout />
+            </RequireAuth>
+          }
+        >
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<HomeProgress />} />
           <Route path="activity" element={<DailyActivity />} />

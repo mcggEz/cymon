@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -18,6 +19,13 @@ const Butterfly = ({ className = '' }) => (
 
 function PageHeader({ title, subtitle }) {
   const navigate = useNavigate()
+  const { signOut } = useAuth()
+
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <header className="flex items-center justify-between border-b border-purple-100 bg-white px-6 py-3">
       <div className="flex items-center gap-3">
@@ -35,7 +43,7 @@ function PageHeader({ title, subtitle }) {
         <button
           className="rounded-md p-2 hover:bg-purple-50"
           aria-label="Log out"
-          onClick={() => navigate('/login')}
+          onClick={handleLogout}
         >
           <Icon d="M14 4h5v16h-5M14 12H4M8 8l-4 4 4 4" />
         </button>

@@ -4,6 +4,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
 import SegmentedControl from '../components/ui/SegmentedControl'
+import { supabase, supabaseConfigured } from '../lib/supabase'
 
 const BrandMark = ({ className = '' }) => (
   <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
@@ -34,18 +35,53 @@ function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
 
-  const handleSubmit = (e) => {
+  const destinationFor = (r) => {
+    if (r === 'admin') return '/admin'
+    if (r === 'psychometrician') return '/psychometrician'
+    if (r === 'psychologist') return '/psychologist'
+    return '/client/home'
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const dest =
-      role === 'admin'
-        ? '/admin'
-        : role === 'psychometrician'
-          ? '/psychometrician'
-          : role === 'clinician'
-            ? '/psychologist'
-            : '/client'
-    navigate(dest)
+    if (submitting) return
+    setError(null)
+    setSubmitting(true)
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (signInError) {
+      setError(signInError.message)
+      setSubmitting(false)
+      return
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+
+    if (profileError || !profile) {
+      setError('Could not load your profile. Contact your administrator.')
+      await supabase.auth.signOut()
+      setSubmitting(false)
+      return
+    }
+
+    if (role === 'client' && profile.role !== 'client') {
+      setError(`This account is registered as ${profile.role}, not client.`)
+      await supabase.auth.signOut()
+      setSubmitting(false)
+      return
+    }
+
+    setSubmitting(false)
+    navigate(destinationFor(profile.role))
   }
 
   return (
@@ -95,7 +131,7 @@ function Login() {
             onChange={setRole}
             options={[
               { value: 'client', label: 'Client' },
-              { value: 'clinician', label: 'Clinician' },
+              { value: 'psychologist', label: 'Clinician' },
               { value: 'psychometrician', label: 'RPm' },
               { value: 'admin', label: 'Admin' },
             ]}
@@ -133,8 +169,21 @@ function Login() {
             </a>
           </div>
 
-          <Button type="submit" fullWidth size="lg">
-            LOG IN
+          {!supabaseConfigured ? (
+            <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Supabase not configured. Create <code>frontend/.env</code> from{' '}
+              <code>.env.example</code> and restart the dev server.
+            </div>
+          ) : null}
+
+          {error ? (
+            <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <Button type="submit" fullWidth size="lg" disabled={submitting}>
+            {submitting ? 'SIGNING IN…' : 'LOG IN'}
           </Button>
 
           <p className="text-center text-sm text-slate-600">
