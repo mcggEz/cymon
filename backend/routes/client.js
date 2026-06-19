@@ -629,4 +629,36 @@ router.patch('/patient', requireAuth, requireClient, async (req, res, next) => {
   }
 });
 
+// upload / replace the child's photo
+router.post('/patient/photo', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const patient = await requirePatient(req, res);
+    if (!patient) return;
+    const { image } = req.body || {};
+    const m = /^data:(image\/(png|jpe?g|webp));base64,(.+)$/.exec(image || '');
+    if (!m) {
+      return res.status(400).json({ error: 'Provide a PNG, JPEG, or WEBP image' });
+    }
+    const contentType = m[1];
+    const ext = m[2] === 'jpeg' || m[2] === 'jpg' ? 'jpg' : m[2];
+    const buffer = Buffer.from(m[3], 'base64');
+    if (buffer.length > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: 'Image must be under 5 MB' });
+    }
+    const path = `patients/${patient.id}/${require('crypto').randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from('photos')
+      .upload(path, buffer, { contentType, upsert: true });
+    if (upErr) return res.status(400).json({ error: upErr.message });
+    const { data: pub } = supabase.storage.from('photos').getPublicUrl(path);
+    const photo_url = pub.publicUrl;
+    const { error } = await supabase.from('patients').update({ photo_url }).eq('id', patient.id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ photo_url });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

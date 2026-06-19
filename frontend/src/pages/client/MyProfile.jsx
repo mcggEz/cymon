@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import PageHeader from './PageHeader'
 import { api } from '../../lib/api'
 import Skeleton from '../../components/ui/Skeleton'
@@ -79,6 +79,8 @@ function MyProfile() {
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
   const [pwSaving, setPwSaving] = useState(false)
   const [pwMsg, setPwMsg] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef(null)
 
   const load = () =>
     api.client
@@ -191,6 +193,32 @@ function MyProfile() {
     }
   }
 
+  const onPhoto = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError('Image must be under 5 MB.')
+      return
+    }
+    setSaveError(null)
+    setUploading(true)
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const { photo_url } = await api.client.uploadPatientPhoto({ image: dataUrl })
+      setData((d) => (d ? { ...d, patient: { ...d.patient, photo_url } } : d))
+    } catch (err) {
+      setSaveError(err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const personalAction = editing ? (
     <div className="flex gap-2">
       <button
@@ -227,8 +255,41 @@ function MyProfile() {
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
           <div className="absolute -bottom-16 right-20 h-32 w-32 rounded-full bg-white/5" />
           <div className="relative flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/15 text-xl font-bold">
-              {loading ? '' : initialsOf(patient?.full_name)}
+            <div className="relative shrink-0">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-white/15 text-xl font-bold">
+                {loading ? (
+                  ''
+                ) : patient?.photo_url ? (
+                  <img src={patient.photo_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initialsOf(patient?.full_name)
+                )}
+              </div>
+              {!loading && patient ? (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  aria-label="Change photo"
+                  className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-purple-700 shadow ring-1 ring-purple-200 hover:bg-purple-50 disabled:opacity-60"
+                >
+                  {uploading ? (
+                    <span className="text-[10px]">…</span>
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none">
+                      <path d="M4 8h3l2-2h6l2 2h3v11H4z" stroke="currentColor" strokeWidth="1.8" />
+                      <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="1.8" />
+                    </svg>
+                  )}
+                </button>
+              ) : null}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={onPhoto}
+                className="hidden"
+              />
             </div>
             {loading ? (
               <div>

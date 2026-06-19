@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
@@ -40,7 +40,18 @@ function Employees() {
   const [form, setForm] = useState(empty)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [avatar, setAvatar] = useState(null)
+  const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const onAvatar = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setAvatar(reader.result)
+    reader.readAsDataURL(file)
+  }
 
   const submit = (e) => {
     e.preventDefault()
@@ -78,6 +89,36 @@ function Employees() {
         </div>
 
         <form onSubmit={submit} className="mt-5 max-w-3xl space-y-5">
+          <section className="flex items-center gap-4 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-purple-700">
+              {avatar ? (
+                <img src={avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none">
+                  <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+              )}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-purple-800">Profile Photo</div>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="mt-1 rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
+              >
+                {avatar ? 'Change Photo' : 'Upload Photo'}
+              </button>
+              <div className="mt-1 text-xs text-slate-500">JPG, PNG, or WEBP · optional</div>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={onAvatar}
+              className="hidden"
+            />
+          </section>
+
           <Section title="Account" hint="Used to sign in to the portal">
             <Input
               label="Email address"
