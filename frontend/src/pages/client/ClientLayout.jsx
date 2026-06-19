@@ -9,11 +9,11 @@ const Icon = ({ d, className = '' }) => (
 )
 
 const NAV = [
-  { to: '/client/home', label: 'HOME AND PROGRESS', d: 'M3 11l9-8 9 8M5 10v10h14V10' },
-  { to: '/client/activity', label: 'DAILY ACTIVITY LOG', d: 'M8 4h9a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2zM9 9h7M9 13h7M9 17h5' },
-  { to: '/client/assessments', label: 'ASSESSMENT CENTER', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
-  { to: '/client/announcements', label: 'ANNOUNCEMENT', d: 'M8 4h9a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2zM9 9h7M9 13h7M9 17h4' },
-  { to: '/client/appointments', label: 'APPOINTMENTS', d: 'M4 7h16v13H4zM4 11h16M8 3v4M16 3v4' },
+  { to: '/client/home', label: 'Home & Progress', d: 'M3 11l9-8 9 8M5 10v10h14V10' },
+  { to: '/client/activity', label: 'Daily Activity Log', d: 'M8 4h9a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2zM9 9h7M9 13h7M9 17h5' },
+  { to: '/client/assessments', label: 'Assessment Center', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
+  { to: '/client/announcements', label: 'Announcements', d: 'M8 4h9a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2zM9 9h7M9 13h7M9 17h4' },
+  { to: '/client/appointments', label: 'Appointments', d: 'M4 7h16v13H4zM4 11h16M8 3v4M16 3v4' },
   { to: '/client/waivers', label: 'Consents & Waivers', d: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4' },
 ]
 
@@ -73,7 +73,7 @@ function Sidebar({ open, onNavigate }) {
             onClick={onNavigate}
             className={({ isActive }) =>
               [
-                'mt-1 flex items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold tracking-wider transition-colors',
+                'mt-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                 isActive ? 'bg-white/15 text-white' : 'text-purple-100/90 hover:bg-white/10',
               ].join(' ')
             }

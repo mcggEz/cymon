@@ -32,6 +32,7 @@ import AdminScoring from './pages/staff/admin/ScoringAnalytics'
 import AdminDocuments from './pages/staff/admin/DocumentVault'
 import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
+import AdminAuditTrail from './pages/staff/admin/AuditTrail'
 import PsychometricianLayout from './pages/staff/PsychometricianLayout'
 import SpeechLayout from './pages/staff/SpeechLayout'
 import OccupationalLayout from './pages/staff/OccupationalLayout'
@@ -137,6 +138,7 @@ function App() {
           <Route path="documents" element={<AdminDocuments />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="employees" element={<AdminEmployees />} />
+          <Route path="audit" element={<AdminAuditTrail />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

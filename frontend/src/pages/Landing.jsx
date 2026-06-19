@@ -169,15 +169,15 @@ function Landing() {
           <div className="hidden md:flex items-center space-x-6">
             <button
               onClick={() => navigate('/login')}
-              className={`text-xs uppercase tracking-wider font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
+              className={`text-sm font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
                 scrolled ? 'text-charcoal' : 'text-slate-200'
               }`}
             >
-              Log in
+              Log In
             </button>
             <button
               onClick={() => navigate('/setup/personal')}
-              className={`text-xs uppercase tracking-wider font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
+              className={`text-sm font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
                 scrolled ? 'text-charcoal' : 'text-slate-200'
               }`}
             >
@@ -329,10 +329,7 @@ function Landing() {
                   Sign In
                 </button>
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[9px] text-slate-500 justify-start md:justify-end">
-                <span>DATA PRIVACY ACT OF 2012</span>
-                <span>NPC CIRCULAR 2023-04</span>
-              </div>
+
             </div>
           </div>
         </div>
@@ -648,8 +645,8 @@ function Landing() {
         <div className="absolute right-0 top-0 w-80 h-80 rounded-full bg-gradient-to-tr from-violet to-pink opacity-10 blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0 relative z-10">
           <div className="space-y-2">
-            <span className="text-violet font-mono tracking-widest text-xs uppercase block">// Start Enrollment</span>
-            <h2 className="text-3xl md:text-5xl font-bold leading-tight">Ready to begin your child&apos;s developmental path?</h2>
+            <span className="text-violet font-mono tracking-widest text-xs uppercase block">// Start Your Journey</span>
+            <h2 className="text-3xl md:text-5xl font-bold leading-tight">Ready to begin your journey to wellness?</h2>
           </div>
           <button
             onClick={() => navigate('/setup/personal')}

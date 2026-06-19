@@ -71,7 +71,7 @@ function StaffLayout({ user, profileTo, nav, outletContext }) {
               onClick={close}
               className={({ isActive }) =>
                 [
-                  'mt-1 flex items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold tracking-wider transition-colors',
+                  'mt-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive ? 'bg-white/15 text-white' : 'text-purple-100/90 hover:bg-white/10',
                 ].join(' ')
               }

@@ -9,6 +9,7 @@ const NAV = [
   { to: '/admin/scoring', label: 'Scoring Analytics', d: 'M4 20l5-9 4 5 7-12' },
   { to: '/admin/documents', label: 'Document Vault', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
   { to: '/admin/announcements', label: 'Announcements', d: 'M4 11l16-7v16zM4 11v4l3 1v4' },
+  { to: '/admin/audit', label: 'Audit Trail', d: 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z' },
   { to: '/admin/employees', label: 'Employees', d: 'M9 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM3 20a6 6 0 0 1 12 0M18 8v6M21 11h-6' },
 ]
 
