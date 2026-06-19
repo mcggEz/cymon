@@ -329,7 +329,7 @@ function Employees() {
         ) : null}
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex flex-1 items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500">
               <span>🔍</span>
               <input
@@ -352,6 +352,9 @@ function Employees() {
               ))}
             </select>
           </div>
+        </section>
+
+        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-sm">
               <thead>

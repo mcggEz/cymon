@@ -82,6 +82,8 @@ function Patients() {
   const [rows, setRows] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
     let on = true
@@ -94,6 +96,13 @@ function Patients() {
       on = false
     }
   }, [])
+
+  const q = query.trim().toLowerCase()
+  const filtered = rows.filter((r) => {
+    const mq = !q || r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q)
+    const ms = statusFilter === 'all' || r.status === statusFilter
+    return mq && ms
+  })
 
   return (
     <>
@@ -111,12 +120,21 @@ function Patients() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-1 items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500">
               <span>🔍</span>
-              <input placeholder="Search by name…" className="flex-1 bg-transparent outline-none" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name or ID…"
+                className="flex-1 bg-transparent outline-none"
+              />
             </div>
-            <select className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm">
-              <option>All Statuses</option>
-              <option>Active</option>
-              <option>Pending</option>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
+            >
+              <option value="all">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Pending">Pending</option>
             </select>
             <button className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
               ⬇ Export List
@@ -146,7 +164,14 @@ function Patients() {
                     </tr>
                   ))
                 : null}
-              {rows.map((r) => (
+              {!loading && filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
+                    No patients match your search.
+                  </td>
+                </tr>
+              ) : null}
+              {!loading && filtered.map((r) => (
                 <tr key={r.id}>
                   <td className="py-3">
                     <div className="font-semibold text-slate-800">{r.name}</div>
