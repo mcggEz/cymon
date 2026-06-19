@@ -77,7 +77,7 @@ router.get('/tasks', async (req, res, next) => {
 router.get('/assessments', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const [{ data: tests }, { data: sessions }] = await Promise.all([
+    const [{ data: tests }, { data: sessions }, { data: roster }] = await Promise.all([
       supabase.from('assessment_templates').select('id, document_type_code, title, est_minutes, icon, document_types(description)').eq('is_active', true),
       supabase
         .from('appointments')
@@ -85,6 +85,12 @@ router.get('/assessments', async (req, res, next) => {
         .eq('clinic_id', req.profile.clinic_id)
         .order('starts_at', { ascending: true })
         .limit(6),
+      supabase
+        .from('patients')
+        .select('id, first_name, last_name')
+        .eq('clinic_id', req.profile.clinic_id)
+        .is('deleted_at', null)
+        .order('first_name', { ascending: true }),
     ]);
     res.json({
       tests: (tests || []).map((t) => ({
@@ -99,6 +105,7 @@ router.get('/assessments', async (req, res, next) => {
         id: s.id,
         label: `${name(s.patients)} (${new Date(s.starts_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} Session)`,
       })),
+      patients: (roster || []).map((p) => ({ id: p.id, name: `${p.first_name} ${p.last_name}` })),
     });
   } catch (err) {
     next(err);
@@ -183,6 +190,40 @@ router.get('/activity-logs', async (req, res, next) => {
         status: r.status,
       })),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// assign an assessment template to a patient (surfaces in the client portal)
+router.post('/assignments', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, template_id, due_date } = req.body || {};
+    if (!patient_id || !template_id) {
+      return res.status(400).json({ error: 'patient_id and template_id are required' });
+    }
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const { data, error } = await supabase
+      .from('assessment_assignments')
+      .insert({
+        patient_id,
+        template_id,
+        assigned_by_id: req.profile.id,
+        status: 'assigned',
+        due_date: due_date || null,
+      })
+      .select('id')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ assignment: data });
   } catch (err) {
     next(err);
   }

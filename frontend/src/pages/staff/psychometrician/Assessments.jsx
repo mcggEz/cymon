@@ -16,19 +16,17 @@ const LOGS = [
   },
 ]
 
-function LaunchModal({ test, patients, onClose, onStart }) {
+function LaunchModal({ test, patients, onClose, onAssign, assigning }) {
   const [patient, setPatient] = useState('')
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
       <div className="w-full max-w-md rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
-        <h2 className="text-xl font-bold text-purple-800">Launch Assessment</h2>
+        <h2 className="text-xl font-bold text-purple-800">Assign Assessment</h2>
         <p className="mt-1 text-sm text-slate-600">
           Assigning: <span className="font-medium text-purple-700">{test.title}</span>
         </p>
 
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
-          SELECT PATIENT FROM SCHEDULE
-        </div>
+        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">SELECT PATIENT</div>
         <select
           className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
           value={patient}
@@ -36,7 +34,9 @@ function LaunchModal({ test, patients, onClose, onStart }) {
         >
           <option value="">-- Choose Patient --</option>
           {patients.map((p) => (
-            <option key={p.id}>{p.label}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </select>
 
@@ -48,10 +48,11 @@ function LaunchModal({ test, patients, onClose, onStart }) {
             Cancel
           </button>
           <button
-            onClick={onStart}
-            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            onClick={() => onAssign(patient)}
+            disabled={!patient || assigning}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
           >
-            Start Assessment →
+            {assigning ? 'Assigning…' : 'Assign →'}
           </button>
         </div>
       </div>
@@ -88,8 +89,10 @@ function ToolCard({ t, onLaunch, half = false }) {
 function Assessments() {
   const [active, setActive] = useState(null)
   const [tests, setTests] = useState([])
-  const [sessions, setSessions] = useState([])
+  const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
+  const [assigning, setAssigning] = useState(false)
+  const [notice, setNotice] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -99,7 +102,7 @@ function Assessments() {
       .then((d) => {
         if (!on) return
         setTests(d.tests)
-        setSessions(d.sessions)
+        setPatients(d.patients)
       })
       .catch(() => {})
       .finally(() => {
@@ -109,6 +112,20 @@ function Assessments() {
       on = false
     }
   }, [])
+
+  const assign = async (patientId) => {
+    setAssigning(true)
+    try {
+      await api.psychometrician.assignAssessment({ patient_id: patientId, template_id: active.id })
+      const pname = patients.find((p) => p.id === patientId)?.name || 'the patient'
+      setNotice(`Assigned “${active.title}” to ${pname} — it now appears in their Assessment Center.`)
+      setActive(null)
+    } catch (e) {
+      setNotice(`Could not assign: ${e.message}`)
+    } finally {
+      setAssigning(false)
+    }
+  }
 
   return (
     <>
@@ -127,6 +144,9 @@ function Assessments() {
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Select a tool from the library to assign and launch for a patient.
         </div>
+        {notice ? (
+          <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
+        ) : null}
 
         <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
           STANDARDIZED TESTS
@@ -153,12 +173,10 @@ function Assessments() {
         {active ? (
           <LaunchModal
             test={active}
-            patients={sessions}
+            patients={patients}
             onClose={() => setActive(null)}
-            onStart={() => {
-              setActive(null)
-              navigate('/psychometrician/data-review')
-            }}
+            onAssign={assign}
+            assigning={assigning}
           />
         ) : null}
       </div>

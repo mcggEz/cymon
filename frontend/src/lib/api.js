@@ -98,6 +98,8 @@ export const api = {
     dataReview: () => request('/api/psychometrician/data-review', { auth: true }),
     reports: () => request('/api/psychometrician/reports', { auth: true }),
     activityLogs: () => request('/api/psychometrician/activity-logs', { auth: true }),
+    assignAssessment: (payload) =>
+      request('/api/psychometrician/assignments', { method: 'POST', body: payload, auth: true }),
     updateSubmission: (id, payload) =>
       request(`/api/psychometrician/submissions/${id}`, { method: 'PATCH', body: payload, auth: true }),
     updateReport: (id, payload) =>
