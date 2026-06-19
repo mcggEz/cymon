@@ -18,17 +18,15 @@ const Butterfly = ({ className = '', flip = false }) => (
 
 
 
-const FloralPetal = ({ className = '', style = {} }) => (
-  <svg viewBox="0 0 120 120" fill="currentColor" className={className} style={style}>
-    <circle cx="60" cy="60" r="10" />
-    <path d="M60 50C60 30 80 15 60 0C40 15 60 30 60 50Z" />
-    <path d="M60 70C60 90 80 105 60 120C40 105 60 90 60 70Z" />
-    <path d="M50 60C30 60 15 40 0 60C15 80 30 60 50 60Z" />
-    <path d="M70 60C90 60 105 40 120 60C105 80 90 60 70 60Z" />
-    <path d="M53 53C39 39 28 28 17 38C28 48 39 39 53 53Z" />
-    <path d="M67 67C81 81 92 92 103 82C92 72 81 81 67 67Z" />
-    <path d="M53 67C39 81 28 92 17 82C28 72 39 81 53 67Z" />
-    <path d="M67 53C81 39 92 28 103 38C92 48 81 39 67 53Z" />
+const Sparkle = ({ className = '', style = {} }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={`text-white/50 pointer-events-none animate-pulse ${className}`}
+    style={style}
+    aria-hidden="true"
+  >
+    <path d="M12 0L14.8 9.2L24 12L14.8 14.8L12 24L9.2 14.8L0 12L9.2 9.2Z" />
   </svg>
 )
 
@@ -126,52 +124,58 @@ function Landing() {
           >
             <Butterfly className="h-9 w-9 text-violet" />
             <div className="leading-tight">
-              <div className="font-serif italic text-2xl font-bold">CyMon</div>
-              <div className="font-mono text-[10px] tracking-[0.25em] opacity-80 uppercase">// ClearMind</div>
+              <div className="font-sans text-2xl font-bold tracking-tight">CyMon</div>
+              <div className="font-mono text-[9px] tracking-[0.22em] opacity-80 uppercase">// ClearMind</div>
             </div>
           </a>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-10">
+          {/* Desktop Nav in Capsule */}
+          <nav className={`hidden md:flex items-center space-x-8 px-6 py-2 rounded-full border transition-all duration-300 ${
+            scrolled
+              ? 'bg-charcoal/5 border-charcoal/10 text-charcoal'
+              : 'bg-white/5 border-white/10 text-slate-200 backdrop-blur-md shadow-sm'
+          }`}>
             <a
               href="#platform"
-              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
-                scrolled ? 'text-charcoal' : 'text-slate-200'
-              }`}
+              className="text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300"
             >
               Platform
             </a>
             <a
               href="#portals"
-              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
-                scrolled ? 'text-charcoal' : 'text-slate-200'
-              }`}
+              className="text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300"
             >
               Portals
             </a>
             <a
               href="#news"
-              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
-                scrolled ? 'text-charcoal' : 'text-slate-200'
-              }`}
+              className="text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300"
             >
               Announcements
             </a>
+          </nav>
+
+          {/* Header Action Buttons */}
+          <div className="hidden md:flex items-center space-x-6">
             <button
               onClick={() => navigate('/login')}
-              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
-                scrolled ? 'text-charcoal' : 'text-white'
+              className={`text-xs uppercase tracking-wider font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
+                scrolled ? 'text-charcoal' : 'text-slate-200'
               }`}
             >
               Log in
             </button>
             <button
               onClick={() => navigate('/setup/personal')}
-              className="bg-violet hover:bg-violet-dark text-white text-sm font-semibold px-6 py-3 rounded-full transition-colors duration-300 shadow-sm cursor-pointer"
+              className={`text-xs uppercase tracking-wider font-semibold px-6 py-2.5 rounded-full transition-all duration-300 shadow-sm cursor-pointer inline-flex items-center space-x-1.5 ${
+                scrolled
+                  ? 'bg-charcoal hover:bg-violet text-white'
+                  : 'bg-slate-950/85 hover:bg-violet text-white border border-white/10'
+              }`}
             >
-              Get Started
+              <span>:· Get Started</span>
             </button>
-          </nav>
+          </div>
 
           {/* Mobile Toggle */}
           <button
@@ -239,48 +243,89 @@ function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen bg-charcoal flex items-center justify-center pt-24 pb-16 px-6 lg:px-16 overflow-hidden">
-        {/* Glow Spheres */}
-        <div className="absolute -right-40 top-1/4 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-violet to-pink opacity-25 blur-[120px] pointer-events-none" />
-        <div className="absolute -left-40 bottom-1/4 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-violet to-pink opacity-25 blur-[120px] pointer-events-none" />
+      <section
+        className="relative min-h-screen flex items-center justify-center pt-32 pb-16 px-6 lg:px-16 overflow-hidden"
+        style={{ background: 'radial-gradient(circle at 50% 50%, #22155c 0%, #0d0721 100%)' }}
+      >
+        {/* Giant 3D Smooth Glassmorphic Spheres */}
+        <div
+          className="absolute left-[5%] bottom-[-20%] w-[320px] md:w-[680px] h-[320px] md:h-[680px] rounded-full pointer-events-none z-0 border border-white/5 animate-float-slow"
+          style={{
+            background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.15) 0%, rgba(165, 122, 255, 0.1) 40%, rgba(13, 7, 33, 0.8) 80%)',
+            boxShadow: 'inset -20px -20px 50px rgba(165, 122, 255, 0.4), inset 20px 20px 50px rgba(255, 255, 255, 0.15), 0 40px 80px rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(5px)',
+          }}
+        />
+        <div
+          className="absolute right-[-15%] bottom-[10%] w-[380px] md:w-[720px] h-[380px] md:h-[720px] rounded-full pointer-events-none z-0 border border-white/5 animate-float-slower"
+          style={{
+            background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08) 0%, rgba(221, 128, 188, 0.12) 45%, rgba(13, 7, 33, 0.7) 80%)',
+            boxShadow: 'inset -25px -25px 60px rgba(221, 128, 188, 0.35), inset 25px 25px 60px rgba(255, 255, 255, 0.08), 0 45px 90px rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(3px)',
+          }}
+        />
+        <div
+          className="absolute left-[3%] top-[8%] w-[200px] md:w-[360px] h-[200px] md:h-[360px] rounded-full pointer-events-none z-0 border border-white/5"
+          style={{
+            background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08) 0%, rgba(165, 122, 255, 0.08) 50%, rgba(13, 7, 33, 0.8) 90%)',
+            boxShadow: 'inset -15px -15px 45px rgba(165, 122, 255, 0.25), inset 15px 15px 45px rgba(255, 255, 255, 0.08), 0 25px 50px rgba(0, 0, 0, 0.4)',
+          }}
+        />
+        <div
+          className="absolute right-[5%] top-[-8%] w-[240px] md:w-[480px] h-[240px] md:h-[480px] rounded-full pointer-events-none z-0 border border-white/5"
+          style={{
+            background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.08) 0%, rgba(221, 128, 188, 0.08) 45%, rgba(13, 7, 33, 0.75) 80%)',
+            boxShadow: 'inset -20px -20px 50px rgba(221, 128, 188, 0.2), inset 20px 20px 50px rgba(255, 255, 255, 0.08), 0 30px 60px rgba(0, 0, 0, 0.35)',
+            backdropFilter: 'blur(2px)',
+          }}
+        />
 
-        {/* Subtle Animated Floral Background Shapes */}
-        <FloralPetal className="absolute left-[4%] top-[12%] w-48 h-48 text-violet/5 pointer-events-none animate-float-slow" />
-        <FloralPetal className="absolute right-[6%] bottom-[10%] w-56 h-56 text-pink/5 pointer-events-none animate-float-slower" />
-        <FloralPetal className="absolute right-[20%] top-[8%] w-32 h-32 text-violet/5 pointer-events-none animate-float-slower" style={{ transform: 'rotate(75deg)' }} />
-        <FloralPetal className="absolute left-[18%] bottom-[8%] w-40 h-40 text-pink/5 pointer-events-none animate-float-slow" style={{ transform: 'rotate(-45deg)' }} />
-        <FloralPetal className="absolute left-[28%] top-[35%] w-24 h-24 text-pink/4 pointer-events-none animate-float-slower" style={{ transform: 'rotate(30deg)' }} />
-        <FloralPetal className="absolute right-[30%] bottom-[30%] w-28 h-28 text-violet/4 pointer-events-none animate-float-slow" style={{ transform: 'rotate(110deg)' }} />
-        <FloralPetal className="absolute left-[8%] bottom-[28%] w-36 h-36 text-violet/5 pointer-events-none animate-float-slower" style={{ transform: 'rotate(15deg)' }} />
-        <FloralPetal className="absolute right-[8%] top-[28%] w-44 h-44 text-pink/5 pointer-events-none animate-float-slow" style={{ transform: 'rotate(150deg)' }} />
+        {/* Ambient Sparkles */}
+        <Sparkle className="absolute left-[16%] top-[26%] w-3 h-3" />
+        <Sparkle className="absolute left-[8%] top-[48%] w-4 h-4" />
+        <Sparkle className="absolute right-[30%] top-[32%] w-3.5 h-3.5" style={{ animationDelay: '1s' }} />
+        <Sparkle className="absolute right-[14%] top-[45%] w-3 h-3" style={{ animationDelay: '1.5s' }} />
+        <Sparkle className="absolute left-[36%] bottom-[35%] w-4 h-4" style={{ animationDelay: '2s' }} />
+        <Sparkle className="absolute right-[42%] bottom-[20%] w-3 h-3" style={{ animationDelay: '0.5s' }} />
 
-        <div className="max-w-3xl w-full mx-auto text-center space-y-8 relative z-10">
-          <div className="space-y-6">
-            <h1 className="text-4xl md:text-7xl font-bold tracking-tight text-white leading-tight">
+        <div className="max-w-7xl w-full mx-auto min-h-[calc(100vh-12rem)] flex flex-col justify-between relative z-20">
+          {/* Middle-Left Title Block */}
+          <div className="flex-1 flex flex-col justify-center text-left py-12 md:py-16">
+            <h1 className="text-5xl md:text-[6.5rem] font-light tracking-tight text-white leading-[0.95] max-w-5xl select-none font-sans">
               Compassionate care,<br />
               <span className="text-violet">simplified.</span>
             </h1>
-            <p className="text-slate-200 text-base md:text-xl leading-relaxed max-w-2xl mx-auto">
-              One secure platform for a child&apos;s entire developmental journey — intake, assessments, interventions, and progress — connecting families and clinicians at ClearMind Psychological Services.
-            </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-            <button
-              onClick={() => navigate('/setup/personal')}
-              className="bg-violet hover:bg-violet-dark text-white font-mono text-xs uppercase tracking-widest px-8 py-4 rounded-full transition-all duration-300 shadow-md transform hover:-translate-y-0.5"
-            >
-              Enroll a Child
-            </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="border border-white/20 hover:border-violet text-white font-mono text-xs uppercase tracking-widest px-8 py-4 rounded-full transition-all duration-300 bg-white/5 hover:bg-white/10"
-            >
-              Sign In to Portal
-            </button>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-8 font-mono text-[10px] text-slate-400">
-            <span>DATA PRIVACY ACT OF 2012</span>
-            <span>NPC CIRCULAR 2023-04</span>
+
+          {/* Bottom Grid Layout */}
+          <div className="grid md:grid-cols-12 gap-8 items-end w-full">
+            {/* Bottom-Left Space (Indicator Removed) */}
+            <div className="md:col-span-6" />
+
+            {/* Bottom-Right: Description, Actions & Privacy Notices */}
+            <div className="md:col-span-6 flex flex-col items-start md:items-end space-y-6 text-left md:text-right">
+              <p className="text-slate-200/90 text-base md:text-lg leading-relaxed max-w-md font-light">
+                ClearMind Psychological Services provides compassionate and professional mental health support, tailored to meet the unique needs of individuals, couples, and families.
+              </p>
+              <div className="flex flex-wrap gap-4 justify-start md:justify-end">
+                <button
+                  onClick={() => navigate('/setup/personal')}
+                  className="bg-violet hover:bg-violet-dark text-white font-sans text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all duration-300 shadow-md transform hover:-translate-y-0.5 cursor-pointer font-bold"
+                >
+                  Enroll a Child
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="border border-white/20 hover:border-violet text-white font-sans text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all duration-300 bg-white/5 hover:bg-white/10 cursor-pointer font-bold"
+                >
+                  Sign In
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[9px] text-slate-500 justify-start md:justify-end">
+                <span>DATA PRIVACY ACT OF 2012</span>
+                <span>NPC CIRCULAR 2023-04</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -292,7 +337,7 @@ function Landing() {
             We are redefining clinical care coordination to empower families and clinicians.
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-16 text-[#1a191f] leading-relaxed text-base md:text-lg mb-20 font-medium">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-16 text-[#1a191f] leading-relaxed text-base md:text-lg mb-20 font-light">
             <p>
               Current developmental care pathways rely on fragmented intake forms, isolated therapy records, and delayed caregiver communications. Families and clinicians are left struggling to synchronize milestones and manually coordinate critical progress data.
             </p>

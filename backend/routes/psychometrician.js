@@ -188,4 +188,66 @@ router.get('/activity-logs', async (req, res, next) => {
   }
 });
 
+// mark a caregiver submission processed / flagged
+router.patch('/submissions/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { status, flagged } = req.body || {};
+    const { data: sub } = await supabase
+      .from('assessment_submissions')
+      .select('id, patients(clinic_id)')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!sub || !sub.patients || sub.patients.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    const upd = {};
+    if (status !== undefined) {
+      if (!['submitted', 'processed', 'scored', 'flagged', 'draft'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+      }
+      upd.status = status;
+      if (status === 'processed') upd.processed_by_id = req.profile.id;
+    }
+    if (flagged !== undefined) upd.flagged = Boolean(flagged);
+    if (!Object.keys(upd).length) return res.status(400).json({ error: 'Nothing to update' });
+    const { error } = await supabase.from('assessment_submissions').update(upd).eq('id', req.params.id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// update a report draft / submit it for psychologist review
+router.patch('/reports/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { status, completeness } = req.body || {};
+    const { data: rep } = await supabase
+      .from('assessment_reports')
+      .select('id, patients(clinic_id)')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!rep || !rep.patients || rep.patients.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    const upd = { prepared_by_id: req.profile.id };
+    if (status !== undefined) {
+      if (!['draft', 'in_progress', 'ready_for_review'].includes(status)) {
+        return res.status(400).json({ error: 'A psychometrician can only set draft, in_progress, or ready_for_review' });
+      }
+      upd.status = status;
+    }
+    if (completeness !== undefined) {
+      upd.completeness = Math.max(0, Math.min(100, Number(completeness) || 0));
+    }
+    const { error } = await supabase.from('assessment_reports').update(upd).eq('id', req.params.id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

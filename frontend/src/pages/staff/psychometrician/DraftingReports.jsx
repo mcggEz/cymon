@@ -82,24 +82,30 @@ function DraftingReports() {
   const [drafts, setDrafts] = useState([])
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState(null)
 
-  useEffect(() => {
-    let on = true
+  const load = () =>
     api.psychometrician
       .reports()
       .then((d) => {
-        if (!on) return
         setDrafts(d.drafts)
         setSummary(d.summary)
       })
       .catch(() => {})
-      .finally(() => {
-        if (on) setLoading(false)
-      })
-    return () => {
-      on = false
-    }
+
+  useEffect(() => {
+    load().finally(() => setLoading(false))
   }, [])
+
+  const submitForReview = async (id) => {
+    setBusyId(id)
+    try {
+      await api.psychometrician.updateReport(id, { status: 'ready_for_review', completeness: 100 })
+      await load()
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   return (
     <>
@@ -122,7 +128,21 @@ function DraftingReports() {
         <div className="mt-5 flex flex-col gap-4">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
+              <div key={i} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-3 w-40" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="h-6 w-24" rounded="rounded-full" />
+                </div>
+                <Skeleton className="mt-4 h-2 w-full" rounded="rounded-full" />
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              </div>
             ))
           ) : (
             <>
@@ -170,6 +190,15 @@ function DraftingReports() {
                   👁 Preview
                 </button>
               </div>
+              {d.status === 'draft' || d.status === 'in_progress' ? (
+                <button
+                  onClick={() => submitForReview(d.id)}
+                  disabled={busyId === d.id}
+                  className="mt-3 w-full rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+                >
+                  {busyId === d.id ? 'Submitting…' : '✓ Submit for Psychologist Review'}
+                </button>
+              ) : null}
             </article>
             )
           })}

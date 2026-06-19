@@ -12,7 +12,8 @@ const STATUS_META = {
 }
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
-function ChecklistModal({ row, onClose }) {
+function ChecklistModal({ row, onClose, onProcess, processing }) {
+  const done = row.status === 'processed' || row.status === 'scored'
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
       <div className="w-full max-w-2xl rounded-2xl border-2 border-purple-300 bg-white shadow-xl">
@@ -92,9 +93,19 @@ function ChecklistModal({ row, onClose }) {
             >
               Close Viewer
             </button>
-            <button className="rounded-md bg-purple-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-800">
-              Mark as Processed ✓
-            </button>
+            {done ? (
+              <span className="rounded-md bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-700">
+                Processed ✓
+              </span>
+            ) : (
+              <button
+                onClick={() => onProcess(row.id)}
+                disabled={processing}
+                className="rounded-md bg-purple-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+              >
+                {processing ? 'Processing…' : 'Mark as Processed ✓'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -125,24 +136,31 @@ function DataReview() {
   const [rows, setRows] = useState([])
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [processing, setProcessing] = useState(false)
 
-  useEffect(() => {
-    let on = true
+  const load = () =>
     api.psychometrician
       .dataReview()
       .then((d) => {
-        if (!on) return
         setRows(d.rows)
         setSummary(d.summary)
       })
       .catch(() => {})
-      .finally(() => {
-        if (on) setLoading(false)
-      })
-    return () => {
-      on = false
-    }
+
+  useEffect(() => {
+    load().finally(() => setLoading(false))
   }, [])
+
+  const markProcessed = async (id) => {
+    setProcessing(true)
+    try {
+      await api.psychometrician.updateSubmission(id, { status: 'processed' })
+      await load()
+      setActive(null)
+    } finally {
+      setProcessing(false)
+    }
+  }
 
   return (
     <>
@@ -189,9 +207,14 @@ function DataReview() {
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={5} className="py-3">
-                          <Skeleton className="h-11 w-full" />
+                        <td className="py-3">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="mt-1 h-3 w-20" />
                         </td>
+                        <td className="py-3"><Skeleton className="h-4 w-28" /></td>
+                        <td className="py-3"><Skeleton className="h-4 w-20" /></td>
+                        <td className="py-3"><Skeleton className="h-6 w-28" /></td>
+                        <td className="py-3"><Skeleton className="h-4 w-20" /></td>
                       </tr>
                     ))
                   : rows.map((r) => {
@@ -230,7 +253,14 @@ function DataReview() {
           </div>
         </section>
 
-        {active ? <ChecklistModal row={active} onClose={() => setActive(null)} /> : null}
+        {active ? (
+          <ChecklistModal
+            row={active}
+            onClose={() => setActive(null)}
+            onProcess={markProcessed}
+            processing={processing}
+          />
+        ) : null}
       </div>
     </>
   )
