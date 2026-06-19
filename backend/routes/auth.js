@@ -93,4 +93,32 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user, profile: req.profile });
 });
 
+router.post('/change-password', requireAuth, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+    // verify the current password before changing it
+    const { error: verifyError } = await authClient.auth.signInWithPassword({
+      email: req.profile.email,
+      password: currentPassword,
+    });
+    if (verifyError) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    const { error } = await supabase.auth.admin.updateUserById(req.user.id, { password: newPassword });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

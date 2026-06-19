@@ -53,6 +53,7 @@ export const api = {
   signup: (payload) => request('/api/auth/signup', { method: 'POST', body: payload }),
   login: (payload) => request('/api/auth/login', { method: 'POST', body: payload }),
   me: () => request('/api/auth/me', { auth: true }),
+  changePassword: (payload) => request('/api/auth/change-password', { method: 'POST', body: payload, auth: true }),
   health: () => request('/api/health'),
   client: {
     getPatient: () => request('/api/client/patient', { auth: true }),

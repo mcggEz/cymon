@@ -75,6 +75,10 @@ function MyProfile() {
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [pwOpen, setPwOpen] = useState(false)
+  const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwMsg, setPwMsg] = useState(null)
 
   const load = () =>
     api.client
@@ -98,7 +102,7 @@ function MyProfile() {
     )
   }
 
-  const { patient, clinical, guardian, clinic } = data || {}
+  const { patient, clinical, guardian, emergency, clinic } = data || {}
   const sexLabel = patient?.sex ? patient.sex[0].toUpperCase() + patient.sex.slice(1) : null
   const setF = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -117,8 +121,34 @@ function MyProfile() {
       g_relationship: guardian?.relationship || '',
       g_contact_number: guardian?.contact_number || '',
       g_email: guardian?.email || '',
+      e_full_name: emergency?.full_name || '',
+      e_relationship: emergency?.relationship || '',
+      e_contact_number: emergency?.contact_number || '',
     })
     setEditing(true)
+  }
+
+  const changePassword = async () => {
+    setPwMsg(null)
+    if (pw.next.length < 6) {
+      setPwMsg({ type: 'error', text: 'New password must be at least 6 characters.' })
+      return
+    }
+    if (pw.next !== pw.confirm) {
+      setPwMsg({ type: 'error', text: 'Passwords do not match.' })
+      return
+    }
+    setPwSaving(true)
+    try {
+      await api.changePassword({ currentPassword: pw.current, newPassword: pw.next })
+      setPw({ current: '', next: '', confirm: '' })
+      setPwOpen(false)
+      setPwMsg({ type: 'success', text: 'Password updated.' })
+    } catch (e) {
+      setPwMsg({ type: 'error', text: e.message })
+    } finally {
+      setPwSaving(false)
+    }
   }
 
   const save = async () => {
@@ -145,6 +175,11 @@ function MyProfile() {
           relationship: form.g_relationship,
           contact_number: form.g_contact_number,
           email: form.g_email,
+        },
+        emergency: {
+          full_name: form.e_full_name,
+          relationship: form.e_relationship,
+          contact_number: form.e_contact_number,
         },
       })
       await load()
@@ -275,18 +310,33 @@ function MyProfile() {
 
           <Card title="Guardian & Emergency Contact" icon="■">
             {editing ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Input label="Guardian Name" value={form.g_full_name} onChange={(e) => setF('g_full_name', e.target.value)} />
-                <Input label="Relationship" value={form.g_relationship} onChange={(e) => setF('g_relationship', e.target.value)} />
-                <Input label="Contact" value={form.g_contact_number} onChange={(e) => setF('g_contact_number', e.target.value)} />
-                <Input label="Email" type="email" value={form.g_email} onChange={(e) => setF('g_email', e.target.value)} />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Input label="Guardian Name" value={form.g_full_name} onChange={(e) => setF('g_full_name', e.target.value)} />
+                  <Input label="Relationship" value={form.g_relationship} onChange={(e) => setF('g_relationship', e.target.value)} />
+                  <Input label="Contact" value={form.g_contact_number} onChange={(e) => setF('g_contact_number', e.target.value)} />
+                  <Input label="Email" type="email" value={form.g_email} onChange={(e) => setF('g_email', e.target.value)} />
+                </div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Emergency Contact</div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Input label="Emergency Name" value={form.e_full_name} onChange={(e) => setF('e_full_name', e.target.value)} />
+                  <Input label="Relationship" value={form.e_relationship} onChange={(e) => setF('e_relationship', e.target.value)} />
+                  <Input label="Emergency Contact" value={form.e_contact_number} onChange={(e) => setF('e_contact_number', e.target.value)} />
+                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <Field loading={loading} label="Guardian Name" value={guardian?.full_name} />
-                <Field loading={loading} label="Relationship" value={guardian?.relationship} />
-                <Field loading={loading} label="Contact" value={guardian?.contact_number} />
-                <Field loading={loading} label="Email" value={guardian?.email} />
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Field loading={loading} label="Guardian Name" value={guardian?.full_name} />
+                  <Field loading={loading} label="Relationship" value={guardian?.relationship} />
+                  <Field loading={loading} label="Contact" value={guardian?.contact_number} />
+                  <Field loading={loading} label="Email" value={guardian?.email} />
+                </div>
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+                  <Field loading={loading} label="Emergency Name" value={emergency?.full_name} />
+                  <Field loading={loading} label="Emergency Relationship" value={emergency?.relationship} />
+                  <Field loading={loading} label="Emergency Contact" value={emergency?.contact_number} />
+                </div>
               </div>
             )}
           </Card>
@@ -296,11 +346,43 @@ function MyProfile() {
               title="Change Password"
               subtitle="Keep your account secure"
               action={
-                <button className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
-                  Change
+                <button
+                  onClick={() => {
+                    setPwMsg(null)
+                    setPwOpen((o) => !o)
+                  }}
+                  className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
+                >
+                  {pwOpen ? 'Close' : 'Change'}
                 </button>
               }
             />
+            {pwOpen ? (
+              <div className="space-y-3 border-b border-slate-100 py-3">
+                <Input label="Current Password" type="password" value={pw.current} onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))} />
+                <Input label="New Password" type="password" value={pw.next} onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))} />
+                <Input label="Confirm New Password" type="password" value={pw.confirm} onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))} />
+                <div className="flex justify-end">
+                  <button
+                    onClick={changePassword}
+                    disabled={pwSaving}
+                    className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+                  >
+                    {pwSaving ? 'Updating…' : 'Update Password'}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {pwMsg ? (
+              <div
+                className={[
+                  'mt-1 text-xs font-medium',
+                  pwMsg.type === 'error' ? 'text-red-600' : 'text-emerald-600',
+                ].join(' ')}
+              >
+                {pwMsg.text}
+              </div>
+            ) : null}
             <SettingsRow
               title="Notification Preferences"
               subtitle="Email & SMS alerts enabled"
