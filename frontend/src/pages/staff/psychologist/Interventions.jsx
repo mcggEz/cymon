@@ -1,17 +1,24 @@
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import { api } from '../../../lib/api'
 
-const ITEMS = [
-  { name: 'Alex Johnson', date: '2026-03-28', count: 5, status: 'Completed', tone: 'emerald' },
-  { name: 'Jordan Smith', date: '2026-03-27', count: 3, status: 'In Progress', tone: 'sky' },
-  { name: 'Casey Williams', date: '2026-03-26', count: 4, status: 'Completed', tone: 'emerald' },
-]
-
-const tone = {
-  emerald: 'bg-emerald-100 text-emerald-700',
-  sky: 'bg-sky-100 text-sky-700',
+const STATUS_META = {
+  completed: { label: 'Completed', tone: 'bg-emerald-100 text-emerald-700' },
+  in_progress: { label: 'In Progress', tone: 'bg-sky-100 text-sky-700' },
+  planned: { label: 'Planned', tone: 'bg-amber-100 text-amber-700' },
 }
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '')
 
 function Interventions() {
+  const [items, setItems] = useState([])
+  useEffect(() => {
+    let on = true
+    api.psychologist.interventions().then((d) => on && setItems(d.items)).catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader title="Interventions" />
@@ -31,16 +38,23 @@ function Interventions() {
         </section>
 
         <div className="mt-5 flex flex-col gap-4">
-          {ITEMS.map((i) => (
-            <article key={i.name} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          {items.length === 0 ? (
+            <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
+              No intervention plans yet.
+            </div>
+          ) : null}
+          {items.map((i) => {
+            const meta = STATUS_META[i.status] || STATUS_META.planned
+            return (
+            <article key={i.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-lg font-bold text-purple-800">{i.name}</div>
-                  <div className="text-xs text-slate-500">{i.date}</div>
+                  <div className="text-xs text-slate-500">{i.title} · {fmtDate(i.date)}</div>
                   <div className="mt-1 text-sm text-slate-700">{i.count} procedures documented</div>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone[i.tone]}`}>
-                  {i.status}
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
+                  {meta.label}
                 </span>
               </div>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -52,7 +66,8 @@ function Interventions() {
                 </button>
               </div>
             </article>
-          ))}
+            )
+          })}
         </div>
 
         <div className="mt-5 text-center">

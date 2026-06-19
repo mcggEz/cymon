@@ -1,12 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
+import { api } from '../../../lib/api'
 
-const ROWS = [
-  { name: 'Leo Cruz', type: 'Behavioral Assessment Report (FO-06)', date: 'Mar 30, 2026' },
-  { name: 'Alex Johnson', type: 'SPED Waiver (FO-02)', date: 'Mar 28, 2026' },
-  { name: 'Jordan Smith', type: 'Student Admission (FO-01)', date: 'Mar 27, 2026' },
-]
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
 
 function PreviewModal({ row, onClose }) {
   return (
@@ -52,7 +50,20 @@ RECOMMENDATIONS:
 
 function DocumentVault() {
   const [active, setActive] = useState(null)
+  const [rows, setRows] = useState([])
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let on = true
+    api.admin
+      .documents()
+      .then((d) => on && setRows(d.documents.map((x) => ({ ...x, date: fmtDate(x.finalized_at) }))))
+      .catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader title="Document Vault" showSearch={false} />
@@ -94,8 +105,8 @@ function DocumentVault() {
               </tr>
             </thead>
             <tbody className="divide-y divide-purple-100">
-              {ROWS.map((r) => (
-                <tr key={r.name}>
+              {rows.map((r) => (
+                <tr key={r.id}>
                   <td className="py-3 font-medium text-slate-800">{r.name}</td>
                   <td className="py-3 text-slate-700">{r.type}</td>
                   <td className="py-3 text-slate-600">{r.date}</td>

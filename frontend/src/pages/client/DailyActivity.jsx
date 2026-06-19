@@ -1,31 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import Button from '../../components/ui/Button'
+import { api } from '../../lib/api'
 
 const MOODS = [
-  { id: 'very-bad', label: 'Very Bad', color: 'bg-red-400', emoji: '😣' },
+  { id: 'very_bad', label: 'Very Bad', color: 'bg-red-400', emoji: '😣' },
   { id: 'sad', label: 'Sad', color: 'bg-orange-400', emoji: '🙁' },
   { id: 'okay', label: 'Okay', color: 'bg-yellow-400', emoji: '😐' },
   { id: 'good', label: 'Good', color: 'bg-green-400', emoji: '🙂' },
   { id: 'great', label: 'Great', color: 'bg-emerald-500', emoji: '😄' },
 ]
 
-const SUBMISSIONS = [
-  { date: 'Mar 11, 2026', tasks: 'Yes, all', dot: 'bg-green-500' },
-  { date: 'Mar 10, 2026', tasks: 'Yes, all', dot: 'bg-green-500' },
-  { date: 'Mar 9, 2026', tasks: 'Some', dot: 'bg-yellow-500' },
-  { date: 'Mar 8, 2026', tasks: 'None', dot: 'bg-red-500' },
-  { date: 'Mar 7, 2026', tasks: 'Yes, all', dot: 'bg-green-500' },
-]
+const TASK_LABEL = { yes_all: 'Yes, all', some: 'Some', none: 'None' }
+const TASK_DOT = { yes_all: 'bg-green-500', some: 'bg-yellow-500', none: 'bg-red-500' }
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
+const weekday = (d) => new Date(d).toLocaleDateString('en-US', { weekday: 'short' })
 
-function MoodChart() {
-  const points = [3.0, 3.5, 4.0, 3.2, 4.5, 4.2, 4.6]
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+function MoodChart({ series }) {
   const max = 5
   const width = 320
   const height = 120
+  if (!series || series.length < 2) {
+    return <div className="flex h-32 items-center justify-center text-sm text-slate-400">Not enough data yet</div>
+  }
+  const points = series.map((s) => s.score)
   const step = width / (points.length - 1)
   const path = points
     .map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * step} ${height - (p / max) * height}`)
@@ -37,9 +38,9 @@ function MoodChart() {
         {points.map((p, i) => (
           <circle key={i} cx={i * step} cy={height - (p / max) * height} r="3" fill="#7c3aed" />
         ))}
-        {labels.map((l, i) => (
-          <text key={l} x={i * step} y={height + 16} fontSize="9" fill="#64748b" textAnchor="middle">
-            {l}
+        {series.map((s, i) => (
+          <text key={i} x={i * step} y={height + 16} fontSize="9" fill="#64748b" textAnchor="middle">
+            {weekday(s.date)}
           </text>
         ))}
       </svg>
@@ -49,6 +50,46 @@ function MoodChart() {
 
 function DailyActivity() {
   const [mood, setMood] = useState('okay')
+  const [taskCompletion, setTaskCompletion] = useState('')
+  const [behavioral, setBehavioral] = useState('')
+  const [sleep, setSleep] = useState('')
+  const [appetite, setAppetite] = useState('')
+  const [observations, setObservations] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [notice, setNotice] = useState(null)
+  const [logs, setLogs] = useState([])
+  const [series, setSeries] = useState([])
+
+  const load = () =>
+    api.client.activityLogs().then((d) => {
+      setLogs(d.logs)
+      setSeries(d.moodSeries)
+    })
+  useEffect(() => {
+    load().catch(() => {})
+  }, [])
+
+  const handleSubmit = async () => {
+    setNotice(null)
+    setSubmitting(true)
+    try {
+      await api.client.addActivityLog({
+        mood,
+        task_completion: taskCompletion || null,
+        behavioral_episodes: behavioral || null,
+        sleep_quality: sleep || null,
+        appetite: appetite || null,
+        observations: observations || null,
+      })
+      setObservations('')
+      setNotice('Report sent to the clinic.')
+      await load()
+    } catch (err) {
+      setNotice(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <>
@@ -90,25 +131,25 @@ function DailyActivity() {
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Select label="Therapy task completion?" placeholder="Select">
-                <option>Yes, completed all tasks</option>
-                <option>Some completed</option>
-                <option>None</option>
+              <Select label="Therapy task completion?" placeholder="Select" value={taskCompletion} onChange={(e) => setTaskCompletion(e.target.value)}>
+                <option value="yes_all">Yes, completed all tasks</option>
+                <option value="some">Some completed</option>
+                <option value="none">None</option>
               </Select>
-              <Select label="Behavioral episodes today?" placeholder="Select">
-                <option>No episodes — calm and cooperative</option>
-                <option>Mild episode</option>
-                <option>Significant episode</option>
+              <Select label="Behavioral episodes today?" placeholder="Select" value={behavioral} onChange={(e) => setBehavioral(e.target.value)}>
+                <option value="none">No episodes — calm and cooperative</option>
+                <option value="mild">Mild episode</option>
+                <option value="significant">Significant episode</option>
               </Select>
-              <Select label="Sleep quality last night" placeholder="Select">
-                <option>Slept well (7+ hours)</option>
-                <option>Restless</option>
-                <option>Poor</option>
+              <Select label="Sleep quality last night" placeholder="Select" value={sleep} onChange={(e) => setSleep(e.target.value)}>
+                <option value="good">Slept well (7+ hours)</option>
+                <option value="restless">Restless</option>
+                <option value="poor">Poor</option>
               </Select>
-              <Select label="Appetite / eating today?" placeholder="Select">
-                <option>Good appetite — ate well</option>
-                <option>Average</option>
-                <option>Refused meals</option>
+              <Select label="Appetite / eating today?" placeholder="Select" value={appetite} onChange={(e) => setAppetite(e.target.value)}>
+                <option value="good">Good appetite — ate well</option>
+                <option value="average">Average</option>
+                <option value="refused">Refused meals</option>
               </Select>
             </div>
 
@@ -117,10 +158,16 @@ function DailyActivity() {
               label="Additional observations (optional)"
               rows={3}
               placeholder="Any specific notes, new behaviors, concerns, or positive highlights…"
+              value={observations}
+              onChange={(e) => setObservations(e.target.value)}
             />
 
-            <Button className="mt-4" size="md">
-              Send Report to Clinic
+            {notice ? (
+              <div className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</div>
+            ) : null}
+
+            <Button className="mt-4" size="md" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Sending…' : 'Send Report to Clinic'}
             </Button>
           </section>
 
@@ -128,12 +175,15 @@ function DailyActivity() {
             <section className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold text-purple-800">Recent Submissions</div>
               <ul className="mt-3 space-y-3 text-sm">
-                {SUBMISSIONS.map((s) => (
-                  <li key={s.date} className="flex items-start gap-3">
-                    <span className={`mt-1.5 h-2 w-2 rounded-full ${s.dot}`} />
+                {logs.length === 0 ? (
+                  <li className="text-xs text-slate-500">No submissions yet.</li>
+                ) : null}
+                {logs.map((s) => (
+                  <li key={s.id} className="flex items-start gap-3">
+                    <span className={`mt-1.5 h-2 w-2 rounded-full ${TASK_DOT[s.task_completion] || 'bg-slate-300'}`} />
                     <div>
-                      <div className="font-medium text-slate-800">{s.date}</div>
-                      <div className="text-xs text-slate-500">Tasks: {s.tasks}</div>
+                      <div className="font-medium text-slate-800">{fmtDate(s.log_date)}</div>
+                      <div className="text-xs text-slate-500">Tasks: {TASK_LABEL[s.task_completion] || '—'}</div>
                     </div>
                   </li>
                 ))}
@@ -143,7 +193,7 @@ function DailyActivity() {
             <section className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold text-purple-800">Mood This Week</div>
               <div className="mt-3">
-                <MoodChart />
+                <MoodChart series={series} />
               </div>
             </section>
           </div>

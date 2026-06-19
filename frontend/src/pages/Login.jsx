@@ -29,12 +29,51 @@ const Butterfly = ({ className = '' }) => (
   </svg>
 )
 
+const ArrowLeft = ({ className = '' }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+    <path
+      d="M15 6l-6 6 6 6"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+const EyeIcon = ({ open, className = '' }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+    {open ? (
+      <>
+        <path
+          d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+      </>
+    ) : (
+      <>
+        <path
+          d="M3 3l18 18M10.6 6.1A10.7 10.7 0 0 1 12 6c6.5 0 10 6 10 6a17.4 17.4 0 0 1-3.2 4M6.6 7.6A17 17 0 0 0 2 12s3.5 6 10 6c1.4 0 2.6-.3 3.7-.7M9.9 9.9a3 3 0 0 0 4.2 4.2"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </>
+    )}
+  </svg>
+)
+
 function Login() {
   const navigate = useNavigate()
   const { signIn, signOut } = useAuth()
   const [role, setRole] = useState('client')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -67,44 +106,67 @@ function Login() {
   }
 
   return (
-    <main className="h-dvh overflow-hidden bg-[#efeaf7] flex flex-col items-center justify-center p-4 min-[360px]:p-6 sm:p-10">
-      <header className="flex items-center gap-3 py-4 min-[360px]:py-6 sm:py-8 text-purple-700">
-        <BrandMark className="h-8 w-8 min-[360px]:h-10 min-[360px]:w-10" />
-        <div className="leading-tight">
-          <div className="text-xl min-[360px]:text-2xl font-semibold">ClearMind</div>
-          <div className="text-[10px] min-[360px]:text-xs tracking-[0.25em] text-purple-700/80">
-            PSYCHOLOGICAL SERVICES
-          </div>
-        </div>
-      </header>
+    <main className="relative min-h-screen overflow-hidden bg-cream text-charcoal flex flex-col items-center justify-center p-4">
+      {/* Glow Ambient */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-violet to-pink opacity-20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-48 -right-40 h-[28rem] w-[28rem] rounded-full bg-gradient-to-tr from-violet to-pink opacity-15 blur-3xl" />
 
-      <section className="w-full max-w-5xl rounded-2xl bg-white shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
-        <aside className="relative bg-gradient-to-br from-purple-700 to-purple-900 text-white p-6 min-[360px]:p-8 sm:p-10 min-h-56 md:min-h-[26rem] flex flex-col justify-between overflow-hidden">
-          <Butterfly className="absolute right-4 top-6 h-28 w-28 text-purple-200/60" />
-          <div className="relative z-10 flex-1 flex items-center">
-            <span className="font-serif italic text-5xl min-[360px]:text-6xl sm:text-7xl font-semibold drop-shadow">
+      {/* Back Button */}
+      <button
+        type="button"
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 inline-flex items-center gap-1.5 rounded-full border border-charcoal/10 bg-white px-3 py-1.5 text-sm font-semibold text-charcoal/70 transition-all hover:border-violet hover:text-violet shadow-sm cursor-pointer"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </button>
+
+      <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-charcoal/5 bg-white shadow-[0_30px_70px_-20px_rgba(165,122,255,0.2)] grid grid-cols-1 md:grid-cols-12">
+        {/* Sidebar Brand Column (Visible on md+) */}
+        <aside className="relative hidden md:flex md:col-span-5 bg-slate-50 border-r border-charcoal/5 p-12 min-h-[32rem] flex-col justify-between overflow-hidden">
+          <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-violet/5 blur-2xl" />
+          <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-pink/5 blur-2xl" />
+          <Butterfly className="absolute right-4 top-6 h-28 w-28 text-violet/10" />
+
+          <div className="relative z-10 flex-1 flex flex-col justify-center">
+            <span className="font-serif italic text-6xl font-bold text-charcoal">
               CyMon
             </span>
+            <p className="mt-4 max-w-xs text-sm text-slate-600 leading-relaxed">
+              Compassionate care, organized. A digital home for the SPED program at ClearMind Psychological Services.
+            </p>
           </div>
-          <p className="relative z-10 text-[10px] min-[360px]:text-xs text-purple-100/80 leading-relaxed">
+
+          <p className="relative z-10 font-mono text-[9px] text-slate-400 leading-relaxed uppercase tracking-wider">
             Serving Brgy. Banilad &amp; Brgy. Maryferns, Calauan City<br />
             Data Privacy Act of 2012, NPC Circular 2023-04<br />
             © 2026 ClearMind Psychological Services
           </p>
         </aside>
 
+        {/* Form Column */}
         <form
           onSubmit={handleSubmit}
-          className="p-6 min-[360px]:p-8 sm:p-10 flex flex-col gap-4 min-[360px]:gap-5"
+          className="p-8 md:p-12 md:col-span-7 flex flex-col gap-5 justify-center"
         >
+          {/* Mobile-only logo */}
+          <div className="md:hidden flex items-center gap-2 mb-2 text-violet">
+            <BrandMark className="h-7 w-7 text-violet" />
+            <div className="leading-tight text-left">
+              <div className="text-sm font-bold text-charcoal">ClearMind</div>
+              <div className="font-mono text-[7px] tracking-[0.2em] text-slate-400">PSYCHOLOGICAL SERVICES</div>
+            </div>
+          </div>
+
           <div>
-            <h1 className="text-2xl min-[360px]:text-3xl font-bold text-purple-800">
-              Welcome Back!
+            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-violet font-semibold">
+              // sign in
+            </div>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-charcoal">
+              Welcome back
             </h1>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Empowering every child&apos;s unique potential. Log in to access
-              comprehensive developmental assessments, personalized early
-              intervention plans, and dedicated support from our specialists.
+            <p className="mt-1 text-sm text-slate-500 leading-relaxed">
+              Sign in to access assessments, intervention plans, and specialist summaries.
             </p>
           </div>
 
@@ -120,53 +182,76 @@ function Login() {
           />
 
           <Input
-            label="Email Address"
+            label="Email address"
             type="email"
             autoComplete="email"
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
 
-          <Input
-            label="Password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="relative">
+            <Input
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className="pr-10"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 bottom-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-violet/10 hover:text-violet"
+            >
+              <EyeIcon open={showPassword} className="h-4 w-4" />
+            </button>
+          </div>
 
           <div className="flex items-center justify-between">
             <Checkbox
-              label="Remember Me"
+              label="Remember me"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
+              className="text-slate-700 font-medium"
             />
             <a
               href="#forgot"
-              className="text-sm font-medium text-purple-700 hover:text-purple-900"
+              className="text-xs font-bold text-violet hover:text-violet-dark"
             >
-              Forgot Password?
+              Forgot password?
             </a>
           </div>
 
           {error ? (
-            <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div
+              role="alert"
+              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 font-medium"
+            >
               {error}
             </div>
           ) : null}
 
-          <Button type="submit" fullWidth size="lg" disabled={submitting}>
-            {submitting ? 'SIGNING IN…' : 'LOG IN'}
+          <Button
+            type="submit"
+            fullWidth
+            size="lg"
+            disabled={submitting}
+            className="bg-violet hover:bg-violet-dark text-white font-mono uppercase tracking-widest text-sm py-3.5 rounded-full mt-2 font-bold shadow-sm cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5"
+          >
+            {submitting ? 'Signing in…' : 'Log in'}
           </Button>
 
-          <p className="text-center text-sm text-slate-600">
-            Don&apos;t have an Account?{' '}
+          <p className="text-center text-sm text-slate-500 mt-2 font-medium">
+            Don&apos;t have an account?{' '}
             <button
               type="button"
               onClick={() => navigate('/setup/personal')}
-              className="font-medium text-purple-700 hover:text-purple-900"
+              className="font-bold text-violet hover:text-violet-dark cursor-pointer"
             >
               Register
             </button>

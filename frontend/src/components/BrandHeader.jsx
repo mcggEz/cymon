@@ -15,17 +15,17 @@ const Butterfly = ({ className = '', flip = false }) => (
 
 function BrandHeader() {
   return (
-    <div className="flex items-center justify-center gap-3 py-6">
-      <Butterfly className="h-12 w-12 text-purple-700" />
-      <div className="relative">
-        <div className="font-serif italic text-4xl font-semibold text-white drop-shadow-md bg-gradient-to-r from-purple-700 to-purple-900 px-8 py-2 rounded-md">
+    <div className="flex items-center justify-center gap-3 py-6 min-[360px]:py-8">
+      <Butterfly className="h-9 w-9 text-violet min-[360px]:h-11 min-[360px]:w-11" />
+      <div className="text-center">
+        <div className="font-serif italic text-4xl font-bold text-charcoal min-[360px]:text-5xl">
           CyMon
         </div>
-        <div className="mt-1 text-center text-[10px] tracking-[0.25em] text-purple-700/80">
+        <div className="mt-1 font-mono text-[9px] tracking-[0.2em] text-slate-400 min-[360px]:text-[10px]">
           CLEARMIND · PSYCHOLOGICAL SERVICES
         </div>
       </div>
-      <Butterfly className="h-12 w-12 text-purple-700" flip />
+      <Butterfly className="h-9 w-9 text-violet min-[360px]:h-11 min-[360px]:w-11" flip />
     </div>
   )
 }

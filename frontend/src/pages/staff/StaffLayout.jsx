@@ -21,7 +21,7 @@ const Butterfly = ({ className = '', flip = false }) => (
   </svg>
 )
 
-function StaffLayout({ user, profileTo, nav }) {
+function StaffLayout({ user, profileTo, nav, outletContext }) {
   return (
     <div className="flex h-dvh bg-[#efeaf7]">
       <aside className="flex w-64 flex-col bg-gradient-to-b from-purple-700 to-purple-900 text-white">
@@ -66,7 +66,7 @@ function StaffLayout({ user, profileTo, nav }) {
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Outlet />
+        <Outlet context={outletContext} />
       </div>
     </div>
   )

@@ -1,16 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import { api } from '../../../lib/api'
 
-const ROWS = [
-  { id: 'a', name: 'Alex Johnson', sid: 'CMPS-2026-042', by: 'Maria Johnson', rel: 'Mother', date: 'Mar 27, 2026', status: 'PROCESSED & DRAFTED', tone: 'sky', flag: true },
-  { id: 'b', name: 'Jordan Smith', sid: 'CMPS-2026-088', by: 'David Smith', rel: 'Father', date: 'Mar 26, 2026', status: 'PROCESSED & DRAFTED', tone: 'sky' },
-  { id: 'c', name: 'Morgan Davis', sid: 'CMPS-2026-112', by: 'Sarah Davis', rel: 'Mother', date: 'Mar 25, 2026', status: 'APPROVED BY RPSY', tone: 'emerald' },
-]
-
-const tone = {
-  sky: 'bg-sky-100 text-sky-700',
-  emerald: 'bg-emerald-100 text-emerald-700',
+const STATUS_META = {
+  draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700' },
+  submitted: { label: 'SUBMITTED', tone: 'bg-sky-100 text-sky-700' },
+  processed: { label: 'PROCESSED & DRAFTED', tone: 'bg-sky-100 text-sky-700' },
+  scored: { label: 'APPROVED BY RPSY', tone: 'bg-emerald-100 text-emerald-700' },
+  flagged: { label: 'FLAGGED', tone: 'bg-rose-100 text-rose-700' },
 }
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
 function ChecklistModal({ row, onClose }) {
   return (
@@ -118,6 +117,24 @@ function StatCard({ value, label, icon }) {
 
 function DataReview() {
   const [active, setActive] = useState(null)
+  const [rows, setRows] = useState([])
+  const [summary, setSummary] = useState(null)
+
+  useEffect(() => {
+    let on = true
+    api.psychometrician
+      .dataReview()
+      .then((d) => {
+        if (!on) return
+        setRows(d.rows)
+        setSummary(d.summary)
+      })
+      .catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader
@@ -132,9 +149,9 @@ function DataReview() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard value="3" label="New Submissions" icon="✉" />
-          <StatCard value="1" label="Flagged Priority" icon="⚑" />
-          <StatCard value="12" label="Approved by RPsy" icon="✓" />
+          <StatCard value={summary?.newSubmissions ?? '—'} label="New Submissions" icon="✉" />
+          <StatCard value={summary?.flagged ?? '—'} label="Flagged Priority" icon="⚑" />
+          <StatCard value={summary?.approved ?? '—'} label="Approved by RPsy" icon="✓" />
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -160,7 +177,9 @@ function DataReview() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
-                {ROWS.map((r) => (
+                {rows.map((r) => {
+                  const meta = STATUS_META[r.status] || STATUS_META.submitted
+                  return (
                   <tr key={r.id}>
                     <td className="py-3">
                       <div className="flex items-center gap-2 font-medium text-purple-800">
@@ -172,10 +191,10 @@ function DataReview() {
                     <td className="py-3 text-slate-700">
                       {r.by} <span className="text-xs text-slate-500">({r.rel})</span>
                     </td>
-                    <td className="py-3 text-slate-600">{r.date}</td>
+                    <td className="py-3 text-slate-600">{fmtDate(r.date)}</td>
                     <td className="py-3">
-                      <span className={`rounded-md px-2.5 py-1 text-[11px] font-semibold ${tone[r.tone]}`}>
-                        {r.status}
+                      <span className={`rounded-md px-2.5 py-1 text-[11px] font-semibold ${meta.tone}`}>
+                        {meta.label}
                       </span>
                     </td>
                     <td className="py-3">
@@ -187,7 +206,8 @@ function DataReview() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

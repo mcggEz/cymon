@@ -1,27 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
-
-const TESTS = [
-  {
-    id: 'mmse',
-    code: 'CMPS:SE-FO-04',
-    title: 'Mini-Mental Status Examination',
-    desc:
-      'Evaluates practical, conceptual, social, and motor domains, noting perceptual disturbances and stimming behaviors.',
-    duration: 'Est. 15–20 mins',
-    icon: '🧠',
-  },
-  {
-    id: 'caft',
-    code: 'CMPS:SE-FO-05',
-    title: 'Child Adaptive Functioning Tool',
-    desc:
-      'Interactive tool to test math, colors, shapes, literacy, word recognition, writing, and verbal interpretation.',
-    duration: 'Est. 25–30 mins',
-    icon: '✦',
-  },
-]
+import { api } from '../../../lib/api'
 
 const LOGS = [
   {
@@ -35,14 +15,7 @@ const LOGS = [
   },
 ]
 
-const PATIENTS = [
-  'Alex Johnson (09:00 AM Session)',
-  'Jordan Smith (10:30 AM Session)',
-  'Casey Williams (01:00 PM Session)',
-  'Browse All Enrolled Students…',
-]
-
-function LaunchModal({ test, onClose, onStart }) {
+function LaunchModal({ test, patients, onClose, onStart }) {
   const [patient, setPatient] = useState('')
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
@@ -61,8 +34,8 @@ function LaunchModal({ test, onClose, onStart }) {
           onChange={(e) => setPatient(e.target.value)}
         >
           <option value="">-- Choose Patient --</option>
-          {PATIENTS.map((p) => (
-            <option key={p}>{p}</option>
+          {patients.map((p) => (
+            <option key={p.id}>{p.label}</option>
           ))}
         </select>
 
@@ -113,7 +86,24 @@ function ToolCard({ t, onLaunch, half = false }) {
 
 function Assessments() {
   const [active, setActive] = useState(null)
+  const [tests, setTests] = useState([])
+  const [sessions, setSessions] = useState([])
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let on = true
+    api.psychometrician
+      .assessments()
+      .then((d) => {
+        if (!on) return
+        setTests(d.tests)
+        setSessions(d.sessions)
+      })
+      .catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
 
   return (
     <>
@@ -133,31 +123,11 @@ function Assessments() {
           Select a tool from the library to assign and launch for a patient.
         </div>
 
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
-          IN PROGRESS (DRAFTS)
-        </div>
-        <article className="mt-2 flex items-center justify-between rounded-md border border-purple-200 bg-white px-4 py-3 shadow-sm">
-          <div>
-            <div className="text-sm font-semibold text-purple-800">
-              Mini-Mental Status Examination (MMSE)
-            </div>
-            <div className="text-xs text-slate-500">
-              Patient: Alex Johnson · Last edited: 10 mins ago
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-amber-600">Draft Auto-Saved</span>
-            <button className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-800">
-              Resume →
-            </button>
-          </div>
-        </article>
-
         <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
           STANDARDIZED TESTS
         </div>
         <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {TESTS.map((t) => (
+          {tests.map((t) => (
             <ToolCard key={t.id} t={t} half onLaunch={() => setActive(t)} />
           ))}
         </div>
@@ -174,6 +144,7 @@ function Assessments() {
         {active ? (
           <LaunchModal
             test={active}
+            patients={sessions}
             onClose={() => setActive(null)}
             onStart={() => {
               setActive(null)

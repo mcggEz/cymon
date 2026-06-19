@@ -2,7 +2,7 @@ function SegmentedControl({ value, onChange, options, className = '' }) {
   return (
     <div
       role="tablist"
-      className={`inline-flex w-full rounded-full bg-purple-600 p-1 ${className}`}
+      className={`inline-flex w-full rounded-full bg-slate-100 p-1 border border-charcoal/5 ${className}`}
     >
       {options.map((opt) => {
         const selected = opt.value === value
@@ -14,11 +14,11 @@ function SegmentedControl({ value, onChange, options, className = '' }) {
             aria-selected={selected}
             onClick={() => onChange(opt.value)}
             className={[
-              'flex-1 h-9 rounded-full text-sm font-medium transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+              'flex-1 h-9 rounded-full text-xs font-semibold tracking-wider font-mono uppercase transition-all duration-200 cursor-pointer',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet/30',
               selected
-                ? 'bg-white text-purple-700 shadow'
-                : 'text-white/90 hover:text-white',
+                ? 'bg-violet text-white shadow-sm'
+                : 'text-slate-500 hover:text-charcoal',
             ].join(' ')}
           >
             {opt.label}

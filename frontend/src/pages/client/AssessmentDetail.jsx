@@ -1,122 +1,52 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import PageHeader from './PageHeader'
-import Input from '../../components/ui/Input'
-import Select from '../../components/ui/Select'
-import Textarea from '../../components/ui/Textarea'
 import Button from '../../components/ui/Button'
+import { api } from '../../lib/api'
 
-const DOMAINS = [
-  {
-    n: 'I.',
-    title: 'PRACTICAL DOMAIN',
-    score: '4/5',
-    rows: [
-      'Appearance',
-      'Dresses appropriate to the occasion',
-      'B. ACTIVITIES OF DAILY LIVING',
-      'Opens a simple container or jar',
-      'Can demonstrate handwashing when asked',
-      'Removes a pack of confectionery when craving',
-      'Can independently drink from a cup or bottle',
-    ],
-  },
-  {
-    n: 'II.',
-    title: 'CONCEPTUAL DOMAIN',
-    score: '4/5',
-    rows: [
-      'A. OBJECT RECOGNITION',
-      'Names at least six (6) familiar objects (ex: bottle)',
-      'Counts 0–10, familiar faces (mother, father)',
-      'B. IDENTIFYING DETAILS',
-      'Can name his/her own name',
-      'Knows full name when asked',
-      'C. RACE ASSOCIATION',
-      'Connects similar entities under one age',
-    ],
-  },
-  {
-    n: 'III.',
-    title: 'AFFECT & INTERACTION',
-    score: '4/5',
-    rows: [
-      'A. EMOTIONAL',
-      'Makes eye contact when name is called',
-      'Responds to greetings (verbal or gesture)',
-      'Can show emotions (happy, sad)',
-      'Cries when age appropriate distress',
-      'Can identify basic emotions',
-    ],
-  },
-  {
-    n: 'IV.',
-    title: 'BODILY KINESTHETIC DOMAIN',
-    score: '4/5',
-    rows: [
-      'A. FINE MOTOR SKILLS',
-      'Can hold drug ID appropriately (pencil)',
-      'Writes letters or name legibly',
-      'B. GROSS MOTOR SKILLS',
-      'Can demonstrate hand-eye coordination (sharing)',
-      'Can pin face shape (circle, triangle, square)',
-      'C. SOCIAL MOTOR SKILLS',
-      'Can stand on one foot briefly',
-      'Walks steadily across the room',
-      'Can jump forward with both feet together',
-      'Climbs stairs using alternating feet',
-    ],
-  },
-  {
-    n: 'V.',
-    title: 'PERCEPTUAL DISTURBANCES & STIMMING',
-    score: '4/5',
-    rows: [
-      'PERCEPTUAL DISTURBANCES',
-      'Hallucinations',
-      'Delusions',
-      'Illusions',
-      'STIMMING',
-      'Verbal automatic vocalizations',
-      'Hand flapping',
-      'Body rocking, head banging or spinning around',
-    ],
-  },
-]
-
-function DomainCard({ d }) {
+function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
       <header className="flex items-center justify-between bg-purple-700 px-4 py-2 text-white">
-        <div className="text-sm font-semibold tracking-wider">
-          {d.n} {d.title}
-        </div>
-        <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">{d.score}</span>
+        <div className="text-sm font-semibold tracking-wider">{domain.title}</div>
+        <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">
+          {domain.items.filter((it) => answers[it.key] === 'yes').length}/{domain.items.length}
+        </span>
       </header>
       <div className="divide-y divide-purple-100">
-        {d.rows.map((row, i) => {
-          const isHeader = row === row.toUpperCase() && row.length > 2
-          return isHeader ? (
-            <div key={i} className="bg-purple-50 px-4 py-2 text-[11px] font-semibold tracking-wider text-purple-700">
-              {row}
+        {domain.items.map((it) => (
+          <div key={it.key} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-2">
+            <div className="text-sm text-slate-700">{it.label}</div>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => onAnswer(it.key, 'yes')}
+                className={[
+                  'rounded-md px-3 py-1 text-xs font-medium',
+                  answers[it.key] === 'yes' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700',
+                ].join(' ')}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => onAnswer(it.key, 'no')}
+                className={[
+                  'rounded-md px-3 py-1 text-xs font-medium',
+                  answers[it.key] === 'no' ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700',
+                ].join(' ')}
+              >
+                No
+              </button>
             </div>
-          ) : (
-            <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-2">
-              <div className="text-sm text-slate-700">{row}</div>
-              <div className="flex gap-1.5">
-                <button className="rounded-md bg-green-500 px-3 py-1 text-xs font-medium text-white">
-                  Yes
-                </button>
-                <button className="rounded-md bg-rose-500 px-3 py-1 text-xs font-medium text-white">
-                  No
-                </button>
-              </div>
-              <input
-                placeholder="Remarks…"
-                className="h-8 rounded-md border border-purple-200 bg-purple-50 px-2 text-xs"
-              />
-            </div>
-          )
-        })}
+            <input
+              value={remarks[it.key] || ''}
+              onChange={(e) => onRemark(it.key, e.target.value)}
+              placeholder="Remarks…"
+              className="h-8 rounded-md border border-purple-200 bg-purple-50 px-2 text-xs"
+            />
+          </div>
+        ))}
       </div>
     </section>
   )
@@ -124,6 +54,69 @@ function DomainCard({ d }) {
 
 function AssessmentDetail() {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const [template, setTemplate] = useState(null)
+  const [answers, setAnswers] = useState({})
+  const [remarks, setRemarks] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let on = true
+    api.client
+      .assessmentTemplate(id)
+      .then((d) => on && setTemplate(d.template))
+      .catch((e) => on && setError(e.message))
+    return () => {
+      on = false
+    }
+  }, [id])
+
+  const structure = useMemo(() => template?.structure || [], [template])
+  const { total, max } = useMemo(() => {
+    let t = 0
+    let m = 0
+    for (const domain of structure) {
+      for (const it of domain.items) {
+        m += 1
+        if (answers[it.key] === 'yes') t += 1
+      }
+    }
+    return { total: t, max: m }
+  }, [structure, answers])
+
+  const setAnswer = (key, val) => setAnswers((a) => ({ ...a, [key]: val }))
+  const setRemark = (key, val) => setRemarks((r) => ({ ...r, [key]: val }))
+
+  const handleSubmit = async () => {
+    setError(null)
+    setSubmitting(true)
+    try {
+      const answersPayload = {}
+      for (const domain of structure) {
+        for (const it of domain.items) {
+          if (answers[it.key]) answersPayload[it.key] = { response: answers[it.key], remarks: remarks[it.key] || '' }
+        }
+      }
+      const domain_scores = {}
+      for (const domain of structure) {
+        const score = domain.items.filter((it) => answers[it.key] === 'yes').length
+        domain_scores[domain.key] = { score, max: domain.items.length }
+      }
+      await api.client.submitAssessment(id, {
+        answers: answersPayload,
+        domain_scores,
+        total_score: total,
+        max_score: max,
+      })
+      navigate('/client/assessments')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <>
       <PageHeader title="Assessment Center" />
@@ -136,55 +129,43 @@ function AssessmentDetail() {
         </button>
 
         <h1 className="text-center text-2xl font-bold tracking-wider text-purple-800">
-          MINI-MENTAL STATUS EXAMINATION
+          {template ? template.title.toUpperCase() : 'Loading…'}
         </h1>
         <p className="text-center text-xs uppercase tracking-wider text-slate-500">
           Complete the sections below
         </p>
 
-        <section className="mt-4 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="text-base font-semibold text-purple-800">
-            ✦ Personal Information of Student
-          </div>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Input label="Full Name" tone="purple" />
-            <Input label="Date of Exam" type="date" tone="purple" />
-            <Select label="Mood" placeholder="Select Mood">
-              <option>Happy</option>
-              <option>Okay</option>
-              <option>Sad</option>
-            </Select>
-            <Input label="Age / Time" tone="purple" />
-            <Input label="Date of Birth" type="date" tone="purple" />
-            <Select label="Diagnosis" placeholder="Specify if any">
-              <option>ASD</option>
-              <option>ADHD</option>
-            </Select>
-          </div>
-          <Textarea className="mt-4" label="Medical History" rows={2} />
-          <Textarea className="mt-4" label="Family History" rows={2} />
-        </section>
+        {error ? (
+          <div className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+        ) : null}
 
         <div className="mt-5 flex flex-col gap-4">
-          {DOMAINS.map((d) => (
-            <DomainCard key={d.title} d={d} />
+          {structure.map((domain) => (
+            <DomainCard
+              key={domain.key}
+              domain={domain}
+              answers={answers}
+              remarks={remarks}
+              onAnswer={setAnswer}
+              onRemark={setRemark}
+            />
           ))}
         </div>
 
         <div className="mt-6 flex items-center justify-between rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Overall Cognition Score
+              Overall Score
             </div>
-            <div className="text-xs text-slate-500">
-              Auto-computed once you complete all the items in the assessment.
-            </div>
+            <div className="text-xs text-slate-500">Counts the indicators marked “Yes”.</div>
           </div>
-          <div className="text-3xl font-bold text-purple-800">12 / 28</div>
+          <div className="text-3xl font-bold text-purple-800">
+            {total} / {max}
+          </div>
         </div>
 
-        <Button className="mt-4" fullWidth size="lg" onClick={() => navigate('/client/assessments')}>
-          ✓ Submit Assessment
+        <Button className="mt-4" fullWidth size="lg" onClick={handleSubmit} disabled={submitting || !template}>
+          {submitting ? 'Submitting…' : '✓ Submit Assessment'}
         </Button>
       </div>
     </>

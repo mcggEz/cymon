@@ -12,8 +12,8 @@ const CheckIcon = () => (
 
 function StepProgress({ current, steps }) {
   return (
-    <div className="rounded-2xl border-2 border-purple-300 bg-white px-6 py-5">
-      <div className="text-xs font-semibold tracking-wider text-purple-800">
+    <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-6">
+      <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-purple-600">
         PROFILE SETUP · STEP {current} OF {steps.length}
       </div>
       <div className="mt-4 flex items-center">
@@ -26,20 +26,20 @@ function StepProgress({ current, steps }) {
               <div className="flex flex-col items-center">
                 <div
                   className={[
-                    'flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold',
+                    'flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition',
                     done
                       ? 'bg-purple-700 text-white'
                       : active
                         ? 'bg-purple-700 text-white ring-4 ring-purple-200'
-                        : 'bg-purple-100 text-purple-400',
+                        : 'border border-slate-200 bg-slate-50 text-slate-400',
                   ].join(' ')}
                 >
                   {done ? <CheckIcon /> : n}
                 </div>
                 <div
                   className={[
-                    'mt-1 text-xs font-medium',
-                    active || done ? 'text-purple-800' : 'text-purple-300',
+                    'mt-1.5 text-[10px] font-medium sm:text-xs',
+                    active || done ? 'text-slate-900' : 'text-slate-400',
                   ].join(' ')}
                 >
                   {label}
@@ -49,7 +49,7 @@ function StepProgress({ current, steps }) {
                 <div
                   className={[
                     'mx-2 h-px flex-1',
-                    done ? 'bg-purple-700' : 'bg-purple-200',
+                    done ? 'bg-purple-700' : 'bg-slate-200',
                   ].join(' ')}
                 />
               ) : null}

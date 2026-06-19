@@ -1,17 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import { api } from '../../../lib/api'
 
-const ROWS = [
-  { day: '29', mon: 'MAR', name: 'Jordan Smith', detail: 'Sensory Integration Play', status: 'Draft', tone: 'amber', action: 'Edit Log' },
-  { day: '28', mon: 'MAR', name: 'Alex Johnson', detail: 'Pegboard Sorting & Colors', status: 'Pending', tone: 'sky', action: 'View Details' },
-  { day: '26', mon: 'MAR', name: 'Casey Williams', detail: 'Picture Exchange Comm.', status: 'Approved', tone: 'emerald', action: 'View Details' },
-]
-
-const tone = {
-  amber: 'bg-amber-100 text-amber-700',
-  sky: 'bg-sky-100 text-sky-700',
-  emerald: 'bg-emerald-100 text-emerald-700',
+const STATUS_META = {
+  draft: { label: 'Draft', tone: 'bg-amber-100 text-amber-700', action: 'Edit Log' },
+  pending: { label: 'Pending', tone: 'bg-sky-100 text-sky-700', action: 'View Details' },
+  approved: { label: 'Approved', tone: 'bg-emerald-100 text-emerald-700', action: 'View Details' },
 }
+const dayOf = (d) => (d ? String(new Date(d).getDate()) : '')
+const monOf = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : '')
 
 function PreviewModal({ row, onClose }) {
   return (
@@ -81,6 +78,16 @@ function PreviewModal({ row, onClose }) {
 
 function ActivityLog() {
   const [active, setActive] = useState(null)
+  const [rows, setRows] = useState([])
+
+  useEffect(() => {
+    let on = true
+    api.psychometrician.activityLogs().then((d) => on && setRows(d.rows)).catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader
@@ -116,27 +123,35 @@ function ActivityLog() {
           </div>
 
           <ul className="mt-4 divide-y divide-purple-100">
-            {ROWS.map((r) => (
-              <li key={r.name} className="flex items-center gap-4 py-4">
+            {rows.length === 0 ? (
+              <li className="py-4 text-sm text-slate-500">No session logs yet.</li>
+            ) : null}
+            {rows.map((r) => {
+              const meta = STATUS_META[r.status] || STATUS_META.draft
+              return (
+              <li key={r.id} className="flex items-center gap-4 py-4">
                 <div className="flex h-12 w-12 flex-col items-center justify-center rounded-md bg-purple-100 text-purple-800">
-                  <div className="text-base font-bold leading-none">{r.day}</div>
-                  <div className="text-[9px] font-semibold tracking-wider">{r.mon}</div>
+                  <div className="text-base font-bold leading-none">{dayOf(r.date)}</div>
+                  <div className="text-[9px] font-semibold tracking-wider">{monOf(r.date)}</div>
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-purple-800">{r.name}</div>
-                  <div className="text-xs text-slate-500">Session 02 · {r.detail}</div>
+                  <div className="text-xs text-slate-500">
+                    {r.session_number ? `Session ${r.session_number} · ` : ''}{r.detail}
+                  </div>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone[r.tone]}`}>
-                  {r.status}
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
+                  {meta.label}
                 </span>
                 <button
-                  onClick={() => setActive(r)}
+                  onClick={() => setActive({ ...r, day: dayOf(r.date), mon: monOf(r.date) })}
                   className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
                 >
-                  {r.action}
+                  {meta.action}
                 </button>
               </li>
-            ))}
+              )
+            })}
           </ul>
         </section>
 

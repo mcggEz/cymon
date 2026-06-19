@@ -1,0 +1,68 @@
+import { test, expect } from '@playwright/test'
+
+const PW = 'Password123!'
+
+async function login(page, { roleTab, email }) {
+  await page.goto('/login')
+  if (roleTab) {
+    await page.getByRole('tab', { name: roleTab, exact: true }).click()
+  }
+  await page.getByLabel('Email address').fill(email)
+  await page.getByLabel('Password', { exact: true }).fill(PW)
+  await page.getByRole('button', { name: /^log in$/i }).click()
+}
+
+test('landing page renders', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: /Compassionate care/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Enroll a Child/i }).first()).toBeVisible()
+})
+
+test('admin can log in and sees real dashboard data', async ({ page }) => {
+  await login(page, { roleTab: 'Admin', email: 'admin@clearmind.ph' })
+  await expect(page).toHaveURL(/\/admin/)
+  await expect(page.getByText('Total Active Students')).toBeVisible()
+  // navigate via the sidebar (SPA, no reload)
+  await page.getByRole('link', { name: 'PATIENTS' }).click()
+  await expect(page.getByText('Leo Cruz')).toBeVisible()
+  await expect(page.getByText('CMPS-2026-001')).toBeVisible()
+})
+
+test('client can log in and sees their child profile', async ({ page }) => {
+  await login(page, { email: 'client@clearmind.ph' })
+  await expect(page).toHaveURL(/\/client\/home/)
+  await expect(page.getByText(/Good Day, Leo/i)).toBeVisible()
+  await page.getByRole('link', { name: /Leo Cruz/ }).click()
+  await expect(page).toHaveURL(/\/client\/profile/)
+  await expect(page.getByText('Autism Spectrum Disorder')).toBeVisible()
+})
+
+test('psychologist portal loads with real roster data', async ({ page }) => {
+  await login(page, { roleTab: 'Clinician', email: 'psych@clearmind.ph' })
+  await expect(page).toHaveURL(/\/psychologist/)
+  await page.getByRole('link', { name: 'ROSTER OVERVIEW' }).click()
+  await expect(page.getByText('Client Roster Overview')).toBeVisible()
+  await expect(page.getByText('Alex Johnson')).toBeVisible()
+})
+
+test('psychometrician portal loads with real data', async ({ page }) => {
+  await login(page, { roleTab: 'RPm', email: 'rpm@clearmind.ph' })
+  await expect(page).toHaveURL(/\/psychometrician/)
+  await page.getByRole('link', { name: 'DATA REVIEW' }).click()
+  await expect(page.getByText('Submitted Checklists')).toBeVisible()
+})
+
+test('wrong role tab is rejected (client tab + staff account)', async ({ page }) => {
+  await login(page, { email: 'admin@clearmind.ph' }) // Client tab (default) but admin account
+  await expect(page.getByRole('alert')).toContainText(/registered as admin/i)
+})
+
+test('therapist mockup portals are reachable', async ({ page }) => {
+  await page.goto('/speech')
+  await expect(page.getByText(/Speech Therapy — Caseload/i)).toBeVisible()
+  await page.getByRole('link', { name: 'ROUTED REPORTS' }).click()
+  await expect(page.getByText(/Routed Reports/i).first()).toBeVisible()
+
+  await page.goto('/occupational')
+  await expect(page.getByText(/Occupational Therapy — Caseload/i)).toBeVisible()
+})

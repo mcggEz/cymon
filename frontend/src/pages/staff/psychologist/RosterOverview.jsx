@@ -1,22 +1,24 @@
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
-
-const CLIENTS = [
-  { name: 'Alex Johnson', level: 'HSN', progress: 85, updated: '2026-03-28' },
-  { name: 'Jordan Smith', level: 'MSN', progress: 72, updated: '2026-03-27' },
-  { name: 'Casey Williams', level: 'MSN', progress: 58, updated: '2026-03-26' },
-  { name: 'Bree Hodge', level: 'LSN', progress: 34, updated: '2026-03-26' },
-  { name: 'Morgan Davis', level: 'HSN', progress: 91, updated: '2026-03-26' },
-  { name: 'Gabrielle Solis', level: 'HSN', progress: 98, updated: '2026-03-26' },
-  { name: 'Susan Mayer', level: 'MSN', progress: 85, updated: '2026-03-26' },
-]
+import { api } from '../../../lib/api'
 
 const levelTone = {
   HSN: 'bg-rose-100 text-rose-700',
   MSN: 'bg-amber-100 text-amber-700',
   LSN: 'bg-emerald-100 text-emerald-700',
 }
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—')
 
 function RosterOverview() {
+  const [clients, setClients] = useState([])
+  useEffect(() => {
+    let on = true
+    api.psychologist.roster().then((d) => on && setClients(d.clients)).catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader title="Rooster Overview" />
@@ -39,11 +41,11 @@ function RosterOverview() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
-                {CLIENTS.map((c) => (
-                  <tr key={c.name}>
+                {clients.map((c) => (
+                  <tr key={c.id}>
                     <td className="py-3 font-medium text-slate-800">{c.name}</td>
                     <td className="py-3 text-center">
-                      <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${levelTone[c.level]}`}>
+                      <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${levelTone[c.level] || 'bg-slate-100 text-slate-600'}`}>
                         {c.level}
                       </span>
                     </td>
@@ -58,7 +60,7 @@ function RosterOverview() {
                         <span className="text-xs text-slate-600">{c.progress}%</span>
                       </div>
                     </td>
-                    <td className="py-3 text-slate-600">{c.updated}</td>
+                    <td className="py-3 text-slate-600">{fmtDate(c.updated)}</td>
                     <td className="py-3">
                       <div className="flex items-center justify-center gap-3 text-purple-700">
                         <button aria-label="View" className="hover:text-purple-900">👁</button>

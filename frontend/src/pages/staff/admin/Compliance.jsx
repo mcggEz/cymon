@@ -1,20 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
-
-const ROWS = [
-  { student: 'Leo Cruz', sid: 'STU-0049', parent: 'Maria Cruz', email: '[email protected]', doc: 'SPED Consent & Waiver', code: 'CMPS:SE-FO-02', due: 'Mar 15, 2026', status: 'OVERDUE', tone: 'rose' },
-  { student: 'Mia Santos', sid: 'STU-0072', parent: 'John Santos', email: '[email protected]', doc: 'SummerScape Waiver', code: 'CMPS:SE-FO-12', due: 'Mar 29, 2026', status: 'PENDING SIG.', tone: 'amber' },
-  { student: 'Zara Mendoza', sid: 'STU-0017', parent: 'Lidia Mendoza', email: '[email protected]', doc: 'SPED Consent & Waiver', code: 'CMPS:SE-FO-02', due: 'Mar 10, 2026', status: 'OVERDUE', tone: 'rose' },
-  { student: 'Carlos Bautista', sid: 'STU-0061', parent: 'Rosa Bautista', email: '[email protected]', doc: 'SummerScape Waiver', code: 'CMPS:SE-FO-12', due: 'Apr 5, 2026', status: 'PENDING SIG.', tone: 'amber' },
-  { student: 'Nina Aquino', sid: 'STU-0033', parent: 'Bea Aquino', email: '[email protected]', doc: 'SPED Consent & Waiver', code: 'CMPS:SE-FO-02', due: 'Feb 28, 2026', status: 'OVERDUE', tone: 'rose' },
-]
+import { api } from '../../../lib/api'
 
 const TABS = ['All Issues', 'Overdue', 'Pending Signature', 'SPED (FO-02)', 'SummerScape (FO-13)']
 
 const tone = {
   rose: 'text-rose-700',
   amber: 'text-amber-700',
+}
+
+const STATUS_LABEL = { overdue: 'OVERDUE', pending_signature: 'PENDING SIG.' }
+const fmtDue = (d) =>
+  d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+
+function toRow(r) {
+  return {
+    ...r,
+    due: fmtDue(r.due_date),
+    label: STATUS_LABEL[r.status] || r.status,
+    tone: r.status === 'overdue' ? 'rose' : 'amber',
+  }
 }
 
 const Stat = ({ value, label, color }) => (
@@ -26,7 +32,20 @@ const Stat = ({ value, label, color }) => (
 
 function Compliance() {
   const [tab, setTab] = useState('All Issues')
+  const [data, setData] = useState(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let on = true
+    api.admin.compliance().then((d) => on && setData(d)).catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
+  const summary = data?.summary
+  const rows = (data?.rows || []).map(toRow)
+
   return (
     <>
       <StaffHeader title="Compliance & Waivers" showSearch={false} />
@@ -43,10 +62,10 @@ function Compliance() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat value="3" label="Overdue" color="text-rose-600" />
-          <Stat value="5" label="Pending Signature" color="text-amber-600" />
-          <Stat value="73" label="Fully Compliant" color="text-emerald-600" />
-          <Stat value="20" label="Total Students" color="text-sky-600" />
+          <Stat value={summary?.overdue ?? '—'} label="Overdue" color="text-rose-600" />
+          <Stat value={summary?.pending ?? '—'} label="Pending Signature" color="text-amber-600" />
+          <Stat value={summary?.compliant ?? '—'} label="Fully Compliant" color="text-emerald-600" />
+          <Stat value={summary?.total ?? '—'} label="Total Students" color="text-sky-600" />
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -83,8 +102,8 @@ function Compliance() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
-                {ROWS.map((r) => (
-                  <tr key={r.sid}>
+                {rows.map((r) => (
+                  <tr key={r.id}>
                     <td className="py-3">
                       <div className="font-medium text-slate-800">{r.student}</div>
                       <div className="text-xs text-slate-500">ID: {r.sid}</div>
@@ -96,7 +115,7 @@ function Compliance() {
                     <td className="py-3 text-slate-700">{r.doc}</td>
                     <td className="py-3 text-xs text-slate-500">{r.code}</td>
                     <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>{r.due}</td>
-                    <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>● {r.status}</td>
+                    <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>● {r.label}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         <button className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50">
@@ -114,8 +133,10 @@ function Compliance() {
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-            <div>Showing 5 compliance issues</div>
-            <div className="font-semibold text-rose-600">3 require immediate attention</div>
+            <div>Showing {rows.length} compliance issues</div>
+            <div className="font-semibold text-rose-600">
+              {rows.filter((r) => r.status === 'overdue').length} require immediate attention
+            </div>
           </div>
         </section>
       </div>

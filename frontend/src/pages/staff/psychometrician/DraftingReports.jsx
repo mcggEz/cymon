@@ -1,40 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import { api } from '../../../lib/api'
 
-const DRAFTS = [
-  {
-    name: 'Alex Johnson',
-    sid: 'STU-0042 · 7 yr / Male',
-    edited: 'Last Edit: Mar 30, 2026 · MMSE Score: 12/28',
-    status: 'IN PROGRESS',
-    tone: 'amber',
-    completeness: 65,
-    primary: 'Continue Drafting',
-  },
-  {
-    name: 'Jordan Smith',
-    sid: 'STU-0088 · 9 yr / Male',
-    edited: 'Last Edit: Mar 29, 2026 · CAFAT Score: Pending',
-    status: 'READY FOR REVIEW',
-    tone: 'emerald',
-    completeness: 100,
-    primary: 'View Submitted Draft',
-  },
-  {
-    name: 'Casey Williams',
-    sid: 'STU-0015 · 6 yr / Female',
-    edited: 'Last Edit: Mar 28, 2026 · Behavioral Score: 22',
-    status: 'IN PROGRESS',
-    tone: 'amber',
-    completeness: 40,
-    primary: 'Continue Drafting',
-  },
-]
-
-const tone = {
-  amber: 'bg-amber-100 text-amber-700',
-  emerald: 'bg-emerald-100 text-emerald-700',
+const STATUS_META = {
+  draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700', primary: 'Continue Drafting' },
+  in_progress: { label: 'IN PROGRESS', tone: 'bg-amber-100 text-amber-700', primary: 'Continue Drafting' },
+  ready_for_review: { label: 'READY FOR REVIEW', tone: 'bg-emerald-100 text-emerald-700', primary: 'View Submitted Draft' },
+  approved: { label: 'APPROVED', tone: 'bg-emerald-100 text-emerald-700', primary: 'View Report' },
 }
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
 const Stat = ({ value, label, icon }) => (
   <div className="flex items-center gap-3 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -100,6 +74,24 @@ function PreviewModal({ row, onClose }) {
 
 function DraftingReports() {
   const [active, setActive] = useState(null)
+  const [drafts, setDrafts] = useState([])
+  const [summary, setSummary] = useState(null)
+
+  useEffect(() => {
+    let on = true
+    api.psychometrician
+      .reports()
+      .then((d) => {
+        if (!on) return
+        setDrafts(d.drafts)
+        setSummary(d.summary)
+      })
+      .catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader
@@ -114,21 +106,28 @@ function DraftingReports() {
         </p>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Stat value="2" label="Drafts in Progress" icon="📝" />
-          <Stat value="1" label="Ready for Review" icon="✅" />
+          <Stat value={summary?.inProgress ?? '—'} label="Drafts in Progress" icon="📝" />
+          <Stat value={summary?.readyForReview ?? '—'} label="Ready for Review" icon="✅" />
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
-          {DRAFTS.map((d) => (
-            <article key={d.name} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          {drafts.length === 0 ? (
+            <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
+              No reports in the ledger yet.
+            </div>
+          ) : null}
+          {drafts.map((d) => {
+            const meta = STATUS_META[d.status] || STATUS_META.draft
+            return (
+            <article key={d.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-lg font-bold text-purple-800">{d.name}</div>
                   <div className="text-xs text-slate-500">ID: {d.sid}</div>
-                  <div className="text-xs text-slate-500">{d.edited}</div>
+                  <div className="text-xs text-slate-500">Last edit: {fmtDate(d.updated_at)}</div>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone[d.tone]}`}>
-                  {d.status}
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
+                  {meta.label}
                 </span>
               </div>
 
@@ -147,7 +146,7 @@ function DraftingReports() {
                   href="#editor"
                   className="rounded-md bg-purple-700 px-4 py-2 text-center text-sm font-medium text-white hover:bg-purple-800"
                 >
-                  ✏ {d.primary}
+                  ✏ {meta.primary}
                 </a>
                 <button
                   onClick={() => setActive(d)}
@@ -157,7 +156,8 @@ function DraftingReports() {
                 </button>
               </div>
             </article>
-          ))}
+            )
+          })}
         </div>
 
         <section id="editor" className="mt-8 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">

@@ -32,6 +32,12 @@ import AdminScoring from './pages/staff/admin/ScoringAnalytics'
 import AdminDocuments from './pages/staff/admin/DocumentVault'
 import AdminAnnouncements from './pages/staff/admin/Announcements'
 import PsychometricianLayout from './pages/staff/PsychometricianLayout'
+import SpeechLayout from './pages/staff/SpeechLayout'
+import OccupationalLayout from './pages/staff/OccupationalLayout'
+import TherapyCaseload from './pages/staff/therapy/Caseload'
+import TherapyRoutedReports from './pages/staff/therapy/RoutedReports'
+import TherapySessionNotes from './pages/staff/therapy/SessionNotes'
+import TherapyGoals from './pages/staff/therapy/Goals'
 import Tasks from './pages/staff/psychometrician/Tasks'
 import PmAssessments from './pages/staff/psychometrician/Assessments'
 import DataReview from './pages/staff/psychometrician/DataReview'
@@ -69,7 +75,14 @@ function App() {
           <Route path="waivers/:id" element={<WaiverDetail />} />
         </Route>
 
-        <Route path="/psychologist" element={<PsychologistLayout />}>
+        <Route
+          path="/psychologist"
+          element={
+            <RequireAuth roles={['psychologist']}>
+              <PsychologistLayout />
+            </RequireAuth>
+          }
+        >
           <Route index element={<Approvals />} />
           <Route path="roster" element={<RosterOverview />} />
           <Route path="mainstreaming" element={<Mainstreaming />} />
@@ -77,7 +90,14 @@ function App() {
           <Route path="progress" element={<Progress />} />
         </Route>
 
-        <Route path="/psychometrician" element={<PsychometricianLayout />}>
+        <Route
+          path="/psychometrician"
+          element={
+            <RequireAuth roles={['psychometrician']}>
+              <PsychometricianLayout />
+            </RequireAuth>
+          }
+        >
           <Route index element={<Tasks />} />
           <Route path="assessments" element={<PmAssessments />} />
           <Route path="data-review" element={<DataReview />} />
@@ -85,7 +105,29 @@ function App() {
           <Route path="reports" element={<DraftingReports />} />
         </Route>
 
-        <Route path="/admin" element={<AdminLayout />}>
+        {/* Mockup portals — speech & occupational therapist (UX preview, not yet wired) */}
+        <Route path="/speech" element={<SpeechLayout />}>
+          <Route index element={<TherapyCaseload />} />
+          <Route path="reports" element={<TherapyRoutedReports />} />
+          <Route path="sessions" element={<TherapySessionNotes />} />
+          <Route path="goals" element={<TherapyGoals />} />
+        </Route>
+
+        <Route path="/occupational" element={<OccupationalLayout />}>
+          <Route index element={<TherapyCaseload />} />
+          <Route path="reports" element={<TherapyRoutedReports />} />
+          <Route path="sessions" element={<TherapySessionNotes />} />
+          <Route path="goals" element={<TherapyGoals />} />
+        </Route>
+
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth roles={['admin']}>
+              <AdminLayout />
+            </RequireAuth>
+          }
+        >
           <Route index element={<AdminOverview />} />
           <Route path="patients" element={<AdminPatients />} />
           <Route path="compliance" element={<AdminCompliance />} />

@@ -12,7 +12,7 @@ function Checkbox({ label, className = '', id, ...rest }) {
       <input
         id={inputId}
         type="checkbox"
-        className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+        className="h-4 w-4 rounded border-slate-300 text-violet focus:ring-violet/30"
         {...rest}
       />
       {label}
