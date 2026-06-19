@@ -453,6 +453,52 @@ router.patch('/employees/:id', async (req, res, next) => {
   }
 });
 
+// book an appointment
+router.post('/schedule', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, practitioner_id, date, time, session_type, color_tag, notes, location } =
+      req.body || {};
+    if (!patient_id || !practitioner_id || !date || !time || !session_type) {
+      return res
+        .status(400)
+        .json({ error: 'Patient, practitioner, date, time, and session type are required' });
+    }
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    // treat the entered date/time as clinic-local (Philippines, +08:00)
+    const starts = new Date(`${date}T${time}:00+08:00`);
+    if (Number.isNaN(starts.getTime())) {
+      return res.status(400).json({ error: 'Invalid date or time' });
+    }
+    const { data: appt, error } = await supabase
+      .from('appointments')
+      .insert({
+        clinic_id: req.profile.clinic_id,
+        patient_id,
+        practitioner_id,
+        starts_at: starts.toISOString(),
+        session_type,
+        color_tag: color_tag || 'purple',
+        location: location || null,
+        notes: notes || null,
+        created_by_id: req.profile.id,
+      })
+      .select('id')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ appointment: appt });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // register a patient: create the parent (caregiver) account and enroll their child
 router.post('/patients', async (req, res, next) => {
   if (!ensureConfigured(res)) return;

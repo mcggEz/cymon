@@ -23,7 +23,17 @@ const CAL_TONE = {
   rose: 'bg-rose-100 text-rose-800',
 }
 
+const COLOR_DOT = {
+  purple: 'bg-purple-400',
+  sky: 'bg-sky-400',
+  emerald: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  rose: 'bg-rose-500',
+}
+
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+const fieldCls = 'mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm'
+const labelCls = 'text-xs font-semibold tracking-wider text-purple-700'
 
 const shortName = (name) => {
   const parts = (name || '').split(' ').filter(Boolean)
@@ -32,66 +42,133 @@ const shortName = (name) => {
 const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 const monOf = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
 
-function BookModal({ onClose }) {
+function BookModal({ patients, practitioners, onClose, onBooked }) {
+  const [f, setF] = useState({
+    patient_id: '',
+    practitioner_id: '',
+    date: '',
+    time: '',
+    session_type: '',
+    color_tag: 'purple',
+    notes: '',
+    location: '',
+  })
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+
+  const submit = async () => {
+    setErr(null)
+    if (!f.patient_id || !f.practitioner_id || !f.date || !f.time || !f.session_type) {
+      setErr('Patient, practitioner, date, time, and session type are required.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.admin.createAppointment(f)
+      onBooked()
+    } catch (e) {
+      setErr(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <Modal title="Book New Appointment" subtitle="Fill in all required fields to schedule a session" onClose={onClose}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <div className="text-xs font-semibold tracking-wider text-purple-700">STUDENT NAME *</div>
-          <input placeholder="Full name" className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm" />
-        </div>
-        <div>
-          <div className="text-xs font-semibold tracking-wider text-purple-700">STUDENT ID</div>
-          <input placeholder="e.g. STU-0001" className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm" />
-        </div>
-        <div>
-          <div className="text-xs font-semibold tracking-wider text-purple-700">DATE *</div>
-          <input type="date" className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm" />
-        </div>
-        <div>
-          <div className="text-xs font-semibold tracking-wider text-purple-700">TIME *</div>
-          <input type="time" className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm" />
-        </div>
-        <div>
-          <div className="text-xs font-semibold tracking-wider text-purple-700">PRACTITIONER *</div>
-          <select className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm">
-            <option>Select…</option>
-            <option>Dr. Faustino</option>
-            <option>Dr. Malabanan</option>
-            <option>Dr. Reyes</option>
-            <option>Dr. Garcia</option>
+          <div className={labelCls}>STUDENT *</div>
+          <select value={f.patient_id} onChange={(e) => set('patient_id', e.target.value)} className={fieldCls}>
+            <option value="">Select…</option>
+            {patients.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </select>
         </div>
         <div>
-          <div className="text-xs font-semibold tracking-wider text-purple-700">ASSESSMENT / SESSION TYPE *</div>
-          <select className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm">
-            <option>Select…</option>
-            <option>MMSE</option>
-            <option>CAFAT</option>
-            <option>GARS</option>
-            <option>Initial Assessment</option>
-            <option>Follow-up Session</option>
-            <option>Therapy Session</option>
-            <option>Parent Consultation</option>
+          <div className={labelCls}>PRACTITIONER *</div>
+          <select value={f.practitioner_id} onChange={(e) => set('practitioner_id', e.target.value)} className={fieldCls}>
+            <option value="">Select…</option>
+            {practitioners.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </select>
+        </div>
+        <div>
+          <div className={labelCls}>DATE *</div>
+          <input type="date" value={f.date} onChange={(e) => set('date', e.target.value)} className={fieldCls} />
+        </div>
+        <div>
+          <div className={labelCls}>TIME *</div>
+          <input type="time" value={f.time} onChange={(e) => set('time', e.target.value)} className={fieldCls} />
+        </div>
+        <div>
+          <div className={labelCls}>ASSESSMENT / SESSION TYPE *</div>
+          <select value={f.session_type} onChange={(e) => set('session_type', e.target.value)} className={fieldCls}>
+            <option value="">Select…</option>
+            {Object.entries(SESSION_LABEL).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <div className={labelCls}>LOCATION</div>
+          <input
+            value={f.location}
+            onChange={(e) => set('location', e.target.value)}
+            placeholder="ClearMind Clinic"
+            className={fieldCls}
+          />
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-xs font-semibold tracking-wider text-purple-700">NOTES / SPECIAL INSTRUCTIONS</div>
+        <div className={labelCls}>NOTES / SPECIAL INSTRUCTIONS</div>
         <textarea
           rows={3}
+          value={f.notes}
+          onChange={(e) => set('notes', e.target.value)}
           placeholder="Any additional notes…"
           className="mt-1 w-full rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
         />
       </div>
 
+      <div className="mt-4">
+        <div className={labelCls}>COLOR TAG</div>
+        <div className="mt-2 flex items-center gap-2">
+          {Object.keys(COLOR_DOT).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => set('color_tag', c)}
+              aria-label={`Color ${c}`}
+              className={`h-7 w-7 rounded-full ${COLOR_DOT[c]} ${
+                f.color_tag === c ? 'ring-2 ring-purple-500 ring-offset-2' : ''
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {err ? <div className="mt-4 rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
+
       <div className="mt-6 flex items-center justify-end gap-2">
         <button onClick={onClose} className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
           Cancel
         </button>
-        <button onClick={onClose} className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-          📅 Book Appointment
+        <button
+          onClick={submit}
+          disabled={busy}
+          className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+        >
+          {busy ? 'Booking…' : '📅 Book Appointment'}
         </button>
       </div>
     </Modal>
@@ -108,22 +185,27 @@ function Schedule() {
   })
   const [query, setQuery] = useState('')
   const [practFilter, setPractFilter] = useState('all')
+  const [patients, setPatients] = useState([])
+  const [staffList, setStaffList] = useState([])
   const navigate = useNavigate()
+
+  const focusMonth = (list) => {
+    if (!list.length) return
+    const earliest = list.map((a) => new Date(a.starts_at)).sort((a, b) => a - b)[0]
+    setCursor({ y: earliest.getFullYear(), m: earliest.getMonth() })
+  }
 
   useEffect(() => {
     let on = true
-    api.admin
-      .schedule()
-      .then((d) => {
+    Promise.all([api.admin.schedule(), api.admin.patients(), api.admin.employees()])
+      .then(([s, p, e]) => {
         if (!on) return
-        setAppts(d.appointments)
-        // open on the month of the earliest appointment so the schedule isn't empty
-        if (d.appointments.length) {
-          const earliest = d.appointments
-            .map((a) => new Date(a.starts_at))
-            .sort((a, b) => a - b)[0]
-          setCursor({ y: earliest.getFullYear(), m: earliest.getMonth() })
-        }
+        setAppts(s.appointments)
+        focusMonth(s.appointments)
+        setPatients((p.patients || []).map((x) => ({ id: x.id, name: x.name })))
+        setStaffList(
+          (e.employees || []).filter((x) => x.role !== 'admin').map((x) => ({ id: x.id, name: x.name }))
+        )
       })
       .catch(() => {})
       .finally(() => {
@@ -133,6 +215,15 @@ function Schedule() {
       on = false
     }
   }, [])
+
+  const onBooked = async () => {
+    setOpen(false)
+    const d = await api.admin.schedule().catch(() => null)
+    if (d) {
+      setAppts(d.appointments)
+      focusMonth(d.appointments)
+    }
+  }
 
   const practitioners = [...new Set(appts.map((a) => a.practitioner).filter(Boolean))].sort()
   const q = query.trim().toLowerCase()
@@ -328,7 +419,14 @@ function Schedule() {
         </div>
       </div>
 
-      {open ? <BookModal onClose={() => setOpen(false)} /> : null}
+      {open ? (
+        <BookModal
+          patients={patients}
+          practitioners={staffList}
+          onClose={() => setOpen(false)}
+          onBooked={onBooked}
+        />
+      ) : null}
     </>
   )
 }
