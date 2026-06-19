@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import PageHeader from './PageHeader'
 import Input from '../../components/ui/Input'
 import Checkbox from '../../components/ui/Checkbox'
 import Button from '../../components/ui/Button'
 import SignaturePad from '../../components/ui/SignaturePad'
+import { api } from '../../lib/api'
 
 const PROVISIONS = [
   {
@@ -50,7 +51,29 @@ const RULES = [
 
 function WaiverDetail() {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const code = decodeURIComponent(id || '')
   const [signature, setSignature] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSubmit = async () => {
+    setError(null)
+    setSubmitting(true)
+    try {
+      await api.client.submitWaiver(code, {
+        provisions_agreed: Object.fromEntries(PROVISIONS.map((p) => [p.title.split('.')[0], true])),
+        house_rules_agreed: true,
+        signature_text: signature ? 'signed' : null,
+      })
+      navigate('/client/waivers')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <>
       <PageHeader title="Consents & Waivers" />
@@ -130,8 +153,12 @@ function WaiverDetail() {
           />
         </section>
 
-        <Button className="mt-4" fullWidth size="lg" onClick={() => navigate('/client/waivers')}>
-          ✓ Submit Consent and Waiver
+        {error ? (
+          <div className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+        ) : null}
+
+        <Button className="mt-4" fullWidth size="lg" onClick={handleSubmit} disabled={submitting}>
+          {submitting ? 'Submitting…' : '✓ Submit Consent and Waiver'}
         </Button>
       </div>
     </>

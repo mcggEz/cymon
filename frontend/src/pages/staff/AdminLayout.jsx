@@ -1,4 +1,5 @@
 import StaffLayout from './StaffLayout'
+import { useAuth } from '../../auth/useAuth'
 
 const NAV = [
   { to: '/admin', label: 'OVERVIEW', d: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z', end: true },
@@ -11,9 +12,10 @@ const NAV = [
 ]
 
 function AdminLayout() {
+  const { profile } = useAuth()
   return (
     <StaffLayout
-      user={{ name: 'Mr. Marwin Gilbero Jr.', id: 'CMPS-ADMIN-2026-001' }}
+      user={{ name: profile?.display_name || 'Administrator', id: 'Administrator' }}
       profileTo="/admin"
       nav={NAV}
     />

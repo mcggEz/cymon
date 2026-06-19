@@ -1,15 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
-
-const ROWS = [
-  { id: 'CMPS-2026-042', name: 'Alex Johnson', age: 8, status: 'Active', tone: 'emerald', form: 'Complete', formTone: 'text-emerald-600' },
-  { id: 'CMPS-2026-088', name: 'Jordan Smith', age: 10, status: 'Active', tone: 'emerald', form: 'Pending', formTone: 'text-amber-600' },
-  { id: 'CMPS-2026-015', name: 'Casey Williams', age: 7, status: 'Pending', tone: 'amber', form: 'In Progress', formTone: 'text-amber-600' },
-]
+import { api } from '../../../lib/api'
+import Skeleton from '../../../components/ui/Skeleton'
 
 const tone = {
   emerald: 'bg-emerald-100 text-emerald-700',
   amber: 'bg-amber-100 text-amber-700',
+}
+
+const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '')
+
+const FORM_LABEL = { complete: 'Complete', pending: 'Pending', in_progress: 'In Progress' }
+
+function toRow(p) {
+  return {
+    id: p.patient_id,
+    name: p.name,
+    age: p.age,
+    sex: cap(p.sex),
+    status: cap(p.status),
+    tone: p.status === 'active' ? 'emerald' : 'amber',
+    form: FORM_LABEL[p.admission_form_status] || p.admission_form_status,
+    formTone: p.admission_form_status === 'complete' ? 'text-emerald-600' : 'text-amber-600',
+  }
 }
 
 function ProfileModal({ row, onClose }) {
@@ -29,7 +42,7 @@ function ProfileModal({ row, onClose }) {
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-slate-500">Age / Sex</div>
-            <div className="font-semibold text-purple-800">{row.age} / Male</div>
+            <div className="font-semibold text-purple-800">{row.age} / {row.sex}</div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
@@ -66,6 +79,22 @@ function ProfileModal({ row, onClose }) {
 
 function Patients() {
   const [active, setActive] = useState(null)
+  const [rows, setRows] = useState([])
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let on = true
+    api.admin
+      .patients()
+      .then((d) => on && setRows(d.patients.map(toRow)))
+      .catch((e) => on && setError(e.message))
+      .finally(() => on && setLoading(false))
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader title="Patient Management" subtitle="Monday, March 30, 2026 — Clinic Operations" showSearch={false} />
@@ -74,6 +103,9 @@ function Patients() {
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Manage student records, statuses, and admission forms.
         </div>
+        {error ? (
+          <div className="mt-3 rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800">{error}</div>
+        ) : null}
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
@@ -104,7 +136,16 @@ function Patients() {
               </tr>
             </thead>
             <tbody className="divide-y divide-purple-100">
-              {ROWS.map((r) => (
+              {loading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan={5} className="py-3">
+                        <Skeleton className="h-11 w-full" />
+                      </td>
+                    </tr>
+                  ))
+                : null}
+              {rows.map((r) => (
                 <tr key={r.id}>
                   <td className="py-3">
                     <div className="font-semibold text-slate-800">{r.name}</div>

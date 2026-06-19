@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
+import { api } from '../../../lib/api'
 
 const StatCard = ({ value, label, sub, tone, icon }) => {
   const tones = {
@@ -29,23 +32,48 @@ const QuickAction = ({ icon, label }) => (
   </button>
 )
 
-const ACTIVITY = [
-  { dot: 'bg-emerald-500', title: 'SPED Waiver submitted by Caden Reyes', time: '8:42 AM · Processed by Admin' },
-  { dot: 'bg-amber-500', title: 'Reminder sent to Maria Cruz for overdue FO-02', time: '8:15 AM · Auto-Flagged' },
-  { dot: 'bg-sky-500', title: 'Announcement posted: World Down Syndrome Day', time: '10:00 AM · Published to Parent Portal' },
-  { dot: 'bg-emerald-500', title: 'New admission form submitted: Lena Buenaventura', time: '9:30 AM · Pending review' },
-  { dot: 'bg-rose-500', title: 'Mia Santos — SummerScape waiver still pending signature', time: '12:00 PM · Due Mar 29' },
-]
+const SEVERITY_DOT = {
+  info: 'bg-sky-500',
+  warn: 'bg-amber-500',
+  alert: 'bg-rose-500',
+}
+
+const formatTime = (iso) =>
+  iso ? new Date(iso).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' }) : ''
 
 function Overview() {
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    api.admin
+      .overview()
+      .then((d) => active && setData(d))
+      .catch((e) => active && setError(e.message))
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const stats = data?.stats
+  const activity = data?.activity || []
+
   return (
     <>
       <StaffHeader title="Dashboard Overview" subtitle="Monday, March 30, 2026 — Clinic Operations" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
+        {error ? (
+          <div className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>
+        ) : null}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard value="20" label="Total Active Students" sub="↑ +2 this month" tone="purple" icon="👥" />
-          <StatCard value="12" label="Pending Admissions" sub="Awaiting processing" tone="amber" icon="⏳" />
-          <StatCard value="8" label="Waivers Missing Signature" sub="Action required" tone="rose" icon="❗" />
+          <StatCard value={loading ? <Skeleton className="h-8 w-16" /> : stats?.totalActive ?? '—'} label="Total Active Students" sub="Currently enrolled" tone="purple" icon="👥" />
+          <StatCard value={loading ? <Skeleton className="h-8 w-16" /> : stats?.pendingAdmissions ?? '—'} label="Pending Admissions" sub="Awaiting processing" tone="amber" icon="⏳" />
+          <StatCard value={loading ? <Skeleton className="h-8 w-16" /> : stats?.waiversMissing ?? '—'} label="Waivers Missing Signature" sub="Action required" tone="rose" icon="❗" />
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -80,19 +108,23 @@ function Overview() {
             <div className="text-xs text-slate-500">Today</div>
           </div>
           <ul className="mt-3 space-y-3">
-            {ACTIVITY.map((a, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm">
-                <span className={`mt-1.5 h-2 w-2 rounded-full ${a.dot}`} />
-                <div>
-                  <div className="text-slate-800">
-                    {a.title.split(/(\*\*.*?\*\*)/).map((p, j) => (
-                      <span key={j}>{p}</span>
-                    ))}
-                  </div>
-                  <div className="text-xs text-slate-500">{a.time}</div>
-                </div>
+            {loading ? (
+              <li>
+                <SkeletonText lines={5} />
               </li>
-            ))}
+            ) : activity.length === 0 ? (
+              <li className="text-sm text-slate-500">No recent activity.</li>
+            ) : (
+              activity.map((a) => (
+                <li key={a.id} className="flex items-start gap-3 text-sm">
+                  <span className={`mt-1.5 h-2 w-2 rounded-full ${SEVERITY_DOT[a.severity] || 'bg-slate-400'}`} />
+                  <div>
+                    <div className="text-slate-800">{a.summary}</div>
+                    <div className="text-xs text-slate-500">{formatTime(a.created_at)}</div>
+                  </div>
+                </li>
+              ))
+            )}
           </ul>
         </section>
       </div>

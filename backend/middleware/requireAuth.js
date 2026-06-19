@@ -1,0 +1,38 @@
+const { supabase, supabaseConfigured } = require('../lib/supabase');
+
+async function requireAuth(req, res, next) {
+  if (!supabaseConfigured) {
+    return res
+      .status(500)
+      .json({ error: 'Server not configured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing.' });
+  }
+
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing bearer token' });
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, role, display_name, email, clinic_id')
+    .eq('id', data.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return res.status(401).json({ error: 'Profile not found' });
+  }
+
+  req.user = data.user;
+  req.profile = profile;
+  req.accessToken = token;
+  next();
+}
+
+module.exports = requireAuth;

@@ -1,25 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
+import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
+import { api } from '../../../lib/api'
 
-const UPCOMING = [
-  { day: '30', mon: 'MAR', name: 'Zara Mendoza', detail: '10:00 AM · Dr. Faustino (CAFAT)' },
-  { day: '31', mon: 'MAR', name: 'Carlos Bautista', detail: '9:30 AM · Dr. Malabanan (Follow-up Session)' },
-  { day: '3', mon: 'APR', name: 'Leo Cruz', detail: '11:00 AM · Dr. Faustino (GARS)' },
-  { day: '7', mon: 'APR', name: 'Mia Santos', detail: '1:30 PM · Dr. Malabanan (Therapy Session)' },
-  { day: '10', mon: 'APR', name: 'Alex Jimenez', detail: '2:00 PM · Dr. Faustino (MMSE)' },
-]
+const SESSION_LABEL = {
+  mmse: 'MMSE',
+  cafat: 'CAFAT',
+  gars: 'GARS',
+  initial_assessment: 'Initial Assessment',
+  follow_up: 'Follow-up Session',
+  therapy: 'Therapy Session',
+  parent_consultation: 'Parent Consultation',
+}
 
-const EVENTS = [
-  { day: 3, tone: 'bg-sky-100 text-sky-800', title: '9:00 AM — A. Jimenez', sub: 'Dr. Faustino · MMSE' },
-  { day: 5, tone: 'bg-rose-100 text-rose-800', title: '1:00 PM — C. Williams', sub: 'Dr. Malabanan (Follow-up Session)' },
-  { day: 10, tone: 'bg-purple-100 text-purple-800', title: '11:30 AM — B. Santos', sub: 'Dr. Faustino · CAFAT' },
-  { day: 15, tone: 'bg-emerald-100 text-emerald-800', title: '9:00 AM — L. Cruz', sub: 'Dr. Malabanan · GARS' },
-  { day: 18, tone: 'bg-amber-100 text-amber-800', title: '2:00 PM — M. Santos', sub: 'Dr. Faustino (Therapy Session)' },
-  { day: 24, tone: 'bg-sky-100 text-sky-800', title: '9:00 AM — N. Aquino', sub: 'Dr. Malabanan (Initial Assessment)' },
-  { day: 30, tone: 'bg-purple-100 text-purple-800', title: '10:00 AM — Z. Mendoza', sub: 'Dr. Faustino (CAFAT)' },
-  { day: 31, tone: 'bg-sky-100 text-sky-800', title: '9:30 AM — C. Bautista', sub: 'Dr. Malabanan (Follow-up)' },
-]
+const CAL_TONE = {
+  purple: 'bg-purple-100 text-purple-800',
+  sky: 'bg-sky-100 text-sky-800',
+  emerald: 'bg-emerald-100 text-emerald-800',
+  amber: 'bg-amber-100 text-amber-800',
+  rose: 'bg-rose-100 text-rose-800',
+}
+
+const shortName = (name) => {
+  const parts = (name || '').split(' ').filter(Boolean)
+  return parts.length > 1 ? `${parts[0][0]}. ${parts.slice(1).join(' ')}` : name
+}
+const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+const monOf = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
 
 function BookModal({ onClose }) {
   return (
@@ -108,11 +116,42 @@ function BookModal({ onClose }) {
 
 function Schedule() {
   const [open, setOpen] = useState(false)
+  const [appts, setAppts] = useState([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let on = true
+    api.admin
+      .schedule()
+      .then((d) => on && setAppts(d.appointments))
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
+    return () => {
+      on = false
+    }
+  }, [])
+
   const days = Array.from({ length: 31 }, (_, i) => i + 1)
   const offset = 0
-  const eventsByDay = EVENTS.reduce((acc, e) => {
-    acc[e.day] = [...(acc[e.day] || []), e]
+  const upcoming = appts.map((a) => ({
+    id: a.id,
+    day: String(new Date(a.starts_at).getDate()),
+    mon: monOf(a.starts_at),
+    name: a.patient,
+    detail: `${timeOf(a.starts_at)} · ${a.practitioner} (${SESSION_LABEL[a.session_type] || a.session_type})`,
+  }))
+  const eventsByDay = appts.reduce((acc, a) => {
+    const day = new Date(a.starts_at).getDate()
+    const ev = {
+      id: a.id,
+      tone: CAL_TONE[a.color_tag] || CAL_TONE.purple,
+      title: `${timeOf(a.starts_at)} — ${shortName(a.patient)}`,
+      sub: `${a.practitioner} · ${SESSION_LABEL[a.session_type] || a.session_type}`,
+    }
+    acc[day] = [...(acc[day] || []), ev]
     return acc
   }, {})
 
@@ -141,6 +180,10 @@ function Schedule() {
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_280px]">
           <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+            {loading ? (
+              <Skeleton className="h-72 w-full" rounded="rounded-2xl" />
+            ) : (
+            <>
             <div className="flex items-center justify-center gap-3 text-purple-700">
               <button className="rounded-md bg-purple-700 px-2 py-1 text-xs text-white">◀</button>
               <div className="text-lg font-bold">MARCH</div>
@@ -160,8 +203,8 @@ function Schedule() {
                   <div className={`mb-1 ${d === 30 ? 'inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-700 text-white' : 'text-slate-500'}`}>
                     {d}
                   </div>
-                  {(eventsByDay[d] || []).map((e, i) => (
-                    <div key={i} className={`mt-1 rounded px-1 py-0.5 ${e.tone}`}>
+                  {(eventsByDay[d] || []).map((e) => (
+                    <div key={e.id} className={`mt-1 rounded px-1 py-0.5 ${e.tone}`}>
                       <div className="truncate text-[9px] font-semibold">{e.title}</div>
                       <div className="truncate text-[9px] opacity-80">{e.sub}</div>
                     </div>
@@ -169,13 +212,20 @@ function Schedule() {
                 </div>
               ))}
             </div>
+            </>
+            )}
           </section>
 
           <aside className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">📅 Upcoming</div>
+            {loading ? (
+              <div className="mt-3">
+                <SkeletonText lines={5} />
+              </div>
+            ) : (
             <ul className="mt-3 space-y-3">
-              {UPCOMING.map((u) => (
-                <li key={u.name} className="flex items-start gap-3">
+              {upcoming.map((u) => (
+                <li key={u.id} className="flex items-start gap-3">
                   <div className="flex h-10 w-10 flex-col items-center justify-center rounded-md bg-purple-100 text-purple-800">
                     <div className="text-sm font-bold leading-none">{u.day}</div>
                     <div className="text-[9px] font-semibold tracking-wider">{u.mon}</div>
@@ -187,6 +237,7 @@ function Schedule() {
                 </li>
               ))}
             </ul>
+            )}
           </aside>
         </div>
       </div>

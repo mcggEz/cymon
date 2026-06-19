@@ -1,8 +1,25 @@
+import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
+import { api } from '../../lib/api'
+import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
 
-const StatCard = ({ value, label, sub }) => (
+const SESSION_LABEL = {
+  mmse: 'MMSE Assessment',
+  cafat: 'CAFAT Assessment',
+  gars: 'GARS-3 Assessment',
+  initial_assessment: 'Initial Assessment',
+  follow_up: 'Follow-up Session',
+  therapy: 'Therapy Session',
+  parent_consultation: 'Parent Consultation',
+}
+
+const StatCard = ({ value, label, sub, loading = false }) => (
   <div className="rounded-2xl bg-white p-5 shadow-sm">
-    <div className="text-3xl font-bold text-purple-800">{value}</div>
+    {loading ? (
+      <Skeleton className="h-8 w-16" />
+    ) : (
+      <div className="text-3xl font-bold text-purple-800">{value}</div>
+    )}
     <div className="mt-1 text-sm font-medium text-slate-700">{label}</div>
     {sub ? <div className="mt-0.5 text-xs text-slate-500">{sub}</div> : null}
   </div>
@@ -21,11 +38,16 @@ const Badge = ({ children, tone = 'purple' }) => {
   )
 }
 
-function MoodChart() {
-  const points = [3.2, 3.8, 4.0, 3.5, 4.2, 4.6, 4.1]
+function MoodChart({ points, loading = false }) {
   const max = 5
   const width = 320
   const height = 120
+  if (loading) {
+    return <Skeleton className="h-32 w-full" />
+  }
+  if (!points || points.length < 2) {
+    return <div className="flex h-32 items-center justify-center text-sm text-slate-400">Not enough data yet</div>
+  }
   const step = width / (points.length - 1)
   const path = points
     .map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * step} ${height - (p / max) * height}`)
@@ -40,54 +62,94 @@ function MoodChart() {
   )
 }
 
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
+
 function HomeProgress() {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    let on = true
+    api.client.home().then((d) => on && setData(d)).catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
+
+  const loading = !data
+  const patient = data?.patient
+  const clinical = data?.clinical
+  const stats = data?.stats
+  const next = data?.nextAppointment
+  const nextDt = next ? new Date(next.starts_at) : null
+
   return (
     <>
-      <PageHeader title="Good Day, Leo!" subtitle="Welcome to CyMon" />
+      <PageHeader title={patient ? `Good Day, ${patient.first_name}!` : 'Welcome'} subtitle="Welcome to CyMon" />
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
-          2 new assessments assigned by Dr. Jinky are waiting.{' '}
-          <a href="#" className="font-semibold underline">
-            Complete them now →
-          </a>
-        </div>
+        {stats?.assignedAssessments ? (
+          <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
+            {stats.assignedAssessments} new assessment{stats.assignedAssessments > 1 ? 's' : ''}
+            {clinical?.clinician_name ? ` assigned by ${clinical.clinician_name}` : ''} waiting.{' '}
+            <a href="/client/assessments" className="font-semibold underline">
+              Complete them now →
+            </a>
+          </div>
+        ) : null}
 
         <section className="mt-5 rounded-2xl bg-gradient-to-r from-purple-700 to-purple-900 p-5 text-white">
           <div className="text-sm font-medium opacity-90">
-            Current developmental stage for Leo Cruz
+            Current developmental stage{patient ? ` for ${patient.full_name}` : ''}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge tone="purple">IEP Level 2 · Moderate Support Needs</Badge>
+            {loading ? (
+              <div className="h-5 w-48 rounded-full bg-white/20 animate-pulse" />
+            ) : (
+              <Badge tone="purple">{clinical?.iep_level || 'IEP level pending'}</Badge>
+            )}
           </div>
           <div className="mt-3 h-1.5 w-full rounded-full bg-white/20">
-            <div className="h-full w-2/3 rounded-full bg-white" />
+            <div className="h-full rounded-full bg-white" style={{ width: `${clinical?.milestone_progress || 0}%` }} />
           </div>
-          <div className="mt-1 text-xs opacity-80">66% to Level 3</div>
+          <div className="mt-1 text-xs opacity-80">{clinical?.milestone_progress || 0}% milestone progress</div>
         </section>
 
         <section className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatCard value="24" label="CBI Submissions" />
-          <StatCard value="15" label="IEP Goals Met" />
-          <StatCard value="Mar 15" label="Next Appointment" />
-          <StatCard value="4.2" label="Avg Mood (7 days)" />
+          <StatCard loading={loading} value={stats?.cbiSubmissions ?? '—'} label="CBI Submissions" />
+          <StatCard loading={loading} value={stats?.iepGoalsMet ?? '—'} label="IEP Goals Met" />
+          <StatCard loading={loading} value={nextDt ? fmtDate(next.starts_at) : '—'} label="Next Appointment" />
+          <StatCard loading={loading} value={stats?.avgMood ?? '—'} label="Avg Mood (7 days)" />
         </section>
 
         <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
-            <div className="mb-3 text-sm font-semibold text-purple-800">
-              7-Day Mood & Task Completion
-            </div>
-            <MoodChart />
+            <div className="mb-3 text-sm font-semibold text-purple-800">7-Day Mood Trend</div>
+            <MoodChart points={data?.moodSeries} loading={loading} />
           </div>
           <div className="rounded-2xl bg-purple-100 p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">Next Appointment</div>
-            <div className="mt-3 text-3xl font-bold text-purple-900">15</div>
-            <div className="text-sm text-purple-800">Mar 2026 · 10:00 AM</div>
-            <div className="mt-2 text-xs text-purple-700">
-              GARS-3 Follow-up Assessment
-              <br />
-              Dr. Jinky C. Malabanan · ClearMind Clinic
-            </div>
+            {loading ? (
+              <div className="mt-3 space-y-2">
+                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            ) : next ? (
+              <>
+                <div className="mt-3 text-3xl font-bold text-purple-900">{nextDt.getDate()}</div>
+                <div className="text-sm text-purple-800">
+                  {nextDt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} ·{' '}
+                  {nextDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                </div>
+                <div className="mt-2 text-xs text-purple-700">
+                  {SESSION_LABEL[next.session_type] || next.session_type}
+                  <br />
+                  {[next.practitioner, next.location].filter(Boolean).join(' · ')}
+                </div>
+              </>
+            ) : (
+              <div className="mt-3 text-sm text-purple-700">No upcoming appointment.</div>
+            )}
           </div>
         </section>
 
@@ -95,29 +157,34 @@ function HomeProgress() {
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">Clinic Updates</div>
             <ul className="mt-3 space-y-3 text-sm">
-              <li className="border-l-2 border-purple-400 pl-3">
-                <div className="font-medium text-slate-800">New therapy schedule for March 2026</div>
-                <div className="text-xs text-slate-500">Mar 5, 2026</div>
-              </li>
-              <li className="border-l-2 border-purple-400 pl-3">
-                <div className="font-medium text-slate-800">Clinic closure: Mar 17</div>
-                <div className="text-xs text-slate-500">Mar 2, 2026</div>
-              </li>
-              <li className="border-l-2 border-purple-400 pl-3">
-                <div className="font-medium text-slate-800">Holiday closure: April 9 (Holy Week)</div>
-                <div className="text-xs text-slate-500">Feb 28, 2026</div>
-              </li>
+              {loading ? (
+                <li><SkeletonText lines={3} /></li>
+              ) : (data?.announcements || []).length === 0 ? (
+                <li className="text-slate-500">No recent updates.</li>
+              ) : (
+                (data?.announcements || []).map((a) => (
+                  <li key={a.id} className="border-l-2 border-purple-400 pl-3">
+                    <div className="font-medium text-slate-800">{a.title}</div>
+                    <div className="text-xs text-slate-500">{fmtDate(a.publish_date)}</div>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">Latest Clinician Notes</div>
-            <div className="mt-3 rounded-md bg-purple-50 p-3 text-sm text-slate-700">
-              <div className="font-medium text-purple-800">Dr. Jinky C. Malabanan · Mar 3, 2026</div>
-              <p className="mt-1">
-                Leo is showing strong progress in social communication. Continue reinforcing
-                routine-based prompts at home.
-              </p>
-            </div>
+            {loading ? (
+              <div className="mt-3"><SkeletonText lines={3} /></div>
+            ) : clinical?.notes ? (
+              <div className="mt-3 rounded-md bg-purple-50 p-3 text-sm text-slate-700">
+                <div className="font-medium text-purple-800">
+                  {clinical.clinician_name || 'Clinician'} · {fmtDate(clinical.updated_at)}
+                </div>
+                <p className="mt-1">{clinical.notes}</p>
+              </div>
+            ) : (
+              <div className="mt-3 text-sm text-slate-500">No clinician notes yet.</div>
+            )}
           </div>
         </section>
       </div>

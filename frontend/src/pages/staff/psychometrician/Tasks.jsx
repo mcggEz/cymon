@@ -1,34 +1,8 @@
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
-
-const TASKS = [
-  {
-    name: 'Alex Johnson',
-    meta: 'ID: 2026-042 · 7 yrs / M',
-    detail: 'MMSE Assessment',
-    room: 'Testing Room 1',
-    time: '09:00 AM',
-    status: 'SCHEDULED',
-    action: 'Start Assessment →',
-  },
-  {
-    name: 'Jordan Smith',
-    meta: 'ID: 2026-088 · 9 yrs / M',
-    detail: 'CAFAT Testing',
-    room: 'Play Room A',
-    time: '10:30 AM',
-    status: 'SCHEDULED',
-    action: 'Start Assessment →',
-  },
-  {
-    name: 'Casey Williams',
-    meta: 'ID: 2026-015 · 6 yrs / F',
-    detail: 'Behavioral Observation',
-    room: 'Sensory Room',
-    time: '01:00 PM',
-    status: 'COMPLETED',
-    action: 'Draft Report 📝',
-  },
-]
+import { useAuth } from '../../../auth/useAuth'
+import { api } from '../../../lib/api'
+import Skeleton from '../../../components/ui/Skeleton'
 
 const statusTone = {
   SCHEDULED: 'bg-sky-100 text-sky-700',
@@ -36,9 +10,27 @@ const statusTone = {
 }
 
 function Tasks() {
+  const { profile } = useAuth()
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let on = true
+    api.psychometrician
+      .tasks()
+      .then((d) => on && setTasks(d.tasks))
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
+    return () => {
+      on = false
+    }
+  }, [])
+  const completed = tasks.filter((t) => t.status === 'COMPLETED').length
+
   return (
     <>
-      <StaffHeader title="Good Day, Dr. Erika!" subtitle="Welcome to CyMon" showSearch={false} />
+      <StaffHeader title={`Good Day, ${profile?.display_name || 'Doctor'}!`} subtitle="Welcome to CyMon" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
         <section className="rounded-2xl bg-gradient-to-r from-purple-700 to-purple-900 p-5 text-white">
           <div className="flex items-center gap-2 text-base font-semibold">
@@ -72,12 +64,23 @@ function Tasks() {
         <section className="mt-5 rounded-2xl border-2 border-purple-300 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-purple-800">Today&apos;s Task List</h2>
-            <div className="text-xs text-slate-500">1 of 3 Tasks Completed</div>
+            <div className="text-xs text-slate-500">{completed} of {tasks.length} Tasks Completed</div>
           </div>
 
           <ul className="mt-4 divide-y divide-purple-100">
-            {TASKS.map((t) => (
-              <li key={t.name} className="flex items-center gap-4 py-4">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <li key={i} className="py-4">
+                  <Skeleton className="h-12 w-full" />
+                </li>
+              ))
+            ) : (
+              <>
+            {tasks.length === 0 ? (
+              <li className="py-4 text-sm text-slate-500">No scheduled sessions.</li>
+            ) : null}
+            {tasks.map((t) => (
+              <li key={t.id} className="flex items-center gap-4 py-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <div className="font-semibold text-purple-800">{t.name}</div>
@@ -102,10 +105,12 @@ function Tasks() {
                       : 'bg-purple-700 text-white hover:bg-purple-800',
                   ].join(' ')}
                 >
-                  {t.action}
+                  {t.status === 'COMPLETED' ? 'Draft Report 📝' : 'Start Assessment →'}
                 </button>
               </li>
             ))}
+              </>
+            )}
           </ul>
         </section>
       </div>

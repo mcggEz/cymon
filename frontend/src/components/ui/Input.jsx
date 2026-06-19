@@ -2,14 +2,14 @@ import { useId } from 'react'
 
 const tones = {
   default:
-    'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/30',
+    'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-violet focus:ring-violet/30',
   purple:
-    'border-purple-200 bg-purple-50 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/30',
+    'border-purple-200 bg-purple-50 text-slate-900 placeholder:text-slate-400 focus:border-violet focus:ring-violet/30',
 }
 
 const labelTones = {
   default: 'text-slate-700',
-  purple: 'text-purple-800',
+  purple: 'text-violet',
 }
 
 function Input({ label, className = '', id, tone = 'default', ...rest }) {

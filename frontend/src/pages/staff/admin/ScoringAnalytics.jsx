@@ -1,16 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
+import { api } from '../../../lib/api'
 
-const ROWS = [
-  { name: 'Leo Cruz', beh: 35, gars: 112, cafat: 78, status: 'Mastered', tone: 'emerald' },
-  { name: 'Alex Johnson', beh: 28, gars: 105, cafat: 72, status: 'Developing', tone: 'amber' },
-  { name: 'Jordan Smith', beh: 22, gars: 98, cafat: 65, status: 'Needs Support', tone: 'rose' },
-]
-
-const tone = {
-  emerald: 'bg-emerald-100 text-emerald-700',
-  amber: 'bg-amber-100 text-amber-700',
-  rose: 'bg-rose-100 text-rose-700',
+const STATUS_TONE = {
+  Mastered: 'bg-emerald-100 text-emerald-700',
+  Developing: 'bg-amber-100 text-amber-700',
+  'Needs Support': 'bg-rose-100 text-rose-700',
+  'No Data': 'bg-slate-100 text-slate-600',
 }
 
 const Stat = ({ value, label, icon, color }) => (
@@ -73,14 +70,36 @@ function ReportModal({ row, onClose }) {
 
 function ScoringAnalytics() {
   const [active, setActive] = useState(null)
+  const [rows, setRows] = useState([])
+  const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let on = true
+    api.admin
+      .scoring()
+      .then((d) => {
+        if (!on) return
+        setRows(d.rows)
+        setSummary(d.summary)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
+    return () => {
+      on = false
+    }
+  }, [])
+
   return (
     <>
       <StaffHeader title="Student Scoring Analytics" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Stat value="75.2" label="Avg. CAFAT Score" icon="📝" color="bg-purple-100 text-purple-700" />
-          <Stat value="24" label="Assessments This Month" icon="📋" color="bg-emerald-100 text-emerald-700" />
-          <Stat value="5" label="Students Needing Support" icon="⚠" color="bg-amber-100 text-amber-700" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.avgCafat ?? '—'} label="Avg. CAFAT Score" icon="📝" color="bg-purple-100 text-purple-700" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.assessmentsThisMonth ?? '—'} label="Assessments This Month" icon="📋" color="bg-emerald-100 text-emerald-700" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.needsSupport ?? '—'} label="Students Needing Support" icon="⚠" color="bg-amber-100 text-amber-700" />
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -110,14 +129,22 @@ function ScoringAnalytics() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
-                {ROWS.map((r) => (
-                  <tr key={r.name}>
+                {loading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={`s${i}`}>
+                        <td colSpan={6} className="py-3">
+                          <Skeleton className="h-11 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : rows.map((r) => (
+                  <tr key={r.id}>
                     <td className="py-3 font-medium text-slate-800">{r.name}</td>
-                    <td className="py-3">{r.beh}</td>
-                    <td className="py-3">{r.gars}</td>
-                    <td className="py-3">{r.cafat}</td>
+                    <td className="py-3">{r.beh ?? '—'}</td>
+                    <td className="py-3">{r.gars ?? '—'}</td>
+                    <td className="py-3">{r.cafat ?? '—'}</td>
                     <td className="py-3">
-                      <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[r.tone]}`}>
+                      <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${STATUS_TONE[r.status] || STATUS_TONE['No Data']}`}>
                         {r.status}
                       </span>
                     </td>

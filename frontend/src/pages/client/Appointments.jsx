@@ -1,27 +1,56 @@
+import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
+import Skeleton from '../../components/ui/Skeleton'
+import { api } from '../../lib/api'
 
-const UPCOMING = [
-  {
-    day: '15',
-    mon: 'MAR',
-    title: 'GARS-3 Follow-up Assessment',
-    by: 'Dr. Jinky C. Malabanan',
-    when: '9:00 AM',
-    where: 'ClearMind Clinic',
-    status: 'Upcoming',
-  },
-  {
-    day: '29',
-    mon: 'MAR',
-    title: 'Therapy Review Session',
-    by: 'Dr. Jinky C. Malabanan',
-    when: '10:00 AM',
-    where: 'ClearMind Clinic',
-    status: 'Upcoming',
-  },
-]
+const SESSION_LABEL = {
+  mmse: 'MMSE Assessment',
+  cafat: 'CAFAT Assessment',
+  gars: 'GARS Assessment',
+  initial_assessment: 'Initial Assessment',
+  follow_up: 'Follow-up Session',
+  therapy: 'Therapy Session',
+  parent_consultation: 'Parent Consultation',
+}
+const STATUS_LABEL = { scheduled: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled', no_show: 'Missed' }
 
 function Appointments() {
+  const [appointments, setAppointments] = useState([])
+  const [clinic, setClinic] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let on = true
+    api.client
+      .appointments()
+      .then((d) => {
+        if (!on) return
+        setAppointments(d.appointments)
+        setClinic(d.clinic)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
+    return () => {
+      on = false
+    }
+  }, [])
+
+  const rows = appointments.map((a) => {
+    const dt = new Date(a.starts_at)
+    return {
+      id: a.id,
+      day: String(dt.getDate()),
+      mon: dt.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+      title: SESSION_LABEL[a.session_type] || a.session_type,
+      by: a.practitioner || '—',
+      when: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      where: a.location || (clinic && clinic.name) || '',
+      status: STATUS_LABEL[a.status] || a.status,
+    }
+  })
+
   return (
     <>
       <PageHeader title="Appointments" />
@@ -36,8 +65,19 @@ function Appointments() {
             <div className="text-sm font-semibold text-amber-800">Upcoming Appointments</div>
           </header>
           <ul className="divide-y divide-purple-100">
-            {UPCOMING.map((a) => (
-              <li key={a.title} className="flex items-center gap-4 px-5 py-4">
+            {loading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i} className="px-5 py-4">
+                    <Skeleton className="h-14 w-full" rounded="rounded-2xl" />
+                  </li>
+                ))
+              : null}
+            {!loading && rows.length === 0 ? (
+              <li className="px-5 py-4 text-sm text-slate-500">No appointments scheduled.</li>
+            ) : null}
+            {!loading
+              ? rows.map((a) => (
+              <li key={a.id} className="flex items-center gap-4 px-5 py-4">
                 <div className="flex h-14 w-14 flex-col items-center justify-center rounded-xl bg-purple-100 text-purple-800">
                   <div className="text-lg font-bold leading-none">{a.day}</div>
                   <div className="text-[10px] font-semibold tracking-wider">{a.mon}</div>
@@ -52,7 +92,8 @@ function Appointments() {
                   {a.status}
                 </span>
               </li>
-            ))}
+                ))
+              : null}
           </ul>
         </section>
 
@@ -63,11 +104,9 @@ function Appointments() {
           <div className="text-[10px] font-semibold tracking-[0.25em] text-purple-700/80">
             PSYCHOLOGICAL SERVICES
           </div>
-          <p className="mt-3 text-sm text-slate-600">
-            Blk 1 Lot 7 Painsville Subdivision, Brgy. Banilo, Calauan City, Laguna 4025
-          </p>
+          <p className="mt-3 text-sm text-slate-600">{clinic?.address}</p>
           <p className="text-sm text-slate-600">
-            clearmind.psychservices@gmail.com · +63 992-918-4078
+            {[clinic?.email, clinic?.phone].filter(Boolean).join(' · ')}
           </p>
         </section>
       </div>
