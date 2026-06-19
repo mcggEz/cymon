@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { NavLink, Outlet, Link } from 'react-router-dom'
+import { SidebarContext } from '../../components/sidebarContext'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -30,11 +32,26 @@ const Butterfly = ({ className = '', flip = false }) => (
   </svg>
 )
 
-function Sidebar() {
+function Sidebar({ open, onNavigate }) {
   return (
-    <aside className="flex w-64 flex-col bg-gradient-to-b from-purple-700 to-purple-900 text-white">
+    <aside
+      className={[
+        'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-gradient-to-b from-purple-700 to-purple-900 text-white transition-transform duration-300',
+        'lg:static lg:z-auto lg:translate-x-0',
+        open ? 'translate-x-0' : '-translate-x-full',
+      ].join(' ')}
+    >
+      <button
+        type="button"
+        onClick={onNavigate}
+        aria-label="Close menu"
+        className="absolute right-3 top-3 rounded-md p-1.5 text-white/80 hover:bg-white/10 lg:hidden"
+      >
+        <Icon d="M6 6l12 12M18 6L6 18" />
+      </button>
       <Link
         to="/client/profile"
+        onClick={onNavigate}
         className="flex items-center gap-3 px-5 py-5 hover:bg-white/5"
       >
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
@@ -53,6 +70,7 @@ function Sidebar() {
             key={item.to}
             to={item.to}
             end={item.end}
+            onClick={onNavigate}
             className={({ isActive }) =>
               [
                 'mt-1 flex items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold tracking-wider transition-colors',
@@ -76,13 +94,23 @@ function Sidebar() {
 }
 
 function ClientLayout() {
+  const [open, setOpen] = useState(false)
   return (
-    <div className="flex h-dvh bg-[#efeaf7]">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Outlet />
+    <SidebarContext.Provider value={{ openSidebar: () => setOpen(true) }}>
+      <div className="flex h-dvh bg-[#efeaf7]">
+        {open ? (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+        ) : null}
+        <Sidebar open={open} onNavigate={() => setOpen(false)} />
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </SidebarContext.Provider>
   )
 }
 

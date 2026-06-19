@@ -125,7 +125,8 @@ function Patients() {
         </section>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="text-xs font-semibold tracking-wider text-purple-700">
                 <th className="py-3 text-left">Name</th>
@@ -175,6 +176,7 @@ function Patients() {
               ))}
             </tbody>
           </table>
+          </div>
         </section>
 
         {active ? <ProfileModal row={active} onClose={() => setActive(null)} /> : null}

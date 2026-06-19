@@ -57,6 +57,17 @@ test('wrong role tab is rejected (client tab + staff account)', async ({ page })
   await expect(page.getByRole('alert')).toContainText(/registered as admin/i)
 })
 
+test('mobile: sidebar is a drawer opened by the hamburger', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await login(page, { roleTab: 'Admin', email: 'admin@clearmind.ph' })
+  await expect(page).toHaveURL(/\/admin/)
+  const menu = page.getByRole('button', { name: 'Open menu' })
+  await expect(menu).toBeVisible() // hamburger only shows on small screens
+  await menu.click()
+  await page.getByRole('link', { name: 'PATIENTS' }).click() // nav link lives in the drawer
+  await expect(page.getByText('Leo Cruz')).toBeVisible()
+})
+
 test('therapist mockup portals are reachable', async ({ page }) => {
   await page.goto('/speech')
   await expect(page.getByText(/Speech Therapy — Caseload/i)).toBeVisible()

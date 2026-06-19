@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
+import { useSidebar } from '../../components/sidebarContext'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -20,6 +21,7 @@ const Butterfly = ({ className = '' }) => (
 function PageHeader({ title, subtitle }) {
   const navigate = useNavigate()
   const { signOut } = useAuth()
+  const { openSidebar } = useSidebar()
 
   const handleLogout = async () => {
     await signOut()
@@ -27,9 +29,17 @@ function PageHeader({ title, subtitle }) {
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-purple-100 bg-white px-6 py-3">
-      <div className="flex items-center gap-3">
-        <Butterfly className="h-8 w-8 text-purple-700" />
+    <header className="flex items-center justify-between border-b border-purple-100 bg-white px-4 py-3 sm:px-6">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          onClick={openSidebar}
+          aria-label="Open menu"
+          className="rounded-md p-2 text-purple-700 hover:bg-purple-50 lg:hidden"
+        >
+          <Icon d="M4 6h16M4 12h16M4 18h16" />
+        </button>
+        <Butterfly className="h-8 w-8 shrink-0 text-purple-700" />
         <div>
           <div className="text-lg font-semibold text-purple-800 leading-tight">{title}</div>
           {subtitle ? <div className="text-xs text-slate-500">{subtitle}</div> : null}
