@@ -8,6 +8,7 @@
   --color-pink: #dd80bc;
   
   --font-mono: "Chakra Petch", monospace;
+  --font-sans: "Outfit", sans-serif;
 
   --animate-float-slow: floatSlow 15s ease-in-out infinite;
   --animate-float-slower: floatSlower 20s ease-in-out infinite;

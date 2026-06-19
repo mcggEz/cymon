@@ -125,7 +125,11 @@ function Landing() {
             <Butterfly className="h-9 w-9 text-violet" />
             <div className="leading-tight">
               <div className="font-sans text-2xl font-bold tracking-tight">CyMon</div>
-              <div className="font-mono text-[9px] tracking-[0.22em] opacity-80 uppercase">// ClearMind</div>
+              <div className={`font-mono text-[9px] tracking-[0.22em] uppercase transition-colors duration-300 ${
+                scrolled ? 'text-charcoal/80' : 'text-slate-200/80'
+              }`}>
+                // ClearMind
+              </div>
             </div>
           </a>
 
@@ -137,19 +141,25 @@ function Landing() {
           }`}>
             <a
               href="#platform"
-              className="text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300"
+              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
+                scrolled ? 'text-charcoal' : 'text-slate-200'
+              }`}
             >
               Platform
             </a>
             <a
               href="#portals"
-              className="text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300"
+              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
+                scrolled ? 'text-charcoal' : 'text-slate-200'
+              }`}
             >
               Portals
             </a>
             <a
               href="#news"
-              className="text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300"
+              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
+                scrolled ? 'text-charcoal' : 'text-slate-200'
+              }`}
             >
               Announcements
             </a>
@@ -167,13 +177,11 @@ function Landing() {
             </button>
             <button
               onClick={() => navigate('/setup/personal')}
-              className={`text-xs uppercase tracking-wider font-semibold px-6 py-2.5 rounded-full transition-all duration-300 shadow-sm cursor-pointer inline-flex items-center space-x-1.5 ${
-                scrolled
-                  ? 'bg-charcoal hover:bg-violet text-white'
-                  : 'bg-slate-950/85 hover:bg-violet text-white border border-white/10'
+              className={`text-xs uppercase tracking-wider font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
+                scrolled ? 'text-charcoal' : 'text-slate-200'
               }`}
             >
-              <span>:· Get Started</span>
+              Get Started
             </button>
           </div>
 
@@ -367,6 +375,143 @@ function Landing() {
         </div>
       </section>
 
+      {/* About ClearMind Section */}
+      <section className="bg-cream py-20 lg:py-32 px-6 lg:px-16 border-t border-charcoal/5">
+        <div className="max-w-7xl mx-auto space-y-16">
+          {/* Section Header */}
+          <div className="space-y-4">
+            <span className="text-violet font-mono tracking-widest text-xs uppercase block">// CLINIC PROFILE</span>
+            <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4">
+              <h2 className="text-3xl md:text-5xl font-bold text-charcoal tracking-tight">
+                Our Foundation, Mission & Values
+              </h2>
+              <span className="font-mono text-sm text-slate-500 italic">
+                &quot;Clarity of Mind. Journey to Wellness.&quot;
+              </span>
+            </div>
+          </div>
+
+          {/* Main Grid: Story + Core Commitments & Approach */}
+          <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+            {/* Left Column: Story, Mission & Vision */}
+            <div className="lg:col-span-6 space-y-10">
+              <div className="space-y-6 text-slate-700 leading-relaxed font-light text-base md:text-lg">
+                <p>
+                  <strong>ClearMind Psychological Services</strong> was established on December 18, 2024. The clinic name was inspired through the St. Clare of Assisi, a known saint dedicated to prayer, penance and contemplation.
+                </p>
+                <p>
+                  ClearMind Psychological Services (CMPS) provides professional and compassionate mental health care tailored to individual needs, with expert therapists offering individual therapy, couples counseling, child and adolescent therapy, psychological assessments, and stress management strategies. CMPS is dedicated to helping clients achieve emotional well-being and a clearer mind, supporting clients on their journey to mental wellness.
+                </p>
+              </div>
+
+              {/* Mission & Vision Cards */}
+              <div className="grid sm:grid-cols-2 gap-6 pt-4">
+                {/* Mission Card */}
+                <div className="bg-white p-6 rounded-2xl border border-charcoal/5 shadow-sm space-y-3">
+                  <div className="text-xs font-mono text-violet uppercase tracking-wider">// MISSION</div>
+                  <h3 className="text-xl font-bold text-charcoal">Empowerment & Care</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed font-light">
+                    To provide compassionate, evidence-based mental health care that empowers individuals, couples, and families to navigate life&apos;s challenges with clarity and confidence. Through personalized therapy, assessments, and wellness, CMPS creates a safe space where healing begins.
+                  </p>
+                </div>
+                {/* Vision Card */}
+                <div className="bg-white p-6 rounded-2xl border border-charcoal/5 shadow-sm space-y-3">
+                  <div className="text-xs font-mono text-violet uppercase tracking-wider">// VISION</div>
+                  <h3 className="text-xl font-bold text-charcoal">Fostering Growth</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed font-light">
+                    CMPS envisions a future where mental health is valued as a cornerstone of overall well-being, free from stigma and barriers. By 2030, CMPS is dedicated to being a trusted leader in psychological care, fostering self-awareness, emotional strength, and personal growth province-wide.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Values & Approach */}
+            <div className="lg:col-span-6 space-y-12">
+              {/* C.L.E.A.R. Section */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-charcoal border-b border-charcoal/5 pb-3">
+                  C.L.E.A.R. <span className="text-slate-400 font-normal text-sm font-sans tracking-wide ml-2">Our Commitments</span>
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">C</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Compassion</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We provide a warm, empathetic, and non-judgmental space for healing.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">L</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Lifelong Growth</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We promote continuous self-improvement, learning, and personal development.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">E</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Empowerment</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We equip individuals with the tools to take charge of their mental well-being.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">A</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Authenticity</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We foster genuine connections built on trust, honesty, and integrity.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">R</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Resilience</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We empower clients to develop emotional strength and adaptability.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* M.I.N.D. Section */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-charcoal border-b border-charcoal/5 pb-3">
+                  M.I.N.D. <span className="text-slate-400 font-normal text-sm font-sans tracking-wide ml-2">Our Approach</span>
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">M</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Mindfulness</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We encourage self-awareness and present-focused growth.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">I</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Innovation</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We use evidence-based and evolving psychological practices.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">N</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Nurturing</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We support each client&apos;s unique journey toward healing and self-discovery.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl font-bold text-violet font-mono leading-none">D</span>
+                    <div>
+                      <h4 className="font-semibold text-charcoal text-sm uppercase tracking-wide">Dedication</h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-light mt-1">We are committed to providing high-quality, ethical, and client-centered care.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Rounded Dark Container (Platform and Portals) */}
       <div className="bg-cream pt-10 pb-20">
         <div className="bg-charcoal rounded-[2.5rem] md:rounded-[4rem] text-white py-20 lg:py-32 px-6 lg:px-16 max-w-[96%] mx-auto relative overflow-hidden">
@@ -525,17 +670,30 @@ function Landing() {
             <span className="text-slate-400 font-mono text-xs uppercase tracking-widest block">// Contact</span>
             <div className="flex flex-col space-y-2 text-sm">
               <div className="font-bold text-charcoal">ClearMind Psychological Services</div>
-              <p className="text-slate-700 leading-relaxed">
-                Blk 1 Lot 7 Painsville Subdivision,<br />
-                Brgy. Banilo, Calauan City,<br />
+              <p className="text-slate-700 leading-relaxed font-light">
+                Block 1 Lot 7, Palmsville Subdivision,<br />
+                Brgy. Banlic, City of Cabuyao,<br />
                 Laguna 4025
               </p>
-              <a href="mailto:clearmind.psychservices@gmail.com" className="hover:text-violet transition-colors duration-300 font-bold block pt-2 text-charcoal">
-                clearmind.psychservices@gmail.com
+              <a href="mailto:admin@clearmindpsychservices.com" className="hover:text-violet transition-colors duration-300 font-bold block pt-2 text-charcoal">
+                admin@clearmindpsychservices.com
               </a>
-              <a href="tel:+639929184078" className="hover:text-violet transition-colors duration-300 text-charcoal font-medium">
-                +63 992-918-4078
+              <a href="tel:+639929164078" className="hover:text-violet transition-colors duration-300 text-charcoal font-medium">
+                +63 992-916-4078
               </a>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-3 text-slate-500 font-mono text-xs uppercase tracking-wider">
+                <a href="https://www.facebook.com/clearmindpsychservices" target="_blank" rel="noopener noreferrer" className="hover:text-violet transition-colors">
+                  Facebook
+                </a>
+                <span className="text-slate-300">·</span>
+                <a href="https://www.instagram.com/clearmindpsychservices" target="_blank" rel="noopener noreferrer" className="hover:text-violet transition-colors">
+                  Instagram
+                </a>
+                <span className="text-slate-300">·</span>
+                <a href="https://seriousmd.com" target="_blank" rel="noopener noreferrer" className="hover:text-violet transition-colors">
+                  SeriousMD
+                </a>
+              </div>
             </div>
           </div>
 
