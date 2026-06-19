@@ -57,6 +57,7 @@ export const api = {
   client: {
     getPatient: () => request('/api/client/patient', { auth: true }),
     createPatient: (payload) => request('/api/client/patient', { method: 'POST', body: payload, auth: true }),
+    updatePatient: (payload) => request('/api/client/patient', { method: 'PATCH', body: payload, auth: true }),
     home: () => request('/api/client/home', { auth: true }),
     activityLogs: () => request('/api/client/activity-logs', { auth: true }),
     addActivityLog: (payload) => request('/api/client/activity-logs', { method: 'POST', body: payload, auth: true }),

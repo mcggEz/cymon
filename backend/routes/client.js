@@ -558,4 +558,75 @@ router.post('/assessments/:templateId/submit', requireAuth, requireClient, async
   }
 });
 
+// update the caregiver's child (edit profile)
+router.patch('/patient', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const patient = await requirePatient(req, res);
+    if (!patient) return;
+    const { patient: p = {}, guardian: g = {}, emergency: e = {} } = req.body || {};
+
+    if (p.first_name === '' || p.last_name === '') {
+      return res.status(400).json({ error: 'First and last name cannot be empty' });
+    }
+
+    const patientFields = [
+      'first_name', 'middle_name', 'last_name', 'nick_name', 'date_of_birth', 'sex',
+      'blood_type', 'nationality', 'preferred_language', 'school', 'grade_level',
+      'home_address', 'contact_number',
+    ];
+    const required = new Set(['first_name', 'last_name', 'date_of_birth', 'sex']);
+    const patientUpdate = {};
+    for (const k of patientFields) {
+      if (p[k] === undefined) continue;
+      patientUpdate[k] = p[k] === '' && !required.has(k) ? null : p[k];
+    }
+    if (Object.keys(patientUpdate).length) {
+      const { error } = await supabase.from('patients').update(patientUpdate).eq('id', patient.id);
+      if (error) return res.status(400).json({ error: error.message });
+    }
+
+    if (Object.keys(g).length) {
+      const upd = {};
+      for (const k of ['full_name', 'relationship', 'contact_number', 'email', 'occupation', 'employer']) {
+        if (g[k] !== undefined) upd[k] = g[k] === '' ? null : g[k];
+      }
+      const { data: existing } = await supabase
+        .from('guardians')
+        .select('id')
+        .eq('patient_id', patient.id)
+        .order('is_primary', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from('guardians').update(upd).eq('id', existing.id);
+      } else if (upd.full_name) {
+        await supabase.from('guardians').insert({ patient_id: patient.id, is_primary: true, ...upd });
+      }
+    }
+
+    if (Object.keys(e).length) {
+      const upd = {};
+      for (const k of ['full_name', 'relationship', 'contact_number', 'alt_contact_number', 'address']) {
+        if (e[k] !== undefined) upd[k] = e[k] === '' ? null : e[k];
+      }
+      const { data: existing } = await supabase
+        .from('emergency_contacts')
+        .select('id')
+        .eq('patient_id', patient.id)
+        .limit(1)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from('emergency_contacts').update(upd).eq('id', existing.id);
+      } else if (upd.full_name) {
+        await supabase.from('emergency_contacts').insert({ patient_id: patient.id, ...upd });
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

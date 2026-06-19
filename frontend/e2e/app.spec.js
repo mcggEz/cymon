@@ -37,6 +37,27 @@ test('client can log in and sees their child profile', async ({ page }) => {
   await expect(page.getByText('Autism Spectrum Disorder')).toBeVisible()
 })
 
+test('client can edit and save their profile (CRUD)', async ({ page }) => {
+  await login(page, { email: 'client@clearmind.ph' })
+  await page.getByRole('link', { name: /Leo Cruz/ }).click()
+  await expect(page).toHaveURL(/\/client\/profile/)
+  await expect(page.getByText('Autism Spectrum Disorder')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Edit' }).click()
+  const blood = page.getByLabel('Blood Type')
+  await blood.fill('B+')
+  await page.getByRole('button', { name: 'Save' }).click()
+  // after save it reloads and shows the new value (edit mode closed -> Edit button back)
+  await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible()
+  await expect(page.getByText('B+')).toBeVisible()
+
+  // revert so the test is idempotent
+  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByLabel('Blood Type').fill('O+')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('O+')).toBeVisible()
+})
+
 test('psychologist portal loads with real roster data', async ({ page }) => {
   await login(page, { roleTab: 'Clinician', email: 'psych@clearmind.ph' })
   await expect(page).toHaveURL(/\/psychologist/)
