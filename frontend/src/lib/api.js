@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || ''
+// Strip any trailing slash so `${BASE}/api/...` never produces `//api/...`
+// (a `//` makes Vercel 308-redirect, which a CORS preflight can't follow).
+const BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 
 const SESSION_KEY = 'cymon.session'
 
