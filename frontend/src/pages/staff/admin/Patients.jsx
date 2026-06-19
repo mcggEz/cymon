@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
+import Modal from '../../../components/ui/Modal'
+import Input from '../../../components/ui/Input'
+import Select from '../../../components/ui/Select'
+import Button from '../../../components/ui/Button'
 
 const tone = {
   emerald: 'bg-emerald-100 text-emerald-700',
@@ -9,6 +13,114 @@ const tone = {
 }
 
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '')
+
+const Section = ({ title, hint, children }) => (
+  <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+    <div className="text-sm font-semibold text-purple-800">{title}</div>
+    {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
+    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
+  </section>
+)
+
+function RegisterPatientModal({ onClose, onCreated }) {
+  const [f, setF] = useState({
+    parent_email: '',
+    parent_password: '',
+    first_name: '',
+    middle_name: '',
+    last_name: '',
+    date_of_birth: '',
+    sex: '',
+    guardian_name: '',
+    relationship: '',
+    contact_number: '',
+  })
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setErr(null)
+    if (!f.parent_email || !f.parent_password) {
+      setErr('Parent email and password are required.')
+      return
+    }
+    if (f.parent_password.length < 6) {
+      setErr('Password must be at least 6 characters.')
+      return
+    }
+    if (!f.first_name || !f.last_name || !f.date_of_birth || !f.sex) {
+      setErr('Child name, date of birth, and sex are required.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.admin.createPatient({
+        parent_email: f.parent_email,
+        parent_password: f.parent_password,
+        child: {
+          first_name: f.first_name,
+          middle_name: f.middle_name,
+          last_name: f.last_name,
+          date_of_birth: f.date_of_birth,
+          sex: f.sex,
+        },
+        guardian: {
+          full_name: f.guardian_name,
+          relationship: f.relationship,
+          contact_number: f.contact_number,
+          email: f.parent_email,
+        },
+      })
+      onCreated(`${f.first_name} ${f.last_name}`)
+    } catch (e2) {
+      setErr(e2.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal title="Register Patient" subtitle="Create a parent account and enroll their child" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-5">
+        <Section title="Parent Account" hint="The parent uses this to sign in">
+          <Input label="Parent Email" type="email" tone="purple" value={f.parent_email} onChange={(e) => set('parent_email', e.target.value)} />
+          <Input label="Temporary Password" type="password" tone="purple" value={f.parent_password} onChange={(e) => set('parent_password', e.target.value)} />
+        </Section>
+
+        <Section title="Child" hint="The enrolled student">
+          <Input label="First Name" tone="purple" value={f.first_name} onChange={(e) => set('first_name', e.target.value)} />
+          <Input label="Middle Name (optional)" tone="purple" value={f.middle_name} onChange={(e) => set('middle_name', e.target.value)} />
+          <Input label="Last Name" tone="purple" value={f.last_name} onChange={(e) => set('last_name', e.target.value)} />
+          <Input label="Date of Birth" type="date" tone="purple" value={f.date_of_birth} onChange={(e) => set('date_of_birth', e.target.value)} />
+          <Select label="Sex" value={f.sex} onChange={(e) => set('sex', e.target.value)}>
+            <option value="">Select…</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </Select>
+        </Section>
+
+        <Section title="Primary Guardian (optional)" hint="Parent or guardian details">
+          <Input label="Full Name" tone="purple" value={f.guardian_name} onChange={(e) => set('guardian_name', e.target.value)} />
+          <Input label="Relationship" tone="purple" value={f.relationship} onChange={(e) => set('relationship', e.target.value)} />
+          <Input label="Contact Number" tone="purple" value={f.contact_number} onChange={(e) => set('contact_number', e.target.value)} />
+        </Section>
+
+        {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
+
+        <div className="flex items-center justify-end gap-3">
+          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Cancel
+          </button>
+          <Button type="submit" size="lg" disabled={busy}>
+            {busy ? 'Registering…' : 'Register Patient'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
 
 const FORM_LABEL = { complete: 'Complete', pending: 'Pending', in_progress: 'In Progress' }
 
@@ -84,17 +196,17 @@ function Patients() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [showRegister, setShowRegister] = useState(false)
+  const [notice, setNotice] = useState(null)
 
-  useEffect(() => {
-    let on = true
+  const load = () =>
     api.admin
       .patients()
-      .then((d) => on && setRows(d.patients.map(toRow)))
-      .catch((e) => on && setError(e.message))
-      .finally(() => on && setLoading(false))
-    return () => {
-      on = false
-    }
+      .then((d) => setRows(d.patients.map(toRow)))
+      .catch((e) => setError(e.message))
+
+  useEffect(() => {
+    load().finally(() => setLoading(false))
   }, [])
 
   const q = query.trim().toLowerCase()
@@ -108,10 +220,26 @@ function Patients() {
     <>
       <StaffHeader title="Patient Management" subtitle="Monday, March 30, 2026 — Clinic Operations" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
-        <h1 className="text-3xl font-bold text-purple-800">Patient Management</h1>
-        <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
-          Manage student records, statuses, and admission forms.
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-purple-800">Patient Management</h1>
+            <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
+              Manage student records, statuses, and admission forms.
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              setError(null)
+              setNotice(null)
+              setShowRegister(true)
+            }}
+          >
+            + Register Patient
+          </Button>
         </div>
+        {notice ? (
+          <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
+        ) : null}
         {error ? (
           <div className="mt-3 rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800">{error}</div>
         ) : null}
@@ -205,6 +333,16 @@ function Patients() {
         </section>
 
         {active ? <ProfileModal row={active} onClose={() => setActive(null)} /> : null}
+        {showRegister ? (
+          <RegisterPatientModal
+            onClose={() => setShowRegister(false)}
+            onCreated={(name) => {
+              setShowRegister(false)
+              setNotice(`Registered ${name}. The parent can now sign in.`)
+              load()
+            }}
+          />
+        ) : null}
       </div>
     </>
   )

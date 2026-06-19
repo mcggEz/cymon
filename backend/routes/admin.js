@@ -453,4 +453,66 @@ router.patch('/employees/:id', async (req, res, next) => {
   }
 });
 
+// register a patient: create the parent (caregiver) account and enroll their child
+router.post('/patients', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { parent_email, parent_password, child = {}, guardian = {} } = req.body || {};
+    if (!parent_email || !parent_password) {
+      return res.status(400).json({ error: 'Parent email and password are required' });
+    }
+    if (parent_password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    if (!child.first_name || !child.last_name) {
+      return res.status(400).json({ error: 'Child first and last name are required' });
+    }
+    if (!child.date_of_birth || !child.sex) {
+      return res.status(400).json({ error: 'Child date of birth and sex are required' });
+    }
+
+    const { data: created, error: cErr } = await supabase.auth.admin.createUser({
+      email: parent_email,
+      password: parent_password,
+      email_confirm: true,
+      user_metadata: { role: 'client', display_name: guardian.full_name || parent_email.split('@')[0] },
+    });
+    if (cErr) return res.status(400).json({ error: cErr.message });
+    const caregiverId = created.user.id;
+
+    const { data: patient, error } = await supabase
+      .from('patients')
+      .insert({
+        clinic_id: req.profile.clinic_id,
+        caregiver_id: caregiverId,
+        first_name: child.first_name,
+        middle_name: child.middle_name || null,
+        last_name: child.last_name,
+        date_of_birth: child.date_of_birth,
+        sex: child.sex,
+      })
+      .select('*')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+
+    await Promise.all([
+      supabase.from('clinical_profiles').insert({ patient_id: patient.id }),
+      guardian.full_name
+        ? supabase.from('guardians').insert({
+            patient_id: patient.id,
+            full_name: guardian.full_name,
+            relationship: guardian.relationship || null,
+            contact_number: guardian.contact_number || null,
+            email: guardian.email || null,
+            is_primary: true,
+          })
+        : Promise.resolve(),
+    ]);
+
+    res.status(201).json({ patient });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

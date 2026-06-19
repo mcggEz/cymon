@@ -4,6 +4,7 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
+import Modal from '../../../components/ui/Modal'
 import { api } from '../../../lib/api'
 
 const ROLES = [
@@ -243,11 +244,10 @@ function Employees() {
           <Button
             onClick={() => {
               setError(null)
-              setNotice(null)
-              setShowForm((s) => !s)
+              setShowForm(true)
             }}
           >
-            {showForm ? 'Close' : '+ Register Employee'}
+            + Register Employee
           </Button>
         </div>
 
@@ -256,7 +256,12 @@ function Employees() {
         ) : null}
 
         {showForm ? (
-          <form onSubmit={submit} className="mt-5 max-w-3xl space-y-5">
+          <Modal
+            title="Register Employee"
+            subtitle="Create a clinician, therapist, or administrator account"
+            onClose={() => setShowForm(false)}
+          >
+          <form onSubmit={submit} className="space-y-5">
             <section className="flex items-center gap-4 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-purple-700">
                 {avatar ? (
@@ -322,10 +327,20 @@ function Employees() {
 
             {error ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div> : null}
 
-            <Button type="submit" size="lg" disabled={submitting}>
-              {submitting ? 'Registering…' : 'Register Employee'}
-            </Button>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="text-sm font-medium text-slate-500 hover:text-slate-700"
+              >
+                Cancel
+              </button>
+              <Button type="submit" size="lg" disabled={submitting}>
+                {submitting ? 'Registering…' : 'Register Employee'}
+              </Button>
+            </div>
           </form>
+          </Modal>
         ) : null}
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">

@@ -76,6 +76,8 @@ export const api = {
   admin: {
     overview: () => request('/api/admin/overview', { auth: true }),
     patients: () => request('/api/admin/patients', { auth: true }),
+    createPatient: (payload) =>
+      request('/api/admin/patients', { method: 'POST', body: payload, auth: true }),
     compliance: () => request('/api/admin/compliance', { auth: true }),
     schedule: () => request('/api/admin/schedule', { auth: true }),
     documents: () => request('/api/admin/documents', { auth: true }),
