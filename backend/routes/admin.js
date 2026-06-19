@@ -421,4 +421,36 @@ router.post('/employees', async (req, res, next) => {
   }
 });
 
+// activate / deactivate an employee (soft-delete + ban from signing in)
+router.patch('/employees/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { active } = req.body || {};
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({ error: 'active (boolean) is required' });
+    }
+    if (req.params.id === req.profile.id) {
+      return res.status(400).json({ error: 'You cannot change your own account here' });
+    }
+    const { data: emp } = await supabase
+      .from('profiles')
+      .select('id, role, clinic_id')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!emp || emp.clinic_id !== req.profile.clinic_id || emp.role === 'client') {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ deleted_at: active ? null : new Date().toISOString() })
+      .eq('id', emp.id);
+    if (error) return res.status(400).json({ error: error.message });
+    // block / restore their ability to sign in
+    await supabase.auth.admin.updateUserById(emp.id, { ban_duration: active ? 'none' : '876000h' });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

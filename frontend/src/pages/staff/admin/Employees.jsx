@@ -56,6 +56,82 @@ const empty = {
   title: '',
 }
 
+function EmployeeModal({ emp, onClose, onDeactivate, busy }) {
+  const [confirm, setConfirm] = useState(false)
+  const meta = ROLE_META[emp.role] || { label: emp.role, tone: 'bg-slate-100 text-slate-600' }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
+      <div className="w-full max-w-md rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-sm font-bold text-purple-700">
+              {emp.avatar_url ? <img src={emp.avatar_url} alt="" className="h-full w-full object-cover" /> : initialsOf(emp.name)}
+            </div>
+            <div>
+              <div className="text-lg font-bold text-purple-800">{emp.name}</div>
+              <div className="text-xs text-slate-500">{emp.email}</div>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-2xl text-slate-400 hover:text-slate-700">
+            ×
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Role</div>
+            <span className={`mt-1 inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${meta.tone}`}>{meta.label}</span>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">License / ID</div>
+            <div className="font-medium text-purple-800">{emp.credential || '—'}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Title</div>
+            <div className="font-medium text-purple-800">{emp.title || '—'}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Joined</div>
+            <div className="font-medium text-purple-800">{fmtDate(emp.created_at)}</div>
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-slate-100 pt-4">
+          {confirm ? (
+            <div className="space-y-2">
+              <p className="text-xs text-slate-600">Deactivating blocks this employee from signing in. Continue?</p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setConfirm(false)} className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                  Cancel
+                </button>
+                <button
+                  onClick={() => onDeactivate(emp.id)}
+                  disabled={busy}
+                  className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  {busy ? 'Deactivating…' : 'Confirm Deactivate'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+                Close
+              </button>
+              <button
+                onClick={() => setConfirm(true)}
+                className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+              >
+                Deactivate
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Employees() {
   const [employees, setEmployees] = useState([])
   const [loadingList, setLoadingList] = useState(true)
@@ -66,8 +142,21 @@ function Employees() {
   const [notice, setNotice] = useState(null)
   const [avatar, setAvatar] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [viewing, setViewing] = useState(null)
+  const [busy, setBusy] = useState(false)
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const deactivate = async (id) => {
+    setBusy(true)
+    try {
+      await api.admin.setEmployeeActive(id, false)
+      setViewing(null)
+      await loadList()
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const loadList = () => api.admin.employees().then((d) => setEmployees(d.employees)).catch(() => {})
   useEffect(() => {
@@ -239,13 +328,14 @@ function Employees() {
                   <th className="py-3 text-left">License / ID</th>
                   <th className="py-3 text-left">Title</th>
                   <th className="py-3 text-left">Joined</th>
+                  <th className="py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loadingList
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={5} className="py-3">
+                        <td colSpan={6} className="py-3">
                           <Skeleton className="h-11 w-full" />
                         </td>
                       </tr>
@@ -253,7 +343,7 @@ function Employees() {
                   : null}
                 {!loadingList && employees.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan={6} className="py-6 text-center text-sm text-slate-500">
                       No employees registered yet.
                     </td>
                   </tr>
@@ -284,6 +374,14 @@ function Employees() {
                         <td className="py-3 text-slate-700">{emp.credential || '—'}</td>
                         <td className="py-3 text-slate-700">{emp.title || '—'}</td>
                         <td className="py-3 text-slate-600">{fmtDate(emp.created_at)}</td>
+                        <td className="py-3">
+                          <button
+                            onClick={() => setViewing(emp)}
+                            className="rounded-md border border-purple-300 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50"
+                          >
+                            View
+                          </button>
+                        </td>
                       </tr>
                     )
                   })}
@@ -291,6 +389,10 @@ function Employees() {
             </table>
           </div>
         </section>
+
+        {viewing ? (
+          <EmployeeModal emp={viewing} onClose={() => setViewing(null)} onDeactivate={deactivate} busy={busy} />
+        ) : null}
       </div>
     </>
   )

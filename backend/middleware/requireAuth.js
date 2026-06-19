@@ -21,12 +21,15 @@ async function requireAuth(req, res, next) {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, role, display_name, email, clinic_id')
+    .select('id, role, display_name, email, clinic_id, deleted_at')
     .eq('id', data.user.id)
     .single();
 
   if (profileError || !profile) {
     return res.status(401).json({ error: 'Profile not found' });
+  }
+  if (profile.deleted_at) {
+    return res.status(401).json({ error: 'This account has been deactivated' });
   }
 
   req.user = data.user;
