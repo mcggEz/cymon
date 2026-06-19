@@ -144,6 +144,8 @@ function Employees() {
   const [submitting, setSubmitting] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [query, setQuery] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -218,6 +220,14 @@ function Employees() {
       setSubmitting(false)
     }
   }
+
+  const q = query.trim().toLowerCase()
+  const filtered = employees.filter((e) => {
+    const matchesQ =
+      !q || (e.name || '').toLowerCase().includes(q) || (e.email || '').toLowerCase().includes(q)
+    const matchesRole = roleFilter === 'all' || e.role === roleFilter
+    return matchesQ && matchesRole
+  })
 
   return (
     <>
@@ -319,6 +329,29 @@ function Employees() {
         ) : null}
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-1 items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500">
+              <span>🔍</span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name or email…"
+                className="flex-1 bg-transparent outline-none"
+              />
+            </div>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
+            >
+              <option value="all">All Roles</option>
+              {ROLES.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {ROLE_META[r.value]?.label || r.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-sm">
               <thead>
@@ -341,15 +374,17 @@ function Employees() {
                       </tr>
                     ))
                   : null}
-                {!loadingList && employees.length === 0 ? (
+                {!loadingList && filtered.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-6 text-center text-sm text-slate-500">
-                      No employees registered yet.
+                      {employees.length === 0
+                        ? 'No employees registered yet.'
+                        : 'No employees match your search.'}
                     </td>
                   </tr>
                 ) : null}
                 {!loadingList &&
-                  employees.map((emp) => {
+                  filtered.map((emp) => {
                     const meta = ROLE_META[emp.role] || { label: emp.role, tone: 'bg-slate-100 text-slate-600' }
                     return (
                       <tr key={emp.id}>
