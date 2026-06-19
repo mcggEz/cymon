@@ -310,4 +310,81 @@ router.get('/scoring', async (req, res, next) => {
   }
 });
 
+// register a new employee (clinician / therapist / admin)
+const STAFF_ROLES = ['psychologist', 'psychometrician', 'occupational_therapist', 'speech_therapist'];
+
+router.post('/employees', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { email, password, display_name, role, phone, employee_id, position, license_no, title, avatar } =
+      req.body || {};
+
+    if (!email || !password || !display_name || !role) {
+      return res.status(400).json({ error: 'Email, password, full name, and role are required' });
+    }
+    if (![...STAFF_ROLES, 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    if (role === 'admin' && !employee_id) {
+      return res.status(400).json({ error: 'Employee ID is required for administrators' });
+    }
+    if (role === 'admin') {
+      const { data: dupe } = await supabase
+        .from('admin_profiles')
+        .select('profile_id')
+        .eq('employee_id', employee_id)
+        .maybeSingle();
+      if (dupe) return res.status(409).json({ error: 'That Employee ID is already in use' });
+    }
+
+    // creating the auth user fires handle_new_user(), which inserts the profiles row
+    const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { role, display_name },
+    });
+    if (createErr) return res.status(400).json({ error: createErr.message });
+    const userId = created.user.id;
+
+    let avatar_url = null;
+    const m = /^data:(image\/(png|jpe?g|webp));base64,(.+)$/.exec(avatar || '');
+    if (m) {
+      const ext = m[2] === 'jpeg' || m[2] === 'jpg' ? 'jpg' : m[2];
+      const buffer = Buffer.from(m[3], 'base64');
+      if (buffer.length <= 5 * 1024 * 1024) {
+        const path = `avatars/${userId}/${require('crypto').randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('photos')
+          .upload(path, buffer, { contentType: m[1], upsert: true });
+        if (!upErr) avatar_url = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+      }
+    }
+
+    await supabase
+      .from('profiles')
+      .update({ phone: phone || null, ...(avatar_url ? { avatar_url } : {}) })
+      .eq('id', userId);
+
+    if (role === 'admin') {
+      const { error } = await supabase
+        .from('admin_profiles')
+        .insert({ profile_id: userId, employee_id, position: position || null });
+      if (error) return res.status(400).json({ error: error.message });
+    } else {
+      const { error } = await supabase
+        .from('staff')
+        .insert({ profile_id: userId, license_no: license_no || null, title: title || null });
+      if (error) return res.status(400).json({ error: error.message });
+    }
+
+    res.status(201).json({ id: userId, email, role, avatar_url });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

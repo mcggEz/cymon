@@ -3,6 +3,7 @@ import StaffHeader from '../StaffHeader'
 import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
+import { api } from '../../../lib/api'
 
 const ROLES = [
   { value: 'psychologist', label: 'Psychologist / Clinician' },
@@ -41,6 +42,7 @@ function Employees() {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
   const [avatar, setAvatar] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -53,7 +55,7 @@ function Employees() {
     reader.readAsDataURL(file)
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     setError(null)
     setNotice(null)
@@ -73,9 +75,29 @@ function Employees() {
       setError('Employee ID is required for administrators.')
       return
     }
-    // UI only for now — backend registration endpoint to be wired next.
-    const roleLabel = ROLES.find((r) => r.value === form.role)?.label || form.role
-    setNotice(`Form valid — ready to register ${form.display_name} as ${roleLabel}. (Saving is not wired up yet.)`)
+    setSubmitting(true)
+    try {
+      await api.admin.createEmployee({
+        email: form.email,
+        password: form.password,
+        display_name: form.display_name,
+        role: form.role,
+        phone: form.phone,
+        employee_id: form.employee_id,
+        position: form.position,
+        license_no: form.license_no,
+        title: form.title,
+        avatar,
+      })
+      const roleLabel = ROLES.find((r) => r.value === form.role)?.label || form.role
+      setNotice(`Registered ${form.display_name} as ${roleLabel}. They can sign in with their email and password.`)
+      setForm(empty)
+      setAvatar(null)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -208,8 +230,8 @@ function Employees() {
           ) : null}
 
           <div className="flex items-center gap-3">
-            <Button type="submit" size="lg">
-              Register Employee
+            <Button type="submit" size="lg" disabled={submitting}>
+              {submitting ? 'Registering…' : 'Register Employee'}
             </Button>
             <button
               type="button"

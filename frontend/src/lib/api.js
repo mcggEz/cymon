@@ -83,6 +83,8 @@ export const api = {
     createAnnouncement: (payload) =>
       request('/api/admin/announcements', { method: 'POST', body: payload, auth: true }),
     scoring: () => request('/api/admin/scoring', { auth: true }),
+    createEmployee: (payload) =>
+      request('/api/admin/employees', { method: 'POST', body: payload, auth: true }),
   },
   psychologist: {
     approvals: () => request('/api/psychologist/approvals', { auth: true }),
