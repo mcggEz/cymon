@@ -13,13 +13,22 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'num
 function Approvals() {
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState(null)
+
+  const load = () => api.psychologist.approvals().then((d) => setReports(d.reports)).catch(() => {})
   useEffect(() => {
-    let on = true
-    api.psychologist.approvals().then((d) => on && setReports(d.reports)).catch(() => {}).finally(() => { if (on) setLoading(false) })
-    return () => {
-      on = false
-    }
+    load().finally(() => setLoading(false))
   }, [])
+
+  const act = async (id, status) => {
+    setBusyId(id)
+    try {
+      await api.psychologist.updateReport(id, { status })
+      await load()
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   return (
     <>
@@ -55,11 +64,19 @@ function Approvals() {
                 </span>
               </div>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-                  👁 Review & Sign
+                <button
+                  onClick={() => act(r.id, 'approved')}
+                  disabled={busyId === r.id}
+                  className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+                >
+                  {busyId === r.id ? 'Working…' : '✓ Approve & Sign'}
                 </button>
-                <button className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                  ⬇ Generate PDF
+                <button
+                  onClick={() => act(r.id, 'revise_requested')}
+                  disabled={busyId === r.id}
+                  className="rounded-md border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60"
+                >
+                  ↩ Request Revision
                 </button>
               </div>
             </article>

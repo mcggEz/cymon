@@ -143,4 +143,30 @@ router.get('/progress', async (req, res, next) => {
   }
 });
 
+// approve or request a revision on a report routed to the psychologist
+router.patch('/reports/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { status } = req.body || {};
+    if (!['approved', 'revise_requested'].includes(status)) {
+      return res.status(400).json({ error: 'A psychologist can approve or request a revision' });
+    }
+    const { data: rep } = await supabase
+      .from('assessment_reports')
+      .select('id, patients(clinic_id)')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!rep || !rep.patients || rep.patients.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    const upd = { status, noted_by_id: req.profile.id };
+    if (status === 'approved') upd.finalized_at = new Date().toISOString();
+    const { error } = await supabase.from('assessment_reports').update(upd).eq('id', req.params.id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

@@ -89,6 +89,8 @@ export const api = {
     mainstreaming: () => request('/api/psychologist/mainstreaming', { auth: true }),
     interventions: () => request('/api/psychologist/interventions', { auth: true }),
     progress: () => request('/api/psychologist/progress', { auth: true }),
+    updateReport: (id, payload) =>
+      request(`/api/psychologist/reports/${id}`, { method: 'PATCH', body: payload, auth: true }),
   },
   psychometrician: {
     tasks: () => request('/api/psychometrician/tasks', { auth: true }),

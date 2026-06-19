@@ -7,6 +7,7 @@ const STATUS_META = {
   draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700', primary: 'Continue Drafting' },
   in_progress: { label: 'IN PROGRESS', tone: 'bg-amber-100 text-amber-700', primary: 'Continue Drafting' },
   ready_for_review: { label: 'READY FOR REVIEW', tone: 'bg-emerald-100 text-emerald-700', primary: 'View Submitted Draft' },
+  revise_requested: { label: 'REVISION REQUESTED', tone: 'bg-rose-100 text-rose-700', primary: 'Revise & Re-submit' },
   approved: { label: 'APPROVED', tone: 'bg-emerald-100 text-emerald-700', primary: 'View Report' },
 }
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
@@ -190,7 +191,7 @@ function DraftingReports() {
                   👁 Preview
                 </button>
               </div>
-              {d.status === 'draft' || d.status === 'in_progress' ? (
+              {['draft', 'in_progress', 'revise_requested'].includes(d.status) ? (
                 <button
                   onClick={() => submitForReview(d.id)}
                   disabled={busyId === d.id}
