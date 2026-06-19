@@ -139,12 +139,8 @@ function toRow(p) {
 
 function ProfileModal({ row, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
-        <div className="text-xl font-bold text-purple-800">Patient Profile</div>
-        <div className="text-xs text-slate-500">{row.id}</div>
-
-        <div className="mt-4 text-xs font-semibold tracking-wider text-purple-700">
+    <Modal title="Patient Profile" subtitle={row.id} onClose={onClose} maxWidth="max-w-lg">
+        <div className="text-xs font-semibold tracking-wider text-purple-700">
           ◧ PERSONAL INFORMATION
         </div>
         <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
@@ -184,8 +180,7 @@ function ProfileModal({ row, onClose }) {
             Edit
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
