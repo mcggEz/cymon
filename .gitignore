@@ -32,5 +32,11 @@ pnpm-debug.log*
 *.sw?
 Thumbs.db
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # Misc
 *.local

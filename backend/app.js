@@ -4,6 +4,10 @@ const express = require('express');
 const cors = require('cors');
 
 const authRoutes = require('./routes/auth');
+const clientRoutes = require('./routes/client');
+const adminRoutes = require('./routes/admin');
+const psychologistRoutes = require('./routes/psychologist');
+const psychometricianRoutes = require('./routes/psychometrician');
 
 const app = express();
 
@@ -36,6 +40,10 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/client', clientRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/psychologist', psychologistRoutes);
+app.use('/api/psychometrician', psychometricianRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });

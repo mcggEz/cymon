@@ -1,5 +1,5 @@
 const express = require('express');
-const { supabase, supabaseConfigured } = require('../lib/supabase');
+const { supabase, authClient, supabaseConfigured } = require('../lib/supabase');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -36,7 +36,7 @@ router.post('/signup', async (req, res, next) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await authClient.auth.signUp({
       email,
       password,
       options: {
@@ -73,7 +73,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await authClient.auth.signInWithPassword({ email, password });
     if (error) {
       return res.status(401).json({ error: error.message });
     }

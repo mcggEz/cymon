@@ -1,6 +1,12 @@
-const { supabase } = require('../lib/supabase');
+const { supabase, supabaseConfigured } = require('../lib/supabase');
 
 async function requireAuth(req, res, next) {
+  if (!supabaseConfigured) {
+    return res
+      .status(500)
+      .json({ error: 'Server not configured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing.' });
+  }
+
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 

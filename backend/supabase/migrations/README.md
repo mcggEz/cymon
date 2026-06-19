@@ -126,23 +126,74 @@ policies. Conventions:
 This is the security boundary that allows the frontend to query Supabase
 directly (using the anon key) without exposing other clinics' data.
 
+### `0008_fix_rls_recursion.sql`
+Fixes an infinite-recursion bug in the `0007` RLS layer. The helper functions
+(`current_role`, `current_clinic`, `is_admin`, `owns_patient`) read base tables
+but were `SECURITY INVOKER`, so a policy that called a helper re-entered the
+same table's policies and called the helper again — `stack depth limit
+exceeded` on any user-context query (which broke login when the profile was
+read under the user's JWT). Redefines all four helpers as `SECURITY DEFINER`
+with a pinned `search_path` so their internal reads bypass RLS and break the
+cycle.
+
+### `0009_assessment_engine.sql`
+The assessment engine, shared by the client portal and the psychometrician/admin
+staff views. Three tables: `assessment_templates` (one per assessable form, with
+the domains/items structure stored as JSONB and a link to the `document_types`
+code), `assessment_assignments` (a template assigned to a patient — the client's
+"new assessments" feed and the psychometrician task queue), and
+`assessment_submissions` (the filled answers as JSONB plus numeric
+`total_score`/`max_score`/`domain_scores` so ScoringAnalytics can aggregate
+without parsing JSON). RLS mirrors `0007`: templates are a read-only catalog;
+assignments and submissions follow caregiver-owns-patient / staff-in-clinic /
+admin-all.
+
+### `0010_assessment_reports.sql`
+Assessment reports + routing/sign-off. `assessment_reports` carries a
+`report_type` (`behavioral` FO-06 / `progress_summary` FO-08), a `report_status`
+lifecycle (`draft → in_progress → ready_for_review → revise_requested → approved
+→ finalized`), `completeness`, `prepared_by_id` (psychometrician) and
+`noted_by_id` (psychologist sign-off), plus an optional link to the source
+`assessment_submissions` row. Powers psychometrician DraftingReports,
+psychologist Approvals + Progress, and the admin Document Vault. Also introduces
+the shared `staff_can_access_patient(uuid)` SECURITY DEFINER helper (named param,
+so `patients.patient_id` can't shadow it) reused by `0011`. Reports are
+staff-internal — no caregiver policy.
+
+### `0011_interventions_and_roster.sql`
+Psychologist domain. Adds `support_level` (HSN/MSN/LSN) and `milestone_progress`
+to `clinical_profiles` (the RosterOverview classification), plus `interventions`
+(plan with `procedure_count` + status) and `mainstreaming_assessments`
+(transition `readiness_score` + status). RLS uses `staff_can_access_patient()`
+from `0010`.
+
+### `0012_session_logs.sql`
+Psychometrician session activity logs (FO-07): `session_logs` with session
+number/date, activity title, objectives/procedure/observations, and a
+`draft → pending → approved` workflow. Powers the psychometrician ActivityLog
+page. RLS via `staff_can_access_patient()`.
+
+### `0013_add_therapist_roles.sql`
+Adds `occupational_therapist` and `speech_therapist` to the `user_role` enum
+(reports can be routed to them; they can hold accounts). Own migration because
+new enum values must commit before being referenced.
+
+### `0014_extend_demographics.sql`
+Registration additions from the client interview: `patients.name_suffix`
+(Jr/extension); `clinical_profiles.prior_diagnosis` / `prior_physician` /
+`prior_institution` (already diagnosed or assessed at another institution); and
+`guardians.photo_url` (onsite verification).
+
 ## Next migrations on the roadmap
 
 These are queued based on the latest requirements review. Each will be its
 own numbered file when implemented:
 
-1. **Add therapist roles** — `alter type user_role add value
-   'occupational_therapist'; alter type user_role add value
-   'speech_therapist';`
-2. **Extend patient demographics** — add `middle_name`, `name_suffix`,
-   `address` to `patients`; introduce `prior_diagnoses` (physician name,
-   institution).
-3. **Guardian photo** — add `photo_url` column on `guardians`, plus a
-   Supabase Storage bucket policy for `guardian-photos`.
-4. **Assessment routing & sign-off** — introduce
-   `assessment_reports` (`prepared_by`, `noted_by`, `status` enum
-   `draft|submitted|approved|revise_requested`, `routed_to`) plus an
-   `assessment_assignments` table modeling the online/onsite modality and
-   clinician approval.
-5. **Document requests** — `document_requests` table for the client-portal
+1. **Assessment modality & approval** — add `modality` (online/onsite) and
+   `approved_by_id`/`approved_at` to `assessment_assignments`; online ones only
+   surface to the client once a clinician approves them.
+2. **Report routing & notifications** — recipients for routed reports
+   (psychologist → speech/occupational therapist) plus a `notifications` table
+   driving the "notify psychometrician/psychologist" flows.
+3. **Document requests** — `document_requests` table for the client-portal
    "Request for Document" feature.
