@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
+import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 const POSTERS = [
@@ -13,6 +14,7 @@ const fmtDate = (d) =>
 function Announcement() {
   const [messages, setMessages] = useState([])
   const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let on = true
@@ -24,6 +26,9 @@ function Announcement() {
         setEvents(d.events)
       })
       .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -39,12 +44,18 @@ function Announcement() {
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
-          {messages.length === 0 ? (
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" rounded="rounded-2xl" />
+              ))
+            : null}
+          {!loading && messages.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
               No clinic messages yet.
             </div>
           ) : null}
-          {messages.map((m) => (
+          {!loading &&
+            messages.map((m) => (
             <article
               key={m.id}
               className="flex items-start gap-4 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm"
@@ -70,10 +81,16 @@ function Announcement() {
 
         <h2 className="mt-8 text-2xl font-bold text-purple-800">Clinic Events & Promotions</h2>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {events.length === 0 ? (
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-56 w-full" rounded="rounded-2xl" />
+              ))
+            : null}
+          {!loading && events.length === 0 ? (
             <div className="text-sm text-slate-500">No events posted.</div>
           ) : null}
-          {events.map((e, i) => (
+          {!loading &&
+            events.map((e, i) => (
             <article key={e.id} className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
               <div className={`flex h-44 items-center justify-center ${POSTERS[i % POSTERS.length]}`}>
                 <span className="rounded bg-white/80 px-2 py-1 text-[10px] font-bold tracking-wider text-purple-800">

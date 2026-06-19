@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from './PageHeader'
+import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 const fmtDate = (d) =>
@@ -97,6 +98,7 @@ function AssessmentCenter() {
   const [tab, setTab] = useState('all')
   const [assigned, setAssigned] = useState([])
   const [records, setRecords] = useState([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -109,6 +111,9 @@ function AssessmentCenter() {
         setRecords(d.records)
       })
       .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -142,26 +147,36 @@ function AssessmentCenter() {
             </div>
 
             <div className="mt-5 flex flex-col gap-4">
-              {records.length === 0 ? (
+              {loading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-24 w-full" rounded="rounded-2xl" />
+                  ))
+                : null}
+              {!loading && records.length === 0 ? (
                 <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
                   No submitted assessments yet.
                 </div>
               ) : null}
-              {records.map((r) => (
-                <RecordCard key={r.id} r={r} />
-              ))}
+              {!loading &&
+                records.map((r) => <RecordCard key={r.id} r={r} />)}
             </div>
           </>
         ) : (
           <div className="mt-5 flex flex-col gap-4">
-            {assigned.length === 0 ? (
+            {loading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full" rounded="rounded-2xl" />
+                ))
+              : null}
+            {!loading && assigned.length === 0 ? (
               <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
                 No assessments assigned right now.
               </div>
             ) : null}
-            {assigned.map((a) => (
-              <AssessmentCard key={a.id} a={a} onOpen={() => navigate(`/client/assessments/${a.template_id}`)} />
-            ))}
+            {!loading &&
+              assigned.map((a) => (
+                <AssessmentCard key={a.id} a={a} onOpen={() => navigate(`/client/assessments/${a.template_id}`)} />
+              ))}
           </div>
         )}
       </div>

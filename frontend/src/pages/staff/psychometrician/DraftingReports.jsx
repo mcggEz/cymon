@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
+import Skeleton from '../../../components/ui/Skeleton'
 
 const STATUS_META = {
   draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700', primary: 'Continue Drafting' },
@@ -10,13 +11,17 @@ const STATUS_META = {
 }
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
-const Stat = ({ value, label, icon }) => (
+const Stat = ({ value, label, icon, loading }) => (
   <div className="flex items-center gap-3 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
     <div className="flex h-12 w-12 items-center justify-center rounded-md bg-purple-100 text-purple-700">
       {icon}
     </div>
     <div>
-      <div className="text-3xl font-bold text-slate-800">{value}</div>
+      {loading ? (
+        <Skeleton className="h-8 w-12" />
+      ) : (
+        <div className="text-3xl font-bold text-slate-800">{value}</div>
+      )}
       <div className="text-xs font-medium text-slate-600">{label}</div>
     </div>
   </div>
@@ -76,6 +81,7 @@ function DraftingReports() {
   const [active, setActive] = useState(null)
   const [drafts, setDrafts] = useState([])
   const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let on = true
@@ -87,6 +93,9 @@ function DraftingReports() {
         setSummary(d.summary)
       })
       .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -106,11 +115,17 @@ function DraftingReports() {
         </p>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Stat value={summary?.inProgress ?? '—'} label="Drafts in Progress" icon="📝" />
-          <Stat value={summary?.readyForReview ?? '—'} label="Ready for Review" icon="✅" />
+          <Stat value={summary?.inProgress ?? '—'} label="Drafts in Progress" icon="📝" loading={loading} />
+          <Stat value={summary?.readyForReview ?? '—'} label="Ready for Review" icon="✅" loading={loading} />
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
+            ))
+          ) : (
+            <>
           {drafts.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
               No reports in the ledger yet.
@@ -158,6 +173,8 @@ function DraftingReports() {
             </article>
             )
           })}
+            </>
+          )}
         </div>
 
         <section id="editor" className="mt-8 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">

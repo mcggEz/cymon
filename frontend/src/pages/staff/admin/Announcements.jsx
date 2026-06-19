@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const typeMeta = {
@@ -35,10 +36,17 @@ function Announcements() {
   const [body, setBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   const load = () => api.admin.announcements().then((d) => setPublished(d.announcements)).catch(() => {})
   useEffect(() => {
-    load()
+    let on = true
+    load().finally(() => {
+      if (on) setLoading(false)
+    })
+    return () => {
+      on = false
+    }
   }, [])
 
   const handlePublish = async () => {
@@ -175,10 +183,18 @@ function Announcements() {
           <aside className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">📋 PUBLISHED</div>
             <ul className="mt-3 space-y-3">
-              {published.length === 0 ? (
+              {loading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <li key={`s${i}`}>
+                      <Skeleton className="h-20 w-full" rounded="rounded-md" />
+                    </li>
+                  ))
+                : null}
+              {!loading && published.length === 0 ? (
                 <li className="text-xs text-slate-500">No announcements yet.</li>
               ) : null}
-              {published.map((p) => (
+              {!loading &&
+                published.map((p) => (
                 <li key={p.id} className="rounded-md border border-purple-200 bg-white p-3">
                   <div className="flex items-start justify-between">
                     <div className="text-sm font-semibold text-purple-800">{p.title}</div>

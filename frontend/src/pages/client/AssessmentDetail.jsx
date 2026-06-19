@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import PageHeader from './PageHeader'
 import Button from '../../components/ui/Button'
+import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
@@ -140,16 +141,20 @@ function AssessmentDetail() {
         ) : null}
 
         <div className="mt-5 flex flex-col gap-4">
-          {structure.map((domain) => (
-            <DomainCard
-              key={domain.key}
-              domain={domain}
-              answers={answers}
-              remarks={remarks}
-              onAnswer={setAnswer}
-              onRemark={setRemark}
-            />
-          ))}
+          {!template
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-40 w-full" rounded="rounded-2xl" />
+              ))
+            : structure.map((domain) => (
+                <DomainCard
+                  key={domain.key}
+                  domain={domain}
+                  answers={answers}
+                  remarks={remarks}
+                  onAnswer={setAnswer}
+                  onRemark={setRemark}
+                />
+              ))}
         </div>
 
         <div className="mt-6 flex items-center justify-between rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">

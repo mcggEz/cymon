@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
+import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 const SESSION_LABEL = {
@@ -16,6 +17,7 @@ const STATUS_LABEL = { scheduled: 'Upcoming', completed: 'Completed', cancelled:
 function Appointments() {
   const [appointments, setAppointments] = useState([])
   const [clinic, setClinic] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let on = true
@@ -27,6 +29,9 @@ function Appointments() {
         setClinic(d.clinic)
       })
       .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -60,10 +65,18 @@ function Appointments() {
             <div className="text-sm font-semibold text-amber-800">Upcoming Appointments</div>
           </header>
           <ul className="divide-y divide-purple-100">
-            {rows.length === 0 ? (
+            {loading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i} className="px-5 py-4">
+                    <Skeleton className="h-14 w-full" rounded="rounded-2xl" />
+                  </li>
+                ))
+              : null}
+            {!loading && rows.length === 0 ? (
               <li className="px-5 py-4 text-sm text-slate-500">No appointments scheduled.</li>
             ) : null}
-            {rows.map((a) => (
+            {!loading
+              ? rows.map((a) => (
               <li key={a.id} className="flex items-center gap-4 px-5 py-4">
                 <div className="flex h-14 w-14 flex-col items-center justify-center rounded-xl bg-purple-100 text-purple-800">
                   <div className="text-lg font-bold leading-none">{a.day}</div>
@@ -79,7 +92,8 @@ function Appointments() {
                   {a.status}
                 </span>
               </li>
-            ))}
+                ))
+              : null}
           </ul>
         </section>
 

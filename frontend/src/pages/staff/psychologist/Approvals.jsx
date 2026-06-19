@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const priorityTone = {
@@ -11,9 +12,10 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'num
 
 function Approvals() {
   const [reports, setReports] = useState([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     let on = true
-    api.psychologist.approvals().then((d) => on && setReports(d.reports)).catch(() => {})
+    api.psychologist.approvals().then((d) => on && setReports(d.reports)).catch(() => {}).finally(() => { if (on) setLoading(false) })
     return () => {
       on = false
     }
@@ -31,12 +33,16 @@ function Approvals() {
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
-          {reports.length === 0 ? (
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
+            ))
+          ) : reports.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
               Nothing pending review.
             </div>
           ) : null}
-          {reports.map((r) => (
+          {!loading && reports.map((r) => (
             <article key={r.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>

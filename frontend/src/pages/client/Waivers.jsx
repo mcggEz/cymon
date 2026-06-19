@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from './PageHeader'
+import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 const ICONS = { 'CMPS:SE-FO-01': '⊕', 'CMPS:SE-FO-02': '✓', 'CMPS:SE-FO-12': '☀', 'CMPS:SE-FO-13': '☀' }
@@ -15,10 +16,17 @@ const STATUS_META = {
 function Waivers() {
   const navigate = useNavigate()
   const [forms, setForms] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let on = true
-    api.client.waivers().then((d) => on && setForms(d.forms)).catch(() => {})
+    api.client
+      .waivers()
+      .then((d) => on && setForms(d.forms))
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -33,7 +41,13 @@ function Waivers() {
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
-          {forms.map((f) => {
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-32 w-full" rounded="rounded-2xl" />
+              ))
+            : null}
+          {!loading &&
+            forms.map((f) => {
             const meta = STATUS_META[f.status] || STATUS_META.not_started
             return (
               <button

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const STATUS_META = {
@@ -10,9 +11,10 @@ const STATUS_META = {
 
 function Mainstreaming() {
   const [students, setStudents] = useState([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     let on = true
-    api.psychologist.mainstreaming().then((d) => on && setStudents(d.students)).catch(() => {})
+    api.psychologist.mainstreaming().then((d) => on && setStudents(d.students)).catch(() => {}).finally(() => { if (on) setLoading(false) })
     return () => {
       on = false
     }
@@ -31,12 +33,16 @@ function Mainstreaming() {
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
-          {students.length === 0 ? (
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
+            ))
+          ) : students.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
               No mainstreaming assessments yet.
             </div>
           ) : null}
-          {students.map((s) => {
+          {!loading && students.map((s) => {
             const meta = STATUS_META[s.status] || STATUS_META.not_ready
             return (
             <article key={s.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">

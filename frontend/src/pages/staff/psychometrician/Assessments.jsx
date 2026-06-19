@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
+import Skeleton from '../../../components/ui/Skeleton'
 
 const LOGS = [
   {
@@ -88,6 +89,7 @@ function Assessments() {
   const [active, setActive] = useState(null)
   const [tests, setTests] = useState([])
   const [sessions, setSessions] = useState([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -100,6 +102,9 @@ function Assessments() {
         setSessions(d.sessions)
       })
       .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -127,9 +132,13 @@ function Assessments() {
           STANDARDIZED TESTS
         </div>
         <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {tests.map((t) => (
-            <ToolCard key={t.id} t={t} half onLaunch={() => setActive(t)} />
-          ))}
+          {loading
+            ? Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-40 w-full" rounded="rounded-2xl" />
+              ))
+            : tests.map((t) => (
+                <ToolCard key={t.id} t={t} half onLaunch={() => setActive(t)} />
+              ))}
         </div>
 
         <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">

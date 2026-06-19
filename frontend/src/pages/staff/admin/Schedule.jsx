@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
+import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const SESSION_LABEL = {
@@ -116,11 +117,18 @@ function BookModal({ onClose }) {
 function Schedule() {
   const [open, setOpen] = useState(false)
   const [appts, setAppts] = useState([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
     let on = true
-    api.admin.schedule().then((d) => on && setAppts(d.appointments)).catch(() => {})
+    api.admin
+      .schedule()
+      .then((d) => on && setAppts(d.appointments))
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -172,6 +180,10 @@ function Schedule() {
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_280px]">
           <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+            {loading ? (
+              <Skeleton className="h-72 w-full" rounded="rounded-2xl" />
+            ) : (
+            <>
             <div className="flex items-center justify-center gap-3 text-purple-700">
               <button className="rounded-md bg-purple-700 px-2 py-1 text-xs text-white">◀</button>
               <div className="text-lg font-bold">MARCH</div>
@@ -200,10 +212,17 @@ function Schedule() {
                 </div>
               ))}
             </div>
+            </>
+            )}
           </section>
 
           <aside className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">📅 Upcoming</div>
+            {loading ? (
+              <div className="mt-3">
+                <SkeletonText lines={5} />
+              </div>
+            ) : (
             <ul className="mt-3 space-y-3">
               {upcoming.map((u) => (
                 <li key={u.id} className="flex items-start gap-3">
@@ -218,6 +237,7 @@ function Schedule() {
                 </li>
               ))}
             </ul>
+            )}
           </aside>
         </div>
       </div>

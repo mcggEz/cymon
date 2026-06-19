@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const StatCard = ({ value, label, sub, tone, icon }) => {
@@ -43,6 +44,7 @@ const formatTime = (iso) =>
 function Overview() {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
@@ -50,6 +52,9 @@ function Overview() {
       .overview()
       .then((d) => active && setData(d))
       .catch((e) => active && setError(e.message))
+      .finally(() => {
+        if (active) setLoading(false)
+      })
     return () => {
       active = false
     }
@@ -66,9 +71,9 @@ function Overview() {
           <div className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>
         ) : null}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard value={stats?.totalActive ?? '—'} label="Total Active Students" sub="Currently enrolled" tone="purple" icon="👥" />
-          <StatCard value={stats?.pendingAdmissions ?? '—'} label="Pending Admissions" sub="Awaiting processing" tone="amber" icon="⏳" />
-          <StatCard value={stats?.waiversMissing ?? '—'} label="Waivers Missing Signature" sub="Action required" tone="rose" icon="❗" />
+          <StatCard value={loading ? <Skeleton className="h-8 w-16" /> : stats?.totalActive ?? '—'} label="Total Active Students" sub="Currently enrolled" tone="purple" icon="👥" />
+          <StatCard value={loading ? <Skeleton className="h-8 w-16" /> : stats?.pendingAdmissions ?? '—'} label="Pending Admissions" sub="Awaiting processing" tone="amber" icon="⏳" />
+          <StatCard value={loading ? <Skeleton className="h-8 w-16" /> : stats?.waiversMissing ?? '—'} label="Waivers Missing Signature" sub="Action required" tone="rose" icon="❗" />
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -103,7 +108,11 @@ function Overview() {
             <div className="text-xs text-slate-500">Today</div>
           </div>
           <ul className="mt-3 space-y-3">
-            {activity.length === 0 ? (
+            {loading ? (
+              <li>
+                <SkeletonText lines={5} />
+              </li>
+            ) : activity.length === 0 ? (
               <li className="text-sm text-slate-500">No recent activity.</li>
             ) : (
               activity.map((a) => (

@@ -3,6 +3,7 @@ import PageHeader from './PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import Button from '../../components/ui/Button'
+import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 const MOODS = [
@@ -59,6 +60,7 @@ function DailyActivity() {
   const [notice, setNotice] = useState(null)
   const [logs, setLogs] = useState([])
   const [series, setSeries] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const load = () =>
     api.client.activityLogs().then((d) => {
@@ -66,7 +68,15 @@ function DailyActivity() {
       setSeries(d.moodSeries)
     })
   useEffect(() => {
-    load().catch(() => {})
+    let on = true
+    load()
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
+    return () => {
+      on = false
+    }
   }, [])
 
   const handleSubmit = async () => {
@@ -174,26 +184,30 @@ function DailyActivity() {
           <div className="flex flex-col gap-5">
             <section className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold text-purple-800">Recent Submissions</div>
-              <ul className="mt-3 space-y-3 text-sm">
-                {logs.length === 0 ? (
-                  <li className="text-xs text-slate-500">No submissions yet.</li>
-                ) : null}
-                {logs.map((s) => (
-                  <li key={s.id} className="flex items-start gap-3">
-                    <span className={`mt-1.5 h-2 w-2 rounded-full ${TASK_DOT[s.task_completion] || 'bg-slate-300'}`} />
-                    <div>
-                      <div className="font-medium text-slate-800">{fmtDate(s.log_date)}</div>
-                      <div className="text-xs text-slate-500">Tasks: {TASK_LABEL[s.task_completion] || '—'}</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {loading ? (
+                <SkeletonText className="mt-3" lines={5} />
+              ) : (
+                <ul className="mt-3 space-y-3 text-sm">
+                  {logs.length === 0 ? (
+                    <li className="text-xs text-slate-500">No submissions yet.</li>
+                  ) : null}
+                  {logs.map((s) => (
+                    <li key={s.id} className="flex items-start gap-3">
+                      <span className={`mt-1.5 h-2 w-2 rounded-full ${TASK_DOT[s.task_completion] || 'bg-slate-300'}`} />
+                      <div>
+                        <div className="font-medium text-slate-800">{fmtDate(s.log_date)}</div>
+                        <div className="text-xs text-slate-500">Tasks: {TASK_LABEL[s.task_completion] || '—'}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             <section className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold text-purple-800">Mood This Week</div>
               <div className="mt-3">
-                <MoodChart series={series} />
+                {loading ? <Skeleton className="h-32 w-full" /> : <MoodChart series={series} />}
               </div>
             </section>
           </div>

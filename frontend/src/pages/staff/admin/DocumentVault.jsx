@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const fmtDate = (d) =>
@@ -51,6 +52,7 @@ RECOMMENDATIONS:
 function DocumentVault() {
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -59,6 +61,9 @@ function DocumentVault() {
       .documents()
       .then((d) => on && setRows(d.documents.map((x) => ({ ...x, date: fmtDate(x.finalized_at) }))))
       .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -105,7 +110,15 @@ function DocumentVault() {
               </tr>
             </thead>
             <tbody className="divide-y divide-purple-100">
-              {rows.map((r) => (
+              {loading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={`s${i}`}>
+                      <td colSpan={4} className="py-3">
+                        <Skeleton className="h-11 w-full" />
+                      </td>
+                    </tr>
+                  ))
+                : rows.map((r) => (
                 <tr key={r.id}>
                   <td className="py-3 font-medium text-slate-800">{r.name}</td>
                   <td className="py-3 text-slate-700">{r.type}</td>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const TABS = ['All Issues', 'Overdue', 'Pending Signature', 'SPED (FO-02)', 'SummerScape (FO-13)']
@@ -33,11 +34,18 @@ const Stat = ({ value, label, color }) => (
 function Compliance() {
   const [tab, setTab] = useState('All Issues')
   const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
     let on = true
-    api.admin.compliance().then((d) => on && setData(d)).catch(() => {})
+    api.admin
+      .compliance()
+      .then((d) => on && setData(d))
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -62,10 +70,10 @@ function Compliance() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat value={summary?.overdue ?? '—'} label="Overdue" color="text-rose-600" />
-          <Stat value={summary?.pending ?? '—'} label="Pending Signature" color="text-amber-600" />
-          <Stat value={summary?.compliant ?? '—'} label="Fully Compliant" color="text-emerald-600" />
-          <Stat value={summary?.total ?? '—'} label="Total Students" color="text-sky-600" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.overdue ?? '—'} label="Overdue" color="text-rose-600" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.pending ?? '—'} label="Pending Signature" color="text-amber-600" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.compliant ?? '—'} label="Fully Compliant" color="text-emerald-600" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.total ?? '—'} label="Total Students" color="text-sky-600" />
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -102,7 +110,15 @@ function Compliance() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
-                {rows.map((r) => (
+                {loading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={`s${i}`}>
+                        <td colSpan={7} className="py-3">
+                          <Skeleton className="h-11 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : rows.map((r) => (
                   <tr key={r.id}>
                     <td className="py-3">
                       <div className="font-medium text-slate-800">{r.student}</div>

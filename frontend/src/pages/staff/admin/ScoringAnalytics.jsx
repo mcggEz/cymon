@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const STATUS_TONE = {
@@ -71,6 +72,7 @@ function ScoringAnalytics() {
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
   const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let on = true
@@ -82,6 +84,9 @@ function ScoringAnalytics() {
         setSummary(d.summary)
       })
       .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -92,9 +97,9 @@ function ScoringAnalytics() {
       <StaffHeader title="Student Scoring Analytics" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Stat value={summary?.avgCafat ?? '—'} label="Avg. CAFAT Score" icon="📝" color="bg-purple-100 text-purple-700" />
-          <Stat value={summary?.assessmentsThisMonth ?? '—'} label="Assessments This Month" icon="📋" color="bg-emerald-100 text-emerald-700" />
-          <Stat value={summary?.needsSupport ?? '—'} label="Students Needing Support" icon="⚠" color="bg-amber-100 text-amber-700" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.avgCafat ?? '—'} label="Avg. CAFAT Score" icon="📝" color="bg-purple-100 text-purple-700" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.assessmentsThisMonth ?? '—'} label="Assessments This Month" icon="📋" color="bg-emerald-100 text-emerald-700" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.needsSupport ?? '—'} label="Students Needing Support" icon="⚠" color="bg-amber-100 text-amber-700" />
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -124,7 +129,15 @@ function ScoringAnalytics() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
-                {rows.map((r) => (
+                {loading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={`s${i}`}>
+                        <td colSpan={6} className="py-3">
+                          <Skeleton className="h-11 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : rows.map((r) => (
                   <tr key={r.id}>
                     <td className="py-3 font-medium text-slate-800">{r.name}</td>
                     <td className="py-3">{r.beh ?? '—'}</td>

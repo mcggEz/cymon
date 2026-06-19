@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const tone = {
@@ -16,9 +17,10 @@ const STATUS_META = {
 
 function Progress() {
   const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     let on = true
-    api.psychologist.progress().then((d) => on && setItems(d.items)).catch(() => {})
+    api.psychologist.progress().then((d) => on && setItems(d.items)).catch(() => {}).finally(() => { if (on) setLoading(false) })
     return () => {
       on = false
     }
@@ -43,12 +45,16 @@ function Progress() {
         </section>
 
         <div className="mt-5 flex flex-col gap-4">
-          {items.length === 0 ? (
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
+            ))
+          ) : items.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
               No progress reports yet.
             </div>
           ) : null}
-          {items.map((i) => {
+          {!loading && items.map((i) => {
             const meta = STATUS_META[i.status] || STATUS_META.draft
             const trendTone = i.trend && i.trend.includes('↑') ? 'emerald' : 'amber'
             return (

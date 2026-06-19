@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
+import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
 
 const levelTone = {
@@ -11,9 +12,10 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'num
 
 function RosterOverview() {
   const [clients, setClients] = useState([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     let on = true
-    api.psychologist.roster().then((d) => on && setClients(d.clients)).catch(() => {})
+    api.psychologist.roster().then((d) => on && setClients(d.clients)).catch(() => {}).finally(() => { if (on) setLoading(false) })
     return () => {
       on = false
     }
@@ -41,7 +43,16 @@ function RosterOverview() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
-                {clients.map((c) => (
+                {loading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={5} className="py-3">
+                          <Skeleton className="h-11 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : null}
+                {!loading && clients.map((c) => (
                   <tr key={c.id}>
                     <td className="py-3 font-medium text-slate-800">{c.name}</td>
                     <td className="py-3 text-center">

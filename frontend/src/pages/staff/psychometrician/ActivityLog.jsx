@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
+import Skeleton from '../../../components/ui/Skeleton'
 
 const STATUS_META = {
   draft: { label: 'Draft', tone: 'bg-amber-100 text-amber-700', action: 'Edit Log' },
@@ -79,10 +80,17 @@ function PreviewModal({ row, onClose }) {
 function ActivityLog() {
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let on = true
-    api.psychometrician.activityLogs().then((d) => on && setRows(d.rows)).catch(() => {})
+    api.psychometrician
+      .activityLogs()
+      .then((d) => on && setRows(d.rows))
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -123,6 +131,14 @@ function ActivityLog() {
           </div>
 
           <ul className="mt-4 divide-y divide-purple-100">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <li key={i} className="py-4">
+                  <Skeleton className="h-12 w-full" />
+                </li>
+              ))
+            ) : (
+              <>
             {rows.length === 0 ? (
               <li className="py-4 text-sm text-slate-500">No session logs yet.</li>
             ) : null}
@@ -152,6 +168,8 @@ function ActivityLog() {
               </li>
               )
             })}
+              </>
+            )}
           </ul>
         </section>
 

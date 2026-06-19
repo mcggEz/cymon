@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { useAuth } from '../../../auth/useAuth'
 import { api } from '../../../lib/api'
+import Skeleton from '../../../components/ui/Skeleton'
 
 const statusTone = {
   SCHEDULED: 'bg-sky-100 text-sky-700',
@@ -11,9 +12,16 @@ const statusTone = {
 function Tasks() {
   const { profile } = useAuth()
   const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     let on = true
-    api.psychometrician.tasks().then((d) => on && setTasks(d.tasks)).catch(() => {})
+    api.psychometrician
+      .tasks()
+      .then((d) => on && setTasks(d.tasks))
+      .catch(() => {})
+      .finally(() => {
+        if (on) setLoading(false)
+      })
     return () => {
       on = false
     }
@@ -60,6 +68,14 @@ function Tasks() {
           </div>
 
           <ul className="mt-4 divide-y divide-purple-100">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <li key={i} className="py-4">
+                  <Skeleton className="h-12 w-full" />
+                </li>
+              ))
+            ) : (
+              <>
             {tasks.length === 0 ? (
               <li className="py-4 text-sm text-slate-500">No scheduled sessions.</li>
             ) : null}
@@ -93,6 +109,8 @@ function Tasks() {
                 </button>
               </li>
             ))}
+              </>
+            )}
           </ul>
         </section>
       </div>
