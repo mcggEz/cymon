@@ -310,6 +310,40 @@ router.get('/scoring', async (req, res, next) => {
   }
 });
 
+// list registered employees (staff + admins) for the clinic
+router.get('/employees', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, email, role, avatar_url, created_at, admin_profiles(employee_id, position), staff(license_no, title)')
+      .eq('clinic_id', req.profile.clinic_id)
+      .neq('role', 'client')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+    if (error) return next(error);
+    const one = (x) => (Array.isArray(x) ? x[0] : x) || {};
+    res.json({
+      employees: (data || []).map((p) => {
+        const ap = one(p.admin_profiles);
+        const st = one(p.staff);
+        return {
+          id: p.id,
+          name: p.display_name,
+          email: p.email,
+          role: p.role,
+          avatar_url: p.avatar_url,
+          created_at: p.created_at,
+          credential: p.role === 'admin' ? ap.employee_id : st.license_no,
+          title: p.role === 'admin' ? ap.position : st.title,
+        };
+      }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // register a new employee (clinician / therapist / admin)
 const STAFF_ROLES = ['psychologist', 'psychometrician', 'occupational_therapist', 'speech_therapist'];
 
