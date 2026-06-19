@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
-import SegmentedControl from '../components/ui/SegmentedControl'
 import { useAuth } from '../auth/useAuth'
 
 const BrandMark = ({ className = '' }) => (
@@ -14,18 +13,6 @@ const BrandMark = ({ className = '' }) => (
       opacity="0.9"
     />
     <circle cx="32" cy="30" r="3" fill="white" />
-  </svg>
-)
-
-const Butterfly = ({ className = '' }) => (
-  <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
-    <ellipse cx="60" cy="60" rx="2.5" ry="30" fill="currentColor" />
-    <ellipse cx="40" cy="46" rx="22" ry="16" fill="currentColor" opacity="0.85" />
-    <ellipse cx="80" cy="46" rx="22" ry="16" fill="currentColor" opacity="0.85" />
-    <ellipse cx="44" cy="74" rx="16" ry="12" fill="currentColor" opacity="0.7" />
-    <ellipse cx="76" cy="74" rx="16" ry="12" fill="currentColor" opacity="0.7" />
-    <path d="M60 34 Q52 22 46 16" stroke="currentColor" strokeWidth="1.5" fill="none" />
-    <path d="M60 34 Q68 22 74 16" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 )
 
@@ -69,8 +56,7 @@ const EyeIcon = ({ open, className = '' }) => (
 
 function Login() {
   const navigate = useNavigate()
-  const { signIn, signOut } = useAuth()
-  const [role, setRole] = useState('client')
+  const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -92,11 +78,6 @@ function Login() {
     setSubmitting(true)
     try {
       const { profile } = await signIn(email, password)
-      if (role === 'client' && profile.role !== 'client') {
-        signOut()
-        setError(`This account is registered as ${profile.role}, not client.`)
-        return
-      }
       navigate(destinationFor(profile.role))
     } catch (err) {
       setError(err.message)
@@ -107,10 +88,6 @@ function Login() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-cream text-charcoal flex flex-col items-center justify-center p-4">
-      {/* Glow Ambient */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-violet to-pink opacity-20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-48 -right-40 h-[28rem] w-[28rem] rounded-full bg-gradient-to-tr from-violet to-pink opacity-15 blur-3xl" />
-
       {/* Back Button */}
       <button
         type="button"
@@ -123,25 +100,13 @@ function Login() {
 
       <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-charcoal/5 bg-white shadow-[0_30px_70px_-20px_rgba(165,122,255,0.2)] grid grid-cols-1 md:grid-cols-12">
         {/* Sidebar Brand Column (Visible on md+) */}
-        <aside className="relative hidden md:flex md:col-span-5 bg-slate-50 border-r border-charcoal/5 p-12 min-h-[32rem] flex-col justify-between overflow-hidden">
-          <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-violet/5 blur-2xl" />
-          <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-pink/5 blur-2xl" />
-          <Butterfly className="absolute right-4 top-6 h-28 w-28 text-violet/10" />
-
-          <div className="relative z-10 flex-1 flex flex-col justify-center">
-            <span className="font-serif italic text-6xl font-bold text-charcoal">
-              CyMon
-            </span>
+        <aside className="relative hidden md:flex md:col-span-5 bg-slate-50 border-r border-charcoal/5 p-12 min-h-[32rem] flex-col justify-center overflow-hidden">
+          <div className="relative z-10">
+            <span className="font-serif italic text-6xl font-bold text-charcoal">CyMon</span>
             <p className="mt-4 max-w-xs text-sm text-slate-600 leading-relaxed">
               Compassionate care, organized. A digital home for the SPED program at ClearMind Psychological Services.
             </p>
           </div>
-
-          <p className="relative z-10 font-mono text-[9px] text-slate-400 leading-relaxed uppercase tracking-wider">
-            Serving Brgy. Banilad &amp; Brgy. Maryferns, Calauan City<br />
-            Data Privacy Act of 2012, NPC Circular 2023-04<br />
-            © 2026 ClearMind Psychological Services
-          </p>
         </aside>
 
         {/* Form Column */}
@@ -159,27 +124,11 @@ function Login() {
           </div>
 
           <div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-violet font-semibold">
-              // sign in
-            </div>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-charcoal">
-              Welcome back
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight text-charcoal">Welcome back</h1>
             <p className="mt-1 text-sm text-slate-500 leading-relaxed">
               Sign in to access assessments, intervention plans, and specialist summaries.
             </p>
           </div>
-
-          <SegmentedControl
-            value={role}
-            onChange={setRole}
-            options={[
-              { value: 'client', label: 'Client' },
-              { value: 'psychologist', label: 'Clinician' },
-              { value: 'psychometrician', label: 'RPm' },
-              { value: 'admin', label: 'Admin' },
-            ]}
-          />
 
           <Input
             label="Email address"

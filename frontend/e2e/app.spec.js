@@ -2,11 +2,8 @@ import { test, expect } from '@playwright/test'
 
 const PW = 'Password123!'
 
-async function login(page, { roleTab, email }) {
+async function login(page, { email }) {
   await page.goto('/login')
-  if (roleTab) {
-    await page.getByRole('tab', { name: roleTab, exact: true }).click()
-  }
   await page.getByLabel('Email address').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PW)
   await page.getByRole('button', { name: /^log in$/i }).click()
@@ -73,9 +70,9 @@ test('psychometrician portal loads with real data', async ({ page }) => {
   await expect(page.getByText('Submitted Checklists')).toBeVisible()
 })
 
-test('wrong role tab is rejected (client tab + staff account)', async ({ page }) => {
-  await login(page, { email: 'admin@clearmind.ph' }) // Client tab (default) but admin account
-  await expect(page.getByRole('alert')).toContainText(/registered as admin/i)
+test('universal login routes by account role (admin -> /admin)', async ({ page }) => {
+  await login(page, { email: 'admin@clearmind.ph' })
+  await expect(page).toHaveURL(/\/admin/)
 })
 
 test('mobile: sidebar is a drawer opened by the hamburger', async ({ page }) => {
