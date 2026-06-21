@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import { useAuth } from '../../../auth/useAuth'
 import { api } from '../../../lib/api'
@@ -11,6 +12,7 @@ const statusTone = {
 
 function Tasks() {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
@@ -98,6 +100,9 @@ function Tasks() {
                   {t.status}
                 </span>
                 <button
+                  onClick={() =>
+                    navigate(t.status === 'COMPLETED' ? '/psychometrician/reports' : '/psychometrician/assessments')
+                  }
                   className={[
                     'rounded-md px-3 py-2 text-sm font-medium',
                     t.status === 'COMPLETED'

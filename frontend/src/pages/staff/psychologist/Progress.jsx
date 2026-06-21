@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
+import SearchBar from '../../../components/ui/SearchBar'
 import { api } from '../../../lib/api'
 
 const tone = {
@@ -15,9 +16,13 @@ const STATUS_META = {
   in_progress: { label: 'In Progress', tone: 'amber' },
 }
 
+const PAGE_SIZE = 5
+
 function Progress() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
+  const [shown, setShown] = useState(PAGE_SIZE)
   useEffect(() => {
     let on = true
     api.psychologist.progress().then((d) => on && setItems(d.items)).catch(() => {}).finally(() => { if (on) setLoading(false) })
@@ -25,6 +30,12 @@ function Progress() {
       on = false
     }
   }, [])
+
+  const q = query.trim().toLowerCase()
+  const visible = q
+    ? items.filter((i) => i.name.toLowerCase().includes(q) || (i.period || '').toLowerCase().includes(q))
+    : items
+  const paged = visible.slice(0, shown)
 
   return (
     <>
@@ -42,6 +53,16 @@ function Progress() {
               + Generate Report
             </button>
           </div>
+          <div className="mt-4">
+            <SearchBar
+              value={query}
+              onChange={(v) => {
+                setQuery(v)
+                setShown(PAGE_SIZE)
+              }}
+              placeholder="Search reports by student or period…"
+            />
+          </div>
         </section>
 
         <div className="mt-5 flex flex-col gap-4">
@@ -49,12 +70,12 @@ function Progress() {
             Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
             ))
-          ) : items.length === 0 ? (
+          ) : visible.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
-              No progress reports yet.
+              {q ? 'No reports match your search.' : 'No progress reports yet.'}
             </div>
           ) : null}
-          {!loading && items.map((i) => {
+          {!loading && paged.map((i) => {
             const meta = STATUS_META[i.status] || STATUS_META.draft
             const trendTone = i.trend && i.trend.includes('↑') ? 'emerald' : 'amber'
             return (
@@ -91,11 +112,16 @@ function Progress() {
           })}
         </div>
 
-        <div className="mt-5 text-center">
-          <button className="rounded-full bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            Click to View More ▾
-          </button>
-        </div>
+        {!loading && shown < visible.length ? (
+          <div className="mt-5 text-center">
+            <button
+              onClick={() => setShown((s) => s + PAGE_SIZE)}
+              className="rounded-full bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            >
+              Click to View More ▾
+            </button>
+          </div>
+        ) : null}
       </div>
     </>
   )
