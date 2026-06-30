@@ -61,6 +61,9 @@ export const api = {
     updatePatient: (payload) => request('/api/client/patient', { method: 'PATCH', body: payload, auth: true }),
     uploadPatientPhoto: (payload) => request('/api/client/patient/photo', { method: 'POST', body: payload, auth: true }),
     home: () => request('/api/client/home', { auth: true }),
+    notifications: () => request('/api/client/notifications', { auth: true }),
+    markNotificationsRead: (ids) =>
+      request('/api/client/notifications/read', { method: 'POST', body: { ids }, auth: true }),
     activityLogs: () => request('/api/client/activity-logs', { auth: true }),
     addActivityLog: (payload) => request('/api/client/activity-logs', { method: 'POST', body: payload, auth: true }),
     appointments: () => request('/api/client/appointments', { auth: true }),
@@ -96,6 +99,8 @@ export const api = {
   psychologist: {
     approvals: () => request('/api/psychologist/approvals', { auth: true }),
     roster: () => request('/api/psychologist/roster', { auth: true }),
+    updateRoster: (id, payload) =>
+      request(`/api/psychologist/roster/${id}`, { method: 'PATCH', body: payload, auth: true }),
     mainstreaming: () => request('/api/psychologist/mainstreaming', { auth: true }),
     interventions: () => request('/api/psychologist/interventions', { auth: true }),
     progress: () => request('/api/psychologist/progress', { auth: true }),

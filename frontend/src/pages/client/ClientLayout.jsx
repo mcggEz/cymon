@@ -11,7 +11,7 @@ const Icon = ({ d, className = '' }) => (
 const NAV = [
   { to: '/client/home', label: 'Home & Progress', d: 'M3 11l9-8 9 8M5 10v10h14V10' },
   { to: '/client/activity', label: 'Daily Activity Log', d: 'M8 4h9a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2zM9 9h7M9 13h7M9 17h5' },
-  { to: '/client/assessments', label: 'Assessment Center', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
+  { to: '/client/assessments', label: 'Assessment Services', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
   { to: '/client/announcements', label: 'Announcements', d: 'M8 4h9a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2zM9 9h7M9 13h7M9 17h4' },
   { to: '/client/appointments', label: 'Appointments', d: 'M4 7h16v13H4zM4 11h16M8 3v4M16 3v4' },
   { to: '/client/waivers', label: 'Consents & Waivers', d: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4' },

@@ -1,5 +1,7 @@
 const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
+const { createNotification } = require('../lib/notify');
+const { patientName } = require('../lib/names');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -21,7 +23,7 @@ function requireRole(...roles) {
 
 router.use(requireAuth, requireRole('psychologist', 'admin'));
 
-const name = (p) => (p ? `${p.first_name} ${p.last_name}` : '—');
+const name = patientName;
 const inClinic = (rows, clinic) => (rows || []).filter((r) => r.patients && r.patients.clinic_id === clinic);
 const PRIORITY_LABEL = { high: 'High Priority', normal: 'Medium Priority', low: 'Low Priority' };
 
@@ -30,7 +32,7 @@ router.get('/approvals', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('assessment_reports')
-      .select('id, title, document_type_code, report_type, priority, created_at, patients(first_name, last_name, clinic_id)')
+      .select('id, title, document_type_code, report_type, priority, created_at, patients(first_name, middle_name, last_name, clinic_id)')
       .eq('status', 'ready_for_review')
       .order('created_at', { ascending: false });
     if (error) return next(error);
@@ -53,7 +55,7 @@ router.get('/roster', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('patients')
-      .select('id, first_name, last_name, clinical_profiles(support_level, milestone_progress, updated_at)')
+      .select('id, first_name, middle_name, last_name, clinical_profiles(support_level, milestone_progress, chief_complaint, working_diagnosis, updated_at)')
       .eq('clinic_id', req.profile.clinic_id)
       .is('deleted_at', null)
       .order('first_name', { ascending: true });
@@ -63,9 +65,11 @@ router.get('/roster', async (req, res, next) => {
         const cp = p.clinical_profiles || {};
         return {
           id: p.id,
-          name: `${p.first_name} ${p.last_name}`,
+          name: patientName(p),
           level: cp.support_level || '—',
           progress: cp.milestone_progress || 0,
+          chief_complaint: cp.chief_complaint || '',
+          working_diagnosis: cp.working_diagnosis || '',
           updated: cp.updated_at,
         };
       }),
@@ -80,7 +84,7 @@ router.get('/mainstreaming', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('mainstreaming_assessments')
-      .select('id, readiness_score, status, evaluated_on, patients(first_name, last_name, clinic_id, clinical_profiles(support_level))')
+      .select('id, readiness_score, status, evaluated_on, patients(first_name, middle_name, last_name, clinic_id, clinical_profiles(support_level))')
       .order('evaluated_on', { ascending: false });
     if (error) return next(error);
     res.json({
@@ -102,7 +106,7 @@ router.get('/interventions', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('interventions')
-      .select('id, title, plan_date, procedure_count, status, patients(first_name, last_name, clinic_id)')
+      .select('id, title, plan_date, procedure_count, status, patients(first_name, middle_name, last_name, clinic_id)')
       .order('plan_date', { ascending: false });
     if (error) return next(error);
     res.json({
@@ -125,7 +129,7 @@ router.get('/progress', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('assessment_reports')
-      .select('id, title, period, trend, status, patients(first_name, last_name, clinic_id)')
+      .select('id, title, period, trend, status, patients(first_name, middle_name, last_name, clinic_id)')
       .eq('report_type', 'progress_summary')
       .order('created_at', { ascending: false });
     if (error) return next(error);
@@ -153,7 +157,7 @@ router.patch('/reports/:id', async (req, res, next) => {
     }
     const { data: rep } = await supabase
       .from('assessment_reports')
-      .select('id, patients(clinic_id)')
+      .select('id, title, patients(clinic_id, caregiver_id, first_name)')
       .eq('id', req.params.id)
       .maybeSingle();
     if (!rep || !rep.patients || rep.patients.clinic_id !== req.profile.clinic_id) {
@@ -163,6 +167,73 @@ router.patch('/reports/:id', async (req, res, next) => {
     if (status === 'approved') upd.finalized_at = new Date().toISOString();
     const { error } = await supabase.from('assessment_reports').update(upd).eq('id', req.params.id);
     if (error) return res.status(400).json({ error: error.message });
+
+    if (status === 'approved') {
+      await createNotification({
+        clinicId: rep.patients.clinic_id,
+        recipientId: rep.patients.caregiver_id,
+        type: 'report',
+        title: 'A report is ready',
+        body: `${rep.title || 'A new report'} for ${rep.patients.first_name} has been approved and is now available.`,
+        link: '/client/assessments',
+      });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// update a client's roster classification (support level + milestone progress)
+router.patch('/roster/:patientId', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { support_level, milestone_progress, chief_complaint, working_diagnosis } = req.body || {};
+    if (support_level !== undefined && !['HSN', 'MSN', 'LSN'].includes(support_level)) {
+      return res.status(400).json({ error: 'Support level must be HSN, MSN, or LSN' });
+    }
+    if (
+      milestone_progress !== undefined &&
+      (!Number.isInteger(milestone_progress) || milestone_progress < 0 || milestone_progress > 100)
+    ) {
+      return res.status(400).json({ error: 'Milestone progress must be a whole number between 0 and 100' });
+    }
+    if (
+      support_level === undefined &&
+      milestone_progress === undefined &&
+      chief_complaint === undefined &&
+      working_diagnosis === undefined
+    ) {
+      return res.status(400).json({ error: 'Nothing to update' });
+    }
+
+    const { data: patient } = await supabase
+      .from('patients')
+      .select('id, clinic_id, caregiver_id, first_name')
+      .eq('id', req.params.patientId)
+      .maybeSingle();
+    if (!patient || patient.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    const upd = { patient_id: patient.id };
+    if (support_level !== undefined) upd.support_level = support_level;
+    if (milestone_progress !== undefined) upd.milestone_progress = milestone_progress;
+    if (chief_complaint !== undefined) upd.chief_complaint = chief_complaint || null;
+    if (working_diagnosis !== undefined) upd.working_diagnosis = working_diagnosis || null;
+    const { error } = await supabase
+      .from('clinical_profiles')
+      .upsert(upd, { onConflict: 'patient_id' });
+    if (error) return res.status(400).json({ error: error.message });
+
+    await createNotification({
+      clinicId: patient.clinic_id,
+      recipientId: patient.caregiver_id,
+      type: 'report',
+      title: 'Progress updated',
+      body: `${patient.first_name}'s support level and milestone progress were updated by your clinician.`,
+      link: '/client/home',
+    });
     res.json({ ok: true });
   } catch (err) {
     next(err);

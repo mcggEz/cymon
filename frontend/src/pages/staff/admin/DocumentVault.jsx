@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
+import SearchBar from '../../../components/ui/SearchBar'
+import RowAction from '../../../components/ui/RowAction'
+import Modal from '../../../components/ui/Modal'
 import { api } from '../../../lib/api'
 
 const fmtDate = (d) =>
@@ -9,17 +12,22 @@ const fmtDate = (d) =>
 
 function PreviewModal({ row, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
-        <div className="flex items-start justify-between border-b border-purple-100 pb-3">
-          <div>
-            <div className="text-xl font-bold text-purple-800">Progress Summary Report (PSR)</div>
-            <div className="text-xs text-slate-500">{row.name} · Requested: 2026-03-28</div>
-          </div>
-          <button onClick={onClose} className="text-2xl text-slate-400 hover:text-slate-700">×</button>
+    <Modal
+      title="Progress Summary Report (PSR)"
+      subtitle={`${row.name} · Requested: 2026-03-28`}
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-end gap-2">
+          <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Close Preview
+          </button>
+          <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
+            🖨 Print Document
+          </button>
         </div>
-
-        <pre className="mt-4 whitespace-pre-wrap rounded-md bg-purple-50 p-4 font-mono text-xs text-slate-700">
+      }
+    >
+        <pre className="whitespace-pre-wrap rounded-md bg-purple-50 p-4 font-mono text-xs text-slate-700">
 {`PROGRESS SUMMARY REPORT
 ClearMind Psychological Services
 ============================================
@@ -35,17 +43,7 @@ RECOMMENDATIONS:
 - Continue 2x/week occupational therapy.
 - Implement a visual timer for seated tasks at home and school.`}
         </pre>
-
-        <div className="mt-6 flex items-center justify-end gap-2">
-          <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Close Preview
-          </button>
-          <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            🖨 Print Document
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -53,6 +51,8 @@ function DocumentVault() {
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -69,9 +69,17 @@ function DocumentVault() {
     }
   }, [])
 
+  const types = [...new Set(rows.map((r) => r.type).filter(Boolean))]
+  const q = query.trim().toLowerCase()
+  const filtered = rows.filter((r) => {
+    const mq = !q || (r.name || '').toLowerCase().includes(q)
+    const mt = typeFilter === 'all' || r.type === typeFilter
+    return mq && mt
+  })
+
   return (
     <>
-      <StaffHeader title="Document Vault" showSearch={false} />
+      <StaffHeader title="Document Vault" />
       <div className="flex-1 overflow-y-auto p-6">
         <button
           onClick={() => navigate('/admin')}
@@ -86,15 +94,23 @@ function DocumentVault() {
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex flex-1 items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500">
-              <span>🔍</span>
-              <input placeholder="Search student name" className="flex-1 bg-transparent outline-none" />
-            </div>
-            <select className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm">
-              <option>All Document Types</option>
-              <option>FO-01 Admissions</option>
-              <option>FO-06 Assessment Reports</option>
-              <option>Signed Waivers</option>
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder="Search student name"
+              className="flex-1"
+            />
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
+            >
+              <option value="all">All Document Types</option>
+              {types.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
             </select>
           </div>
         </section>
@@ -119,7 +135,16 @@ function DocumentVault() {
                       </td>
                     </tr>
                   ))
-                : rows.map((r) => (
+                : null}
+              {!loading && filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-sm text-slate-500">
+                    No documents match your search.
+                  </td>
+                </tr>
+              ) : null}
+              {!loading &&
+                filtered.map((r) => (
                 <tr key={r.id}>
                   <td className="py-3 font-medium text-slate-800">{r.name}</td>
                   <td className="py-3 text-slate-700">{r.type}</td>
@@ -129,12 +154,9 @@ function DocumentVault() {
                       <button className="text-sm font-medium text-purple-700 hover:text-purple-900">
                         Download PDF
                       </button>
-                      <button
-                        onClick={() => setActive(r)}
-                        className="rounded-md border border-purple-300 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50"
-                      >
+                      <RowAction variant="view" onClick={() => setActive(r)}>
                         View
-                      </button>
+                      </RowAction>
                     </div>
                   </td>
                 </tr>

@@ -1,23 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const Butterfly = ({ className = '', flip = false }) => (
-  <svg
-    viewBox="0 0 120 120"
-    className={className}
-    style={{ transform: flip ? 'scaleX(-1)' : undefined }}
-    aria-hidden="true"
-  >
-    <ellipse cx="60" cy="60" rx="2.5" ry="30" fill="currentColor" />
-    <ellipse cx="40" cy="46" rx="22" ry="16" fill="currentColor" opacity="0.85" />
-    <ellipse cx="80" cy="46" rx="22" ry="16" fill="currentColor" opacity="0.85" />
-    <ellipse cx="44" cy="74" rx="16" ry="12" fill="currentColor" opacity="0.7" />
-    <ellipse cx="76" cy="74" rx="16" ry="12" fill="currentColor" opacity="0.7" />
-  </svg>
-)
-
-
-
 const Sparkle = ({ className = '', style = {} }) => (
   <svg
     viewBox="0 0 24 24"
@@ -122,13 +105,13 @@ function Landing() {
               scrolled ? 'text-charcoal' : 'text-white'
             }`}
           >
-            <Butterfly className="h-9 w-9 text-violet" />
+            <img src="/logo-cymon.png" alt="ClearMind" className="h-10 w-10 rounded-lg object-cover" />
             <div className="leading-tight">
-              <div className="font-sans text-2xl font-bold tracking-tight">CyMon</div>
+              <div className="font-sans text-2xl font-bold tracking-tight">ClearMind</div>
               <div className={`font-mono text-[9px] tracking-[0.22em] uppercase transition-colors duration-300 ${
                 scrolled ? 'text-charcoal/80' : 'text-slate-200/80'
               }`}>
-                // ClearMind
+                // Psychological Services
               </div>
             </div>
           </a>
@@ -429,7 +412,7 @@ function Landing() {
                 <h3 className="text-xl font-bold text-charcoal border-b border-charcoal/5 pb-3">
                   C.L.E.A.R. <span className="text-slate-400 font-normal text-sm font-sans tracking-wide ml-2">Our Commitments</span>
                 </h3>
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-5">
                   <div className="flex items-start space-x-3">
                     <span className="text-2xl font-bold text-violet font-mono leading-none">C</span>
                     <div>
@@ -473,7 +456,7 @@ function Landing() {
                 <h3 className="text-xl font-bold text-charcoal border-b border-charcoal/5 pb-3">
                   M.I.N.D. <span className="text-slate-400 font-normal text-sm font-sans tracking-wide ml-2">Our Approach</span>
                 </h3>
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-5">
                   <div className="flex items-start space-x-3">
                     <span className="text-2xl font-bold text-violet font-mono leading-none">M</span>
                     <div>
@@ -519,10 +502,17 @@ function Landing() {
           <div className="max-w-7xl mx-auto space-y-32 relative z-10">
             {/* ROW 1: Platform workflow */}
             <section id="platform" className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              {/* Left Solid Shape Placeholder with Purple Circle Background */}
-              <div className="bg-black/30 aspect-[4/3] rounded-2xl flex items-center justify-center relative overflow-hidden group">
-                <div className="w-24 h-24 md:w-36 md:h-36 rounded-full bg-gradient-to-tr from-violet to-pink shadow-[0_0_40px_rgba(165,122,255,0.4)] transition-transform duration-500 group-hover:scale-110" />
-                <span className="absolute bottom-4 left-6 text-white/40 font-mono text-xs">// Workflow Visualization</span>
+              {/* ClearMind clinic video (placeholder — client to provide final clip) */}
+              <div className="bg-black/30 aspect-[4/3] rounded-2xl relative overflow-hidden">
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src="https://www.youtube-nocookie.com/embed/J---aiyznGQ"
+                  title="ClearMind workflow — placeholder clip"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+                <span className="pointer-events-none absolute bottom-4 left-6 text-white/40 font-mono text-xs">// Workflow Visualization</span>
               </div>
 
               {/* Right content */}
@@ -560,10 +550,17 @@ function Landing() {
                 </div>
               </div>
 
-              {/* Right Solid Shape Placeholder with Purple Circle Background */}
-              <div className="bg-black/30 aspect-[4/3] rounded-2xl flex items-center justify-center relative overflow-hidden group lg:order-2">
-                <div className="w-24 h-24 md:w-36 md:h-36 rounded-full bg-gradient-to-tr from-violet to-pink shadow-[0_0_40px_rgba(165,122,255,0.4)] transition-transform duration-500 group-hover:scale-110" />
-                <span className="absolute bottom-4 left-6 text-white/40 font-mono text-xs">// Portal Hierarchy</span>
+              {/* ClearMind clinic video (placeholder — client to provide final clip) */}
+              <div className="bg-black/30 aspect-[4/3] rounded-2xl relative overflow-hidden lg:order-2">
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src="https://www.youtube-nocookie.com/embed/tntOCGkgt98"
+                  title="ClearMind portals — placeholder clip"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+                <span className="pointer-events-none absolute bottom-4 left-6 text-white/40 font-mono text-xs">// Portal Hierarchy</span>
               </div>
             </section>
           </div>
@@ -728,8 +725,8 @@ function Landing() {
           {/* Scroll-to-top */}
           <div className="flex items-center space-x-6">
             <a href="#top" className="flex items-center space-x-2 text-charcoal hover:text-violet transition-colors duration-300">
-              <Butterfly className="h-5 w-5 text-violet" />
-              <span className="text-sm font-bold tracking-wider">CyMon</span>
+              <img src="/logo-cymon.png" alt="ClearMind" className="h-6 w-6 rounded-md object-cover" />
+              <span className="text-sm font-bold tracking-wider">ClearMind</span>
             </a>
             <a
               href="#top"

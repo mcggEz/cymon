@@ -349,6 +349,8 @@ function MyProfile() {
 
           <Card title="Clinical Information" icon="◆">
             <div className="grid grid-cols-2 gap-4">
+              <Field loading={loading} label="Chief Complaint" value={clinical?.chief_complaint} />
+              <Field loading={loading} label="Working Diagnosis" value={clinical?.working_diagnosis} />
               <Field loading={loading} label="Primary Diagnosis" value={clinical?.primary_diagnosis} />
               <Field loading={loading} label="IEP Level" value={clinical?.iep_level} />
               <Field loading={loading} label="Treating Clinician" value={clinical?.treating_psychologist_name} />

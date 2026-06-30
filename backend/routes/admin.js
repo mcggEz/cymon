@@ -1,5 +1,7 @@
 const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
+const { createNotification } = require('../lib/notify');
+const { patientName } = require('../lib/names');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -93,7 +95,7 @@ router.get('/patients', async (req, res, next) => {
       patients: (data || []).map((p) => ({
         id: p.id,
         patient_id: p.patient_id,
-        name: [p.first_name, p.last_name].filter(Boolean).join(' '),
+        name: patientName(p),
         age: ageFromDob(p.date_of_birth),
         sex: p.sex,
         status: p.status,
@@ -118,7 +120,7 @@ router.get('/compliance', async (req, res, next) => {
     const { data: rows, error } = await supabase
       .from('waiver_submissions')
       .select(
-        'id, due_date, status, document_type_code, patient_id, patients(first_name, last_name, patient_id), document_types(title)'
+        'id, due_date, status, document_type_code, patient_id, patients(first_name, middle_name, last_name, patient_id), document_types(title)'
       )
       .in('status', ['overdue', 'pending_signature'])
       .order('due_date', { ascending: true });
@@ -138,7 +140,7 @@ router.get('/compliance', async (req, res, next) => {
         const g = guardianByPatient[r.patient_id];
         return {
           id: r.id,
-          student: r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : '—',
+          student: patientName(r.patients),
           sid: r.patients ? r.patients.patient_id : '—',
           parent: g ? g.full_name : '—',
           email: g ? g.email : null,
@@ -159,7 +161,7 @@ router.get('/schedule', async (req, res, next) => {
   try {
     const { data: rows, error } = await supabase
       .from('appointments')
-      .select('id, starts_at, session_type, color_tag, location, practitioner_id, patients(first_name, last_name)')
+      .select('id, starts_at, session_type, color_tag, location, practitioner_id, patients(first_name, middle_name, last_name)')
       .eq('clinic_id', req.profile.clinic_id)
       .order('starts_at', { ascending: true });
     if (error) return next(error);
@@ -171,7 +173,7 @@ router.get('/schedule', async (req, res, next) => {
     res.json({
       appointments: (rows || []).map((r) => ({
         id: r.id,
-        patient: r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : '—',
+        patient: patientName(r.patients),
         practitioner: nameById[r.practitioner_id] || '—',
         starts_at: r.starts_at,
         session_type: r.session_type,
@@ -189,14 +191,14 @@ router.get('/documents', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('documents')
-      .select('id, title, document_type_code, finalized_at, patients(first_name, last_name), document_types(title)')
+      .select('id, title, document_type_code, finalized_at, patients(first_name, middle_name, last_name), document_types(title)')
       .order('finalized_at', { ascending: false });
     if (error) return next(error);
 
     res.json({
       documents: (data || []).map((d) => ({
         id: d.id,
-        name: d.patients ? `${d.patients.first_name} ${d.patients.last_name}` : '—',
+        name: patientName(d.patients),
         type: d.document_types ? d.document_types.title : d.title,
         code: d.document_type_code,
         finalized_at: d.finalized_at,
@@ -257,7 +259,7 @@ router.get('/scoring', async (req, res, next) => {
     const clinic = req.profile.clinic_id;
     const { data: patients } = await supabase
       .from('patients')
-      .select('id, first_name, last_name')
+      .select('id, first_name, middle_name, last_name')
       .eq('clinic_id', clinic)
       .is('deleted_at', null);
     const ids = (patients || []).map((p) => p.id);
@@ -286,7 +288,7 @@ router.get('/scoring', async (req, res, next) => {
       const beh = behByPatient[p.id] ?? null;
       return {
         id: p.id,
-        name: `${p.first_name} ${p.last_name}`,
+        name: patientName(p),
         beh,
         gars: garsByPatient[p.id] ?? null,
         cafat: cafatByPatient[p.id] ?? null,
@@ -466,7 +468,7 @@ router.post('/schedule', async (req, res, next) => {
     }
     const { data: pt } = await supabase
       .from('patients')
-      .select('id, clinic_id')
+      .select('id, clinic_id, caregiver_id, first_name')
       .eq('id', patient_id)
       .maybeSingle();
     if (!pt || pt.clinic_id !== req.profile.clinic_id) {
@@ -493,6 +495,24 @@ router.post('/schedule', async (req, res, next) => {
       .select('id')
       .single();
     if (error) return res.status(400).json({ error: error.message });
+
+    const when = starts.toLocaleString('en-PH', {
+      timeZone: 'Asia/Manila',
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    await createNotification({
+      clinicId: pt.clinic_id,
+      recipientId: pt.caregiver_id,
+      type: 'appointment',
+      title: 'New appointment scheduled',
+      body: `${pt.first_name} has a session on ${when}.`,
+      link: '/client/appointments',
+    });
+
     res.status(201).json({ appointment: appt });
   } catch (err) {
     next(err);

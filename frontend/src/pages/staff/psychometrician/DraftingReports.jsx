@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
+import Avatar from '../../../components/ui/Avatar'
 
 const STATUS_META = {
   draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700', primary: 'Continue Drafting' },
@@ -208,9 +209,14 @@ function DraftingReports() {
         </div>
 
         <section id="editor" className="mt-8 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <h2 className="text-center text-2xl font-bold text-purple-800">Behavioral Assessment Report</h2>
-          <div className="text-center text-xs text-slate-500">
-            Special Education Program · CMPS:SE-FO-06 rev.6 03/22/2026
+          <div className="flex items-start gap-4">
+            <Avatar name="Casey Williams" size="lg" />
+            <div className="flex-1">
+              <h2 className="text-center text-2xl font-bold text-purple-800">Behavioral Assessment Report</h2>
+              <div className="text-center text-xs text-slate-500">
+                Special Education Program · CMPS:SE-FO-06 rev.6 03/22/2026
+              </div>
+            </div>
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_280px]">

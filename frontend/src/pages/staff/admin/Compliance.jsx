@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
+import SearchBar from '../../../components/ui/SearchBar'
 import { api } from '../../../lib/api'
 
 const TABS = ['All Issues', 'Overdue', 'Pending Signature', 'SPED (FO-02)', 'SummerScape (FO-13)']
@@ -33,6 +34,7 @@ const Stat = ({ value, label, color }) => (
 
 function Compliance() {
   const [tab, setTab] = useState('All Issues')
+  const [query, setQuery] = useState('')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
@@ -54,9 +56,30 @@ function Compliance() {
   const summary = data?.summary
   const rows = (data?.rows || []).map(toRow)
 
+  const foMatch = tab.match(/FO-\d+/)
+  const q = query.trim().toLowerCase()
+  const filtered = rows.filter((r) => {
+    const matchesTab =
+      tab === 'All Issues'
+        ? true
+        : tab === 'Overdue'
+          ? r.status === 'overdue'
+          : tab === 'Pending Signature'
+            ? r.status === 'pending_signature'
+            : foMatch
+              ? (r.code || '').includes(foMatch[0])
+              : true
+    const matchesQuery =
+      !q ||
+      (r.student || '').toLowerCase().includes(q) ||
+      (r.parent || '').toLowerCase().includes(q) ||
+      (r.sid || '').toLowerCase().includes(q)
+    return matchesTab && matchesQuery
+  })
+
   return (
     <>
-      <StaffHeader title="Compliance & Waivers" showSearch={false} />
+      <StaffHeader title="Compliance & Waivers" />
       <div className="flex-1 overflow-y-auto p-6">
         <button
           onClick={() => navigate('/admin')}
@@ -90,10 +113,12 @@ function Compliance() {
                 {t}
               </button>
             ))}
-            <div className="ml-auto flex w-56 items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500">
-              <span>🔍</span>
-              <input placeholder="Search students…" className="flex-1 bg-transparent outline-none" />
-            </div>
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder="Search students…"
+              className="ml-auto w-56"
+            />
           </div>
 
           <div className="mt-3 overflow-x-auto">
@@ -118,7 +143,16 @@ function Compliance() {
                         </td>
                       </tr>
                     ))
-                  : rows.map((r) => (
+                  : null}
+                {!loading && filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-sm text-slate-500">
+                      No compliance issues match your search.
+                    </td>
+                  </tr>
+                ) : null}
+                {!loading &&
+                  filtered.map((r) => (
                   <tr key={r.id}>
                     <td className="py-3">
                       <div className="font-medium text-slate-800">{r.student}</div>
@@ -149,9 +183,9 @@ function Compliance() {
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-            <div>Showing {rows.length} compliance issues</div>
+            <div>Showing {filtered.length} compliance issues</div>
             <div className="font-semibold text-rose-600">
-              {rows.filter((r) => r.status === 'overdue').length} require immediate attention
+              {filtered.filter((r) => r.status === 'overdue').length} require immediate attention
             </div>
           </div>
         </section>

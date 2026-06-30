@@ -184,6 +184,18 @@ Registration additions from the client interview: `patients.name_suffix`
 `prior_institution` (already diagnosed or assessed at another institution); and
 `guardians.photo_url` (onsite verification).
 
+### `0015_notifications.sql`
+Per-recipient `notifications` table powering the header bell (client portal
+first; the schema is recipient-agnostic so staff bells can reuse it). Each row
+carries a `notification_type` (`appointment`/`report`/`assessment`/
+`announcement`/`waiver`/`system`), a `title`/`body`, an optional in-app `link`,
+and a nullable `read_at` (null = unread). Distinct from `audit_log`: the audit
+log is the clinic-wide, append-only compliance ledger read only by admins;
+notifications are personal, actionable, and dismissible per recipient. RLS:
+a recipient reads/updates only their own rows; admins manage clinic-scoped
+rows. Backend writers use `lib/notify.js` `createNotification()` (best-effort,
+never blocks the primary request) — first wired into admin appointment booking.
+
 ## Next migrations on the roadmap
 
 These are queued based on the latest requirements review. Each will be its
@@ -192,8 +204,8 @@ own numbered file when implemented:
 1. **Assessment modality & approval** — add `modality` (online/onsite) and
    `approved_by_id`/`approved_at` to `assessment_assignments`; online ones only
    surface to the client once a clinician approves them.
-2. **Report routing & notifications** — recipients for routed reports
-   (psychologist → speech/occupational therapist) plus a `notifications` table
-   driving the "notify psychometrician/psychologist" flows.
+2. **Report routing notifications** — recipients for routed reports
+   (psychologist → speech/occupational therapist); reuse the `notifications`
+   table from `0015` to drive the "notify psychometrician/psychologist" flows.
 3. **Document requests** — `document_requests` table for the client-portal
    "Request for Document" feature.

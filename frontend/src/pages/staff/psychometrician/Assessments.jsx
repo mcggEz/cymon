@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
+import SearchBar from '../../../components/ui/SearchBar'
 
 const LOGS = [
   {
@@ -93,6 +94,7 @@ function Assessments() {
   const [loading, setLoading] = useState(true)
   const [assigning, setAssigning] = useState(false)
   const [notice, setNotice] = useState(null)
+  const [query, setQuery] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -118,7 +120,7 @@ function Assessments() {
     try {
       await api.psychometrician.assignAssessment({ patient_id: patientId, template_id: active.id })
       const pname = patients.find((p) => p.id === patientId)?.name || 'the patient'
-      setNotice(`Assigned “${active.title}” to ${pname} — it now appears in their Assessment Center.`)
+      setNotice(`Assigned “${active.title}” to ${pname} — it now appears in their Assessment Services.`)
       setActive(null)
     } catch (e) {
       setNotice(`Could not assign: ${e.message}`)
@@ -127,15 +129,22 @@ function Assessments() {
     }
   }
 
+  const q = query.trim().toLowerCase()
+  const matches = (t) => !q || [t.title, t.code, t.desc].some((v) => (v || '').toLowerCase().includes(q))
+  const visibleTests = tests.filter(matches)
+  const visibleLogs = LOGS.filter(matches)
+
   return (
     <>
-      <StaffHeader title="Assessment Center" subtitle="Clinical Tools Library & Observation Forms" showSearch={false} />
+      <StaffHeader title="Assessment Services" subtitle="Clinical Tools Library & Observation Forms" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mb-4 flex justify-end">
-          <div className="flex w-72 items-center gap-2 rounded-full border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500 shadow-sm">
-            <span>🔍</span>
-            <input placeholder="Search assessments or forms…" className="flex-1 bg-transparent outline-none" />
-          </div>
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search assessments or forms…"
+            className="w-72"
+          />
         </div>
 
         <h1 className="text-2xl font-bold text-purple-800">
@@ -156,19 +165,26 @@ function Assessments() {
             ? Array.from({ length: 2 }).map((_, i) => (
                 <Skeleton key={i} className="h-40 w-full" rounded="rounded-2xl" />
               ))
-            : tests.map((t) => (
+            : visibleTests.map((t) => (
                 <ToolCard key={t.id} t={t} half onLaunch={() => setActive(t)} />
               ))}
+          {!loading && q && visibleTests.length === 0 ? (
+            <p className="text-sm text-slate-500">No standardized tests match your search.</p>
+          ) : null}
         </div>
 
-        <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
-          SESSION LOGS & OBSERVATIONS
-        </div>
-        <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {LOGS.map((t) => (
-            <ToolCard key={t.id} t={t} half onLaunch={() => navigate('/psychometrician/activity')} />
-          ))}
-        </div>
+        {visibleLogs.length > 0 ? (
+          <>
+            <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
+              SESSION LOGS & OBSERVATIONS
+            </div>
+            <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {visibleLogs.map((t) => (
+                <ToolCard key={t.id} t={t} half onLaunch={() => navigate('/psychometrician/activity')} />
+              ))}
+            </div>
+          </>
+        ) : null}
 
         {active ? (
           <LaunchModal

@@ -1,5 +1,6 @@
 const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
+const { patientName } = require('../lib/names');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -79,7 +80,7 @@ router.get('/patient', requireAuth, requireClient, async (req, res, next) => {
     res.json({
       patient: {
         ...patient,
-        full_name: [patient.first_name, patient.middle_name, patient.last_name].filter(Boolean).join(' '),
+        full_name: patientName(patient),
         age: ageFromDob(patient.date_of_birth),
       },
       clinical: clinical
@@ -211,7 +212,8 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
     const patient = await requirePatient(req, res);
     if (!patient) return;
 
-    const [{ data: clinical }, { data: logs }, { count: cbiCount }, { count: goalsMet }, { data: nextAppt }, { data: announcements }, { count: assignedCount }] =
+    const nowIso = new Date().toISOString();
+    const [{ data: clinical }, { data: logs }, { count: cbiCount }, { count: goalsMet }, { data: nextAppt }, { data: lastAppt }, { data: announcements }, { count: assignedCount }] =
       await Promise.all([
         supabase.from('clinical_profiles').select('*').eq('patient_id', patient.id).maybeSingle(),
         supabase
@@ -226,7 +228,16 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
           .from('appointments')
           .select('starts_at, session_type, practitioner_id, location')
           .eq('patient_id', patient.id)
+          .gte('starts_at', nowIso)
           .order('starts_at', { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('appointments')
+          .select('starts_at, session_type, practitioner_id, location')
+          .eq('patient_id', patient.id)
+          .lt('starts_at', nowIso)
+          .order('starts_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
         supabase
@@ -247,11 +258,14 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
     const avgMood = moodSeries.length
       ? Number((moodSeries.reduce((a, b) => a + b, 0) / moodSeries.length).toFixed(1))
       : null;
-    const practitionerName = nextAppt ? await staffName(nextAppt.practitioner_id) : null;
+    const [practitionerName, lastPractitionerName] = await Promise.all([
+      nextAppt ? staffName(nextAppt.practitioner_id) : null,
+      lastAppt ? staffName(lastAppt.practitioner_id) : null,
+    ]);
     const clinicianName = await staffName(clinical?.treating_psychologist_id);
 
     res.json({
-      patient: { first_name: patient.first_name, full_name: [patient.first_name, patient.last_name].filter(Boolean).join(' ') },
+      patient: { first_name: patient.first_name, full_name: patientName(patient) },
       clinical: clinical
         ? {
             iep_level: clinical.iep_level,
@@ -272,6 +286,9 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
       moodSeries,
       nextAppointment: nextAppt
         ? { starts_at: nextAppt.starts_at, session_type: nextAppt.session_type, practitioner: practitionerName, location: nextAppt.location }
+        : null,
+      lastAppointment: lastAppt
+        ? { starts_at: lastAppt.starts_at, session_type: lastAppt.session_type, practitioner: lastPractitionerName, location: lastAppt.location }
         : null,
       announcements: announcements || [],
     });
@@ -623,6 +640,51 @@ router.patch('/patient', requireAuth, requireClient, async (req, res, next) => {
       }
     }
 
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------- notifications ----------
+
+router.get('/notifications', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const [{ data, error }, { count }] = await Promise.all([
+      supabase
+        .from('notifications')
+        .select('id, type, title, body, link, read_at, created_at')
+        .eq('recipient_id', req.profile.id)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('recipient_id', req.profile.id)
+        .is('read_at', null),
+    ]);
+    if (error) return next(error);
+    res.json({ notifications: data || [], unread: count || 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Mark notifications read. Body: { ids: [...] } to mark specific ones,
+// or omit ids to mark all of the caregiver's notifications read.
+router.post('/notifications/read', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { ids } = req.body || {};
+    let query = supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('recipient_id', req.profile.id)
+      .is('read_at', null);
+    if (Array.isArray(ids) && ids.length) query = query.in('id', ids);
+    const { error } = await query;
+    if (error) return res.status(400).json({ error: error.message });
     res.json({ ok: true });
   } catch (err) {
     next(err);

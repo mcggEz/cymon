@@ -5,6 +5,8 @@ import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
 import Modal from '../../../components/ui/Modal'
+import SearchBar from '../../../components/ui/SearchBar'
+import RowAction from '../../../components/ui/RowAction'
 import { api } from '../../../lib/api'
 
 const ROLES = [
@@ -253,8 +255,22 @@ function Employees() {
             title="Register Employee"
             subtitle="Create a clinician, therapist, or administrator account"
             onClose={() => setShowForm(false)}
+            footer={
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="text-sm font-medium text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+                <Button type="submit" form="register-employee-form" size="lg" disabled={submitting}>
+                  {submitting ? 'Registering…' : 'Register Employee'}
+                </Button>
+              </div>
+            }
           >
-          <form onSubmit={submit} className="space-y-5">
+          <form id="register-employee-form" onSubmit={submit} className="space-y-5">
             <section className="flex items-center gap-4 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-purple-700">
                 {avatar ? (
@@ -319,34 +335,18 @@ function Employees() {
             ) : null}
 
             {error ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div> : null}
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="text-sm font-medium text-slate-500 hover:text-slate-700"
-              >
-                Cancel
-              </button>
-              <Button type="submit" size="lg" disabled={submitting}>
-                {submitting ? 'Registering…' : 'Register Employee'}
-              </Button>
-            </div>
           </form>
           </Modal>
         ) : null}
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex flex-1 items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500">
-              <span>🔍</span>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name or email…"
-                className="flex-1 bg-transparent outline-none"
-              />
-            </div>
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder="Search by name or email…"
+              className="flex-1"
+            />
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
@@ -421,12 +421,9 @@ function Employees() {
                         <td className="py-3 text-slate-700">{emp.title || '—'}</td>
                         <td className="py-3 text-slate-600">{fmtDate(emp.created_at)}</td>
                         <td className="py-3">
-                          <button
-                            onClick={() => setViewing(emp)}
-                            className="rounded-md border border-purple-300 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50"
-                          >
+                          <RowAction variant="view" onClick={() => setViewing(emp)}>
                             View
-                          </button>
+                          </RowAction>
                         </td>
                       </tr>
                     )

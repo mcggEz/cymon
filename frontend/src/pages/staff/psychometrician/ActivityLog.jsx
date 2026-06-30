@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
+import Avatar from '../../../components/ui/Avatar'
 
 const STATUS_META = {
   draft: { label: 'Draft', tone: 'bg-amber-100 text-amber-700', action: 'Edit Log' },
@@ -174,9 +175,14 @@ function ActivityLog() {
         </section>
 
         <section id="new" className="mt-6 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <h2 className="text-2xl font-bold text-purple-800 text-center">Daily Activity Report</h2>
-          <div className="text-center text-xs text-slate-500">
-            Undergraduate Level · CMPS:SE-FO-07 rev.4 03/22/2026
+          <div className="flex items-start gap-4">
+            <Avatar name="Jordan Smith" size="lg" />
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-purple-800 text-center">Daily Activity Report</h2>
+              <div className="text-center text-xs text-slate-500">
+                Undergraduate Level · CMPS:SE-FO-07 rev.4 03/22/2026
+              </div>
+            </div>
           </div>
 
           <div className="mt-5 rounded-md border border-purple-200 bg-purple-50 p-4">

@@ -19,7 +19,7 @@ const Butterfly = ({ className = '' }) => (
   </svg>
 )
 
-function StaffHeader({ title, subtitle, showSearch = true }) {
+function StaffHeader({ title, subtitle }) {
   const navigate = useNavigate()
   const { signOut } = useAuth()
   const { openSidebar } = useSidebar()
@@ -56,7 +56,6 @@ function StaffHeader({ title, subtitle, showSearch = true }) {
   }
 
   return (
-    <>
       <header className="flex items-center justify-between border-b border-purple-100 bg-white px-4 py-3 sm:px-6 relative">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <button
@@ -171,18 +170,6 @@ function StaffHeader({ title, subtitle, showSearch = true }) {
           </div>
         </div>
       </header>
-      {showSearch ? (
-        <div className="border-b border-purple-100 bg-purple-200/60 px-6 py-2">
-          <div className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm text-slate-500 shadow-sm">
-            <Icon d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zM20 20l-4-4" className="h-4 w-4" />
-            <input
-              placeholder="Search Clients by name, date, assessment…"
-              className="flex-1 bg-transparent outline-none"
-            />
-          </div>
-        </div>
-      ) : null}
-    </>
   )
 }
 

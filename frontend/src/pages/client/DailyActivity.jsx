@@ -16,6 +16,13 @@ const MOODS = [
 
 const TASK_LABEL = { yes_all: 'Yes, all', some: 'Some', none: 'None' }
 const TASK_DOT = { yes_all: 'bg-green-500', some: 'bg-yellow-500', none: 'bg-red-500' }
+
+const JOURNAL_STATUS = {
+  not_started: { label: 'Daily Journal not yet started', cls: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
+  completed: { label: 'Daily Journal completed — not yet submitted', cls: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' },
+  submitted: { label: 'Daily Journal submitted', cls: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
+}
+const todayKey = () => new Date().toISOString().slice(0, 10)
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
 const weekday = (d) => new Date(d).toLocaleDateString('en-US', { weekday: 'short' })
@@ -101,6 +108,10 @@ function DailyActivity() {
     }
   }
 
+  const submittedToday = logs.some((l) => l.log_date === todayKey())
+  const journalStatus = submittedToday ? 'submitted' : observations.trim() ? 'completed' : 'not_started'
+  const status = JOURNAL_STATUS[journalStatus]
+
   return (
     <>
       <PageHeader title="Daily Activity Log" subtitle="March 29, 2026" />
@@ -165,12 +176,13 @@ function DailyActivity() {
 
             <Textarea
               className="mt-4"
-              label="Additional observations (optional)"
+              label="Daily Journal"
               rows={3}
-              placeholder="Any specific notes, new behaviors, concerns, or positive highlights…"
+              placeholder="How did the day go? New behaviors, concerns, wins, or anything worth noting…"
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
             />
+            <p className="mt-1 text-xs text-slate-500">Required — please complete today&apos;s journal entry.</p>
 
             {notice ? (
               <div className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</div>
@@ -184,6 +196,10 @@ function DailyActivity() {
           <div className="flex flex-col gap-5">
             <section className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold text-purple-800">Recent Submissions</div>
+              <div className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${status.cls}`}>
+                <span className={`h-2 w-2 shrink-0 rounded-full ${status.dot}`} />
+                {status.label}
+              </div>
               {loading ? (
                 <SkeletonText className="mt-3" lines={5} />
               ) : (

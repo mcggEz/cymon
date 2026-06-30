@@ -1,5 +1,7 @@
 const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
+const { createNotification } = require('../lib/notify');
+const { patientName } = require('../lib/names');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -41,7 +43,7 @@ function ageFromDob(dob) {
   return a;
 }
 
-const name = (p) => (p ? `${p.first_name} ${p.last_name}` : '—');
+const name = patientName;
 const inClinic = (rows, clinic) => (rows || []).filter((r) => r.patients && r.patients.clinic_id === clinic);
 
 router.get('/tasks', async (req, res, next) => {
@@ -49,7 +51,7 @@ router.get('/tasks', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('appointments')
-      .select('id, starts_at, session_type, location, status, patients(first_name, last_name, patient_id, date_of_birth, sex)')
+      .select('id, starts_at, session_type, location, status, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex)')
       .eq('clinic_id', req.profile.clinic_id)
       .order('starts_at', { ascending: true });
     if (error) return next(error);
@@ -81,13 +83,13 @@ router.get('/assessments', async (req, res, next) => {
       supabase.from('assessment_templates').select('id, document_type_code, title, est_minutes, icon, document_types(description)').eq('is_active', true),
       supabase
         .from('appointments')
-        .select('id, starts_at, patients(first_name, last_name)')
+        .select('id, starts_at, patients(first_name, middle_name, last_name)')
         .eq('clinic_id', req.profile.clinic_id)
         .order('starts_at', { ascending: true })
         .limit(6),
       supabase
         .from('patients')
-        .select('id, first_name, last_name')
+        .select('id, first_name, middle_name, last_name')
         .eq('clinic_id', req.profile.clinic_id)
         .is('deleted_at', null)
         .order('first_name', { ascending: true }),
@@ -105,7 +107,7 @@ router.get('/assessments', async (req, res, next) => {
         id: s.id,
         label: `${name(s.patients)} (${new Date(s.starts_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} Session)`,
       })),
-      patients: (roster || []).map((p) => ({ id: p.id, name: `${p.first_name} ${p.last_name}` })),
+      patients: (roster || []).map((p) => ({ id: p.id, name: patientName(p) })),
     });
   } catch (err) {
     next(err);
@@ -117,7 +119,7 @@ router.get('/data-review', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('assessment_submissions')
-      .select('id, status, flagged, submitted_at, created_at, respondent_name, respondent_relationship, patients(first_name, last_name, patient_id, clinic_id)')
+      .select('id, status, flagged, submitted_at, created_at, respondent_name, respondent_relationship, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
       .order('created_at', { ascending: false });
     if (error) return next(error);
     const rows = inClinic(data, req.profile.clinic_id);
@@ -148,7 +150,7 @@ router.get('/reports', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('assessment_reports')
-      .select('id, title, status, completeness, report_type, updated_at, patients(first_name, last_name, patient_id, clinic_id)')
+      .select('id, title, status, completeness, report_type, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
       .eq('report_type', 'behavioral')
       .order('updated_at', { ascending: false });
     if (error) return next(error);
@@ -177,7 +179,7 @@ router.get('/activity-logs', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('session_logs')
-      .select('id, session_number, session_date, activity_title, status, patients(first_name, last_name, clinic_id)')
+      .select('id, session_number, session_date, activity_title, status, patients(first_name, middle_name, last_name, clinic_id)')
       .order('session_date', { ascending: false });
     if (error) return next(error);
     res.json({
@@ -205,7 +207,7 @@ router.post('/assignments', async (req, res, next) => {
     }
     const { data: pt } = await supabase
       .from('patients')
-      .select('id, clinic_id')
+      .select('id, clinic_id, caregiver_id, first_name')
       .eq('id', patient_id)
       .maybeSingle();
     if (!pt || pt.clinic_id !== req.profile.clinic_id) {
@@ -223,6 +225,20 @@ router.post('/assignments', async (req, res, next) => {
       .select('id')
       .single();
     if (error) return res.status(400).json({ error: error.message });
+
+    const { data: tpl } = await supabase
+      .from('assessment_templates')
+      .select('title')
+      .eq('id', template_id)
+      .maybeSingle();
+    await createNotification({
+      clinicId: pt.clinic_id,
+      recipientId: pt.caregiver_id,
+      type: 'assessment',
+      title: 'New assessment assigned',
+      body: `${tpl?.title || 'An assessment'} has been assigned for ${pt.first_name}.`,
+      link: '/client/assessments',
+    });
     res.status(201).json({ assignment: data });
   } catch (err) {
     next(err);

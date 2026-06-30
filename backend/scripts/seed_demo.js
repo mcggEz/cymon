@@ -80,8 +80,10 @@ async function main() {
   ], { onConflict: 'profile_id' });
 
   const byName = {};
+  const caregiverByName = {};
   for (const d of DEMO) {
     const cgId = await ensureCaregiver(d.email, d.caregiver);
+    caregiverByName[`${d.child.first_name} ${d.child.last_name}`] = cgId;
     await sb.from('patients').delete().eq('caregiver_id', cgId); // refresh
     const { data: p, error } = await sb
       .from('patients')
@@ -155,6 +157,25 @@ async function main() {
   ];
   for (const [title, type, body, publish] of anns) {
     await sb.from('announcements').insert({ clinic_id: clinic, title, type, body, publish_date: publish, created_by_id: admin.id });
+  }
+
+  // ---------- notifications (client header bell) ----------
+  const caregiverIds = Object.values(caregiverByName);
+  if (caregiverIds.length) {
+    await sb.from('notifications').delete().in('recipient_id', caregiverIds);
+  }
+  const notifs = [
+    ['Zara Mendoza', 'appointment', 'New appointment scheduled', 'Zara has a CAFAT session on Monday, March 30 at 10:00 AM.', '/client/appointments', false],
+    ['Mia Santos', 'waiver', 'Waiver needs your signature', 'The SummerScape waiver for Mia is still pending your signature.', '/client/waivers', false],
+    ['Alex Johnson', 'assessment', 'New assessment assigned', 'A GARS-3 questionnaire has been assigned for Alex.', '/client/assessments', true],
+  ];
+  for (const [name, type, title, body, link, read] of notifs) {
+    const recipient = caregiverByName[name];
+    if (!recipient) continue;
+    await sb.from('notifications').insert({
+      clinic_id: clinic, recipient_id: recipient, type, title, body, link,
+      read_at: read ? new Date().toISOString() : null,
+    });
   }
 
   // ---------- audit_log (recent activity) ----------

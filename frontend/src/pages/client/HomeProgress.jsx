@@ -65,6 +65,41 @@ function MoodChart({ points, loading = false }) {
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
 
+const AppointmentCard = ({ title, appt, loading = false, tone = 'purple', emptyText }) => {
+  const dt = appt ? new Date(appt.starts_at) : null
+  const palette =
+    tone === 'slate'
+      ? { bg: 'bg-slate-100', num: 'text-slate-800', sub: 'text-slate-600', meta: 'text-slate-500' }
+      : { bg: 'bg-purple-100', num: 'text-purple-900', sub: 'text-purple-800', meta: 'text-purple-700' }
+  return (
+    <div className={`rounded-2xl ${palette.bg} p-5 shadow-sm`}>
+      <div className="text-sm font-semibold text-purple-800">{title}</div>
+      {loading ? (
+        <div className="mt-3 space-y-2">
+          <Skeleton className="h-8 w-12" />
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-40" />
+        </div>
+      ) : appt ? (
+        <>
+          <div className={`mt-3 text-3xl font-bold ${palette.num}`}>{dt.getDate()}</div>
+          <div className={`text-sm ${palette.sub}`}>
+            {dt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} ·{' '}
+            {dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+          </div>
+          <div className={`mt-2 text-xs ${palette.meta}`}>
+            {SESSION_LABEL[appt.session_type] || appt.session_type}
+            <br />
+            {[appt.practitioner, appt.location].filter(Boolean).join(' · ')}
+          </div>
+        </>
+      ) : (
+        <div className={`mt-3 text-sm ${palette.meta}`}>{emptyText}</div>
+      )}
+    </div>
+  )
+}
+
 function HomeProgress() {
   const [data, setData] = useState(null)
 
@@ -81,6 +116,7 @@ function HomeProgress() {
   const clinical = data?.clinical
   const stats = data?.stats
   const next = data?.nextAppointment
+  const last = data?.lastAppointment
   const nextDt = next ? new Date(next.starts_at) : null
 
   return (
@@ -126,30 +162,20 @@ function HomeProgress() {
             <div className="mb-3 text-sm font-semibold text-purple-800">7-Day Mood Trend</div>
             <MoodChart points={data?.moodSeries} loading={loading} />
           </div>
-          <div className="rounded-2xl bg-purple-100 p-5 shadow-sm">
-            <div className="text-sm font-semibold text-purple-800">Next Appointment</div>
-            {loading ? (
-              <div className="mt-3 space-y-2">
-                <Skeleton className="h-8 w-12" />
-                <Skeleton className="h-3 w-32" />
-                <Skeleton className="h-3 w-40" />
-              </div>
-            ) : next ? (
-              <>
-                <div className="mt-3 text-3xl font-bold text-purple-900">{nextDt.getDate()}</div>
-                <div className="text-sm text-purple-800">
-                  {nextDt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} ·{' '}
-                  {nextDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                </div>
-                <div className="mt-2 text-xs text-purple-700">
-                  {SESSION_LABEL[next.session_type] || next.session_type}
-                  <br />
-                  {[next.practitioner, next.location].filter(Boolean).join(' · ')}
-                </div>
-              </>
-            ) : (
-              <div className="mt-3 text-sm text-purple-700">No upcoming appointment.</div>
-            )}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <AppointmentCard
+              title="Next Appointment"
+              appt={next}
+              loading={loading}
+              emptyText="No upcoming appointment."
+            />
+            <AppointmentCard
+              title="Last Appointment"
+              appt={last}
+              loading={loading}
+              tone="slate"
+              emptyText="No past appointment yet."
+            />
           </div>
         </section>
 

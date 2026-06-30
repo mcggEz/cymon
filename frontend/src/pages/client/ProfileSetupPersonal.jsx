@@ -119,9 +119,15 @@ function ProfileSetupPersonal() {
       <SectionDivider label="CHILD'S INFORMATION" />
 
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-purple-700">
-          <CameraIcon />
-        </div>
+        <button
+          type="button"
+          aria-label="Upload profile photo"
+          className="group flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-purple-100 text-purple-700 ring-1 ring-purple-200 transition hover:bg-purple-200 hover:text-purple-800 hover:ring-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 active:scale-95"
+        >
+          <span className="transition-transform group-hover:scale-110">
+            <CameraIcon />
+          </span>
+        </button>
         <div>
           <div className="text-sm font-medium text-purple-800">Upload profile photo</div>
           <div className="text-xs text-slate-500">JPG, PNG up to 5 MB · optional</div>

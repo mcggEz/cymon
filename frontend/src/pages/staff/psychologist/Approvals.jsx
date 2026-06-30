@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
+import SearchBar from '../../../components/ui/SearchBar'
 import { api } from '../../../lib/api'
 
 const priorityTone = {
@@ -14,11 +15,17 @@ function Approvals() {
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
+  const [query, setQuery] = useState('')
 
   const load = () => api.psychologist.approvals().then((d) => setReports(d.reports)).catch(() => {})
   useEffect(() => {
     load().finally(() => setLoading(false))
   }, [])
+
+  const q = query.trim().toLowerCase()
+  const visible = q
+    ? reports.filter((r) => r.name.toLowerCase().includes(q) || (r.type || '').toLowerCase().includes(q))
+    : reports
 
   const act = async (id, status) => {
     setBusyId(id)
@@ -41,17 +48,25 @@ function Approvals() {
           </div>
         </div>
 
+        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search reports by student or type…"
+          />
+        </section>
+
         <div className="mt-5 flex flex-col gap-4">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
             ))
-          ) : reports.length === 0 ? (
+          ) : visible.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
-              Nothing pending review.
+              {q ? 'No reports match your search.' : 'Nothing pending review.'}
             </div>
           ) : null}
-          {!loading && reports.map((r) => (
+          {!loading && visible.map((r) => (
             <article key={r.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>

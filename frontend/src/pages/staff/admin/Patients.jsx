@@ -6,6 +6,8 @@ import Modal from '../../../components/ui/Modal'
 import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
+import SearchBar from '../../../components/ui/SearchBar'
+import RowAction from '../../../components/ui/RowAction'
 
 const tone = {
   emerald: 'bg-emerald-100 text-emerald-700',
@@ -73,7 +75,7 @@ function RegisterPatientModal({ onClose, onCreated }) {
           email: f.parent_email,
         },
       })
-      onCreated(`${f.first_name} ${f.last_name}`)
+      onCreated([f.first_name, f.middle_name?.trim() ? `${f.middle_name.trim().charAt(0).toUpperCase()}.` : '', f.last_name].filter(Boolean).join(' '))
     } catch (e2) {
       setErr(e2.message)
     } finally {
@@ -82,8 +84,22 @@ function RegisterPatientModal({ onClose, onCreated }) {
   }
 
   return (
-    <Modal title="Register Patient" subtitle="Create a parent account and enroll their child" onClose={onClose}>
-      <form onSubmit={submit} className="space-y-5">
+    <Modal
+      title="Register Patient"
+      subtitle="Create a parent account and enroll their child"
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Cancel
+          </button>
+          <Button type="submit" form="register-patient-form" size="lg" disabled={busy}>
+            {busy ? 'Registering…' : 'Register Patient'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="register-patient-form" onSubmit={submit} className="space-y-5">
         <Section title="Parent Account" hint="The parent uses this to sign in">
           <Input label="Parent Email" type="email" tone="purple" value={f.parent_email} onChange={(e) => set('parent_email', e.target.value)} />
           <Input label="Temporary Password" type="password" tone="purple" value={f.parent_password} onChange={(e) => set('parent_password', e.target.value)} />
@@ -108,15 +124,6 @@ function RegisterPatientModal({ onClose, onCreated }) {
         </Section>
 
         {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
-
-        <div className="flex items-center justify-end gap-3">
-          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Cancel
-          </button>
-          <Button type="submit" size="lg" disabled={busy}>
-            {busy ? 'Registering…' : 'Register Patient'}
-          </Button>
-        </div>
       </form>
     </Modal>
   )
@@ -139,7 +146,22 @@ function toRow(p) {
 
 function ProfileModal({ row, onClose }) {
   return (
-    <Modal title="Patient Profile" subtitle={row.id} onClose={onClose} maxWidth="max-w-lg">
+    <Modal
+      title="Patient Profile"
+      subtitle={row.id}
+      onClose={onClose}
+      maxWidth="max-w-lg"
+      footer={
+        <div className="flex items-center justify-end gap-2">
+          <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Close
+          </button>
+          <RowAction variant="edit" className="px-4 py-1.5">
+            Edit
+          </RowAction>
+        </div>
+      }
+    >
         <div className="text-xs font-semibold tracking-wider text-purple-700">
           ◧ PERSONAL INFORMATION
         </div>
@@ -171,15 +193,6 @@ function ProfileModal({ row, onClose }) {
           No active medical alerts. Patient is currently enrolled in the Standard SPED Program. See
           Document Vault for latest Assessment Reports.
         </p>
-
-        <div className="mt-6 flex items-center justify-end gap-2">
-          <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Close
-          </button>
-          <button className="rounded-md bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-600">
-            Edit
-          </button>
-        </div>
     </Modal>
   )
 }
@@ -213,7 +226,7 @@ function Patients() {
 
   return (
     <>
-      <StaffHeader title="Patient Management" subtitle="Monday, March 30, 2026 — Clinic Operations" showSearch={false} />
+      <StaffHeader title="Patient Management" subtitle="Monday, March 30, 2026 — Clinic Operations" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -241,15 +254,12 @@ function Patients() {
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex flex-1 items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-1.5 text-sm text-slate-500">
-              <span>🔍</span>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name or ID…"
-                className="flex-1 bg-transparent outline-none"
-              />
-            </div>
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder="Search by name or ID…"
+              className="flex-1"
+            />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -309,15 +319,10 @@ function Patients() {
                   <td className={`py-3 font-medium ${r.formTone}`}>{r.form}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setActive(r)}
-                        className="rounded-md border border-purple-300 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50"
-                      >
+                      <RowAction variant="view" onClick={() => setActive(r)}>
                         View
-                      </button>
-                      <button className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600">
-                        Edit
-                      </button>
+                      </RowAction>
+                      <RowAction variant="edit">Edit</RowAction>
                     </div>
                   </td>
                 </tr>

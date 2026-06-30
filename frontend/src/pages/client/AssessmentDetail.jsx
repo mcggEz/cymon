@@ -120,7 +120,7 @@ function AssessmentDetail() {
 
   return (
     <>
-      <PageHeader title="Assessment Center" />
+      <PageHeader title="Assessment Services" />
       <div className="flex-1 overflow-y-auto p-6">
         <button
           onClick={() => navigate('/client/assessments')}

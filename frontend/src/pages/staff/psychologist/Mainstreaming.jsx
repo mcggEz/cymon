@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
+import SearchBar from '../../../components/ui/SearchBar'
 import { api } from '../../../lib/api'
 
 const STATUS_META = {
@@ -12,6 +13,7 @@ const STATUS_META = {
 function Mainstreaming() {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
   useEffect(() => {
     let on = true
     api.psychologist.mainstreaming().then((d) => on && setStudents(d.students)).catch(() => {}).finally(() => { if (on) setLoading(false) })
@@ -19,6 +21,11 @@ function Mainstreaming() {
       on = false
     }
   }, [])
+
+  const q = query.trim().toLowerCase()
+  const visible = q
+    ? students.filter((s) => s.name.toLowerCase().includes(q) || (s.level || '').toLowerCase().includes(q))
+    : students
 
   return (
     <>
@@ -32,17 +39,25 @@ function Mainstreaming() {
           </div>
         </div>
 
+        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search students by name or level…"
+          />
+        </section>
+
         <div className="mt-5 flex flex-col gap-4">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
             ))
-          ) : students.length === 0 ? (
+          ) : visible.length === 0 ? (
             <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
-              No mainstreaming assessments yet.
+              {q ? 'No students match your search.' : 'No mainstreaming assessments yet.'}
             </div>
           ) : null}
-          {!loading && students.map((s) => {
+          {!loading && visible.map((s) => {
             const meta = STATUS_META[s.status] || STATUS_META.not_ready
             return (
             <article key={s.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
