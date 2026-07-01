@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
@@ -53,7 +52,6 @@ function DocumentVault() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
-  const navigate = useNavigate()
 
   useEffect(() => {
     let on = true
@@ -81,12 +79,6 @@ function DocumentVault() {
     <>
       <StaffHeader title="Document Vault" />
       <div className="flex-1 overflow-y-auto p-6">
-        <button
-          onClick={() => navigate('/admin')}
-          className="mb-3 inline-flex items-center gap-1 rounded-md border border-purple-200 bg-white px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-50"
-        >
-          ← Back to Overview
-        </button>
         <h1 className="text-3xl font-bold text-purple-800">Document Vault</h1>
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Finalized clinic document records

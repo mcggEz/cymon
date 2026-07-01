@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import Modal from '../../../components/ui/Modal'
@@ -193,7 +192,6 @@ function Schedule() {
   const [practFilter, setPractFilter] = useState('all')
   const [patients, setPatients] = useState([])
   const [staffList, setStaffList] = useState([])
-  const navigate = useNavigate()
 
   const focusMonth = (list) => {
     if (!list.length) return
@@ -287,12 +285,6 @@ function Schedule() {
     <>
       <StaffHeader title="Clinic Master Schedule" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
-        <button
-          onClick={() => navigate('/admin')}
-          className="mb-3 inline-flex items-center gap-1 rounded-md border border-purple-200 bg-white px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-50"
-        >
-          ← Back to Overview
-        </button>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-purple-800">Clinic Master Schedule</h1>
           <button

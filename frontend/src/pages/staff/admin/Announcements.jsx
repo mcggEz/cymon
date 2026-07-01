@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
@@ -45,7 +44,6 @@ const TypeChip = ({ active, label, color, onClick }) => (
 )
 
 function Announcements() {
-  const navigate = useNavigate()
   const [published, setPublished] = useState([])
   const [title, setTitle] = useState('')
   const [type, setType] = useState('urgent')
@@ -153,12 +151,6 @@ function Announcements() {
     <>
       <StaffHeader title="Announcements" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
-        <button
-          onClick={() => navigate('/admin')}
-          className="mb-3 inline-flex items-center gap-1 rounded-md border border-purple-200 bg-white px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-50"
-        >
-          ← Back to Overview
-        </button>
         <h1 className="text-3xl font-bold text-purple-800">Announcements</h1>
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Create and manage posts for the Parent Portal
