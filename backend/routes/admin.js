@@ -660,7 +660,8 @@ router.post('/schedule', async (req, res, next) => {
 router.post('/patients', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { parent_email, parent_password, child = {}, guardian = {} } = req.body || {};
+    const { parent_email, parent_password, child = {}, clinical = {}, guardian = {}, emergency = {} } =
+      req.body || {};
     if (!parent_email || !parent_password) {
       return res.status(400).json({ error: 'Parent email and password are required' });
     }
@@ -691,8 +692,15 @@ router.post('/patients', async (req, res, next) => {
         first_name: child.first_name,
         middle_name: child.middle_name || null,
         last_name: child.last_name,
+        nick_name: child.nick_name || null,
         date_of_birth: child.date_of_birth,
         sex: child.sex,
+        nationality: child.nationality || null,
+        preferred_language: child.preferred_language || null,
+        school: child.school || null,
+        grade_level: child.grade_level || null,
+        home_address: child.home_address || null,
+        contact_number: child.contact_number || null,
       })
       .select('*')
       .single();
@@ -715,7 +723,14 @@ router.post('/patients', async (req, res, next) => {
     }
 
     await Promise.all([
-      supabase.from('clinical_profiles').insert({ patient_id: patient.id }),
+      supabase.from('clinical_profiles').insert({
+        patient_id: patient.id,
+        primary_diagnosis: clinical.primary_diagnosis || null,
+        iep_level: clinical.iep_level || null,
+        secondary_diagnosis: clinical.secondary_diagnosis || null,
+        date_enrolled: clinical.date_enrolled || null,
+        referral_source: clinical.referral_source || null,
+      }),
       guardian.full_name
         ? supabase.from('guardians').insert({
             patient_id: patient.id,
@@ -723,7 +738,19 @@ router.post('/patients', async (req, res, next) => {
             relationship: guardian.relationship || null,
             contact_number: guardian.contact_number || null,
             email: guardian.email || null,
+            occupation: guardian.occupation || null,
+            employer: guardian.employer || null,
             is_primary: true,
+          })
+        : Promise.resolve(),
+      emergency.full_name
+        ? supabase.from('emergency_contacts').insert({
+            patient_id: patient.id,
+            full_name: emergency.full_name,
+            relationship: emergency.relationship || null,
+            contact_number: emergency.contact_number || null,
+            alt_contact_number: emergency.alt_contact_number || null,
+            address: emergency.address || null,
           })
         : Promise.resolve(),
     ]);

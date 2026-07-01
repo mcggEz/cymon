@@ -26,59 +26,80 @@ const Section = ({ title, hint, children }) => (
 )
 
 function RegisterPatientModal({ onClose, onCreated }) {
-  const [f, setF] = useState({
-    parent_email: '',
-    parent_password: '',
+  const [parent, setParent] = useState({ email: '', password: '' })
+  const [child, setChild] = useState({
     first_name: '',
     middle_name: '',
     last_name: '',
+    nick_name: '',
     date_of_birth: '',
     sex: '',
-    guardian_name: '',
+    home_address: '',
+    contact_number: '',
+    nationality: '',
+    preferred_language: '',
+    school: '',
+    grade_level: '',
+  })
+  const [clinical, setClinical] = useState({
+    primary_diagnosis: '',
+    iep_level: '',
+    secondary_diagnosis: '',
+    date_enrolled: '',
+    referral_source: '',
+  })
+  const [guardian, setGuardian] = useState({
+    full_name: '',
     relationship: '',
     contact_number: '',
+    email: '',
+    occupation: '',
+    employer: '',
   })
+  const [emergency, setEmergency] = useState({
+    full_name: '',
+    relationship: '',
+    contact_number: '',
+    alt_contact_number: '',
+    address: '',
+  })
+  const [photo, setPhoto] = useState(null)
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [photo, setPhoto] = useState(null)
-  const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+
+  const setP = (k) => (e) => setParent((s) => ({ ...s, [k]: e.target.value }))
+  const setC = (k) => (e) => setChild((s) => ({ ...s, [k]: e.target.value }))
+  const setCl = (k) => (e) => setClinical((s) => ({ ...s, [k]: e.target.value }))
+  const setG = (k) => (e) => setGuardian((s) => ({ ...s, [k]: e.target.value }))
+  const setE = (k) => (e) => setEmergency((s) => ({ ...s, [k]: e.target.value }))
 
   const submit = async (e) => {
     e.preventDefault()
     setErr(null)
-    if (!f.parent_email || !f.parent_password) {
+    if (!parent.email || !parent.password) {
       setErr('Parent email and password are required.')
       return
     }
-    if (f.parent_password.length < 6) {
+    if (parent.password.length < 6) {
       setErr('Password must be at least 6 characters.')
       return
     }
-    if (!f.first_name || !f.last_name || !f.date_of_birth || !f.sex) {
+    if (!child.first_name || !child.last_name || !child.date_of_birth || !child.sex) {
       setErr('Child name, date of birth, and sex are required.')
       return
     }
     setBusy(true)
     try {
       await api.admin.createPatient({
-        parent_email: f.parent_email,
-        parent_password: f.parent_password,
-        child: {
-          first_name: f.first_name,
-          middle_name: f.middle_name,
-          last_name: f.last_name,
-          date_of_birth: f.date_of_birth,
-          sex: f.sex,
-          photo,
-        },
-        guardian: {
-          full_name: f.guardian_name,
-          relationship: f.relationship,
-          contact_number: f.contact_number,
-          email: f.parent_email,
-        },
+        parent_email: parent.email,
+        parent_password: parent.password,
+        child: { ...child, photo },
+        clinical,
+        guardian: { ...guardian, email: guardian.email || parent.email },
+        emergency,
       })
-      onCreated([f.first_name, f.middle_name?.trim() ? `${f.middle_name.trim().charAt(0).toUpperCase()}.` : '', f.last_name].filter(Boolean).join(' '))
+      const mid = child.middle_name?.trim() ? `${child.middle_name.trim().charAt(0).toUpperCase()}.` : ''
+      onCreated([child.first_name, mid, child.last_name].filter(Boolean).join(' '))
     } catch (e2) {
       setErr(e2.message)
     } finally {
@@ -104,8 +125,8 @@ function RegisterPatientModal({ onClose, onCreated }) {
     >
       <form id="register-patient-form" onSubmit={submit} className="space-y-5">
         <Section title="Parent Account" hint="The parent uses this to sign in">
-          <Input label="Parent Email" type="email" tone="purple" value={f.parent_email} onChange={(e) => set('parent_email', e.target.value)} />
-          <Input label="Temporary Password" type="password" tone="purple" value={f.parent_password} onChange={(e) => set('parent_password', e.target.value)} />
+          <Input label="Parent Email" type="email" tone="purple" value={parent.email} onChange={setP('email')} />
+          <Input label="Temporary Password" type="password" tone="purple" value={parent.password} onChange={setP('password')} />
         </Section>
 
         <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -116,21 +137,55 @@ function RegisterPatientModal({ onClose, onCreated }) {
         </section>
 
         <Section title="Child" hint="The enrolled student">
-          <Input label="First Name" tone="purple" value={f.first_name} onChange={(e) => set('first_name', e.target.value)} />
-          <Input label="Middle Name (optional)" tone="purple" value={f.middle_name} onChange={(e) => set('middle_name', e.target.value)} />
-          <Input label="Last Name" tone="purple" value={f.last_name} onChange={(e) => set('last_name', e.target.value)} />
-          <Input label="Date of Birth" type="date" tone="purple" value={f.date_of_birth} onChange={(e) => set('date_of_birth', e.target.value)} />
-          <Select label="Sex" value={f.sex} onChange={(e) => set('sex', e.target.value)}>
+          <Input label="First Name" tone="purple" value={child.first_name} onChange={setC('first_name')} />
+          <Input label="Middle Name (optional)" tone="purple" value={child.middle_name} onChange={setC('middle_name')} />
+          <Input label="Last Name" tone="purple" value={child.last_name} onChange={setC('last_name')} />
+          <Input label="Nick Name (optional)" tone="purple" value={child.nick_name} onChange={setC('nick_name')} />
+          <Input label="Date of Birth" type="date" tone="purple" value={child.date_of_birth} onChange={setC('date_of_birth')} />
+          <Select label="Sex" value={child.sex} onChange={setC('sex')}>
             <option value="">Select…</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
           </Select>
         </Section>
 
+        <Section title="Contact & Location" hint="The child's contact and schooling details">
+          <Input label="Home Address" tone="purple" value={child.home_address} onChange={setC('home_address')} />
+          <Input label="Contact Number" tone="purple" value={child.contact_number} onChange={setC('contact_number')} />
+          <Input label="Nationality" tone="purple" value={child.nationality} onChange={setC('nationality')} />
+          <Input label="Preferred Language" tone="purple" value={child.preferred_language} onChange={setC('preferred_language')} />
+          <Input label="School / Institution" tone="purple" value={child.school} onChange={setC('school')} />
+          <Input label="Grade / Year Level" tone="purple" value={child.grade_level} onChange={setC('grade_level')} />
+        </Section>
+
+        <Section title="Clinical Information (optional)" hint="Used only for intervention planning">
+          <Select label="Primary Diagnosis" value={clinical.primary_diagnosis} onChange={setCl('primary_diagnosis')}>
+            <option value="">Select…</option>
+            <option value="Autism Spectrum Disorder">Autism Spectrum Disorder</option>
+            <option value="ADHD">ADHD</option>
+            <option value="Other">Other</option>
+          </Select>
+          <Input label="IEP Level" tone="purple" value={clinical.iep_level} onChange={setCl('iep_level')} />
+          <Input label="Secondary Diagnosis" tone="purple" value={clinical.secondary_diagnosis} onChange={setCl('secondary_diagnosis')} />
+          <Input label="Date of Enrollment" type="date" tone="purple" value={clinical.date_enrolled} onChange={setCl('date_enrolled')} />
+          <Input label="Referral Source" tone="purple" value={clinical.referral_source} onChange={setCl('referral_source')} />
+        </Section>
+
         <Section title="Primary Guardian (optional)" hint="Parent or guardian details">
-          <Input label="Full Name" tone="purple" value={f.guardian_name} onChange={(e) => set('guardian_name', e.target.value)} />
-          <Input label="Relationship" tone="purple" value={f.relationship} onChange={(e) => set('relationship', e.target.value)} />
-          <Input label="Contact Number" tone="purple" value={f.contact_number} onChange={(e) => set('contact_number', e.target.value)} />
+          <Input label="Full Name" tone="purple" value={guardian.full_name} onChange={setG('full_name')} />
+          <Input label="Relationship" tone="purple" value={guardian.relationship} onChange={setG('relationship')} />
+          <Input label="Contact Number" tone="purple" value={guardian.contact_number} onChange={setG('contact_number')} />
+          <Input label="Email" type="email" tone="purple" value={guardian.email} onChange={setG('email')} />
+          <Input label="Occupation" tone="purple" value={guardian.occupation} onChange={setG('occupation')} />
+          <Input label="Employer / Company" tone="purple" value={guardian.employer} onChange={setG('employer')} />
+        </Section>
+
+        <Section title="Emergency Contact (optional)" hint="Who to reach in an emergency">
+          <Input label="Full Name" tone="purple" value={emergency.full_name} onChange={setE('full_name')} />
+          <Input label="Relationship" tone="purple" value={emergency.relationship} onChange={setE('relationship')} />
+          <Input label="Contact Number" tone="purple" value={emergency.contact_number} onChange={setE('contact_number')} />
+          <Input label="Alternative Contact Number" tone="purple" value={emergency.alt_contact_number} onChange={setE('alt_contact_number')} />
+          <Input label="Address" tone="purple" value={emergency.address} onChange={setE('address')} />
         </Section>
 
         {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}

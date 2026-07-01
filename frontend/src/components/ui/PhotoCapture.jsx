@@ -64,12 +64,31 @@ function PhotoCapture({ value, onChange }) {
     reader.readAsDataURL(file)
   }
 
+  if (streaming) {
+    return (
+      <div className="w-full max-w-sm rounded-2xl border border-purple-200 bg-slate-900 p-3 shadow-sm">
+        <div className="relative overflow-hidden rounded-xl bg-black">
+          <video ref={videoRef} playsInline muted className="max-h-72 w-full object-cover" />
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" /> Live
+          </span>
+        </div>
+        <div className="mt-3 flex justify-center gap-2">
+          <button type="button" onClick={capture} className="rounded-md bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500">
+            📸 Capture Photo
+          </button>
+          <button type="button" onClick={stop} className="rounded-md border border-white/20 px-4 py-2 text-sm font-medium text-white/90 hover:bg-white/10">
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
       <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-purple-100 text-purple-400 ring-1 ring-purple-200">
-        {streaming ? (
-          <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
-        ) : value ? (
+        {value ? (
           <img src={value} alt="Patient" className="h-full w-full object-cover" />
         ) : (
           <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" aria-hidden="true">
@@ -80,30 +99,19 @@ function PhotoCapture({ value, onChange }) {
       </div>
 
       <div className="flex flex-col items-center gap-2 sm:items-start">
-        {streaming ? (
-          <div className="flex gap-2">
-            <button type="button" onClick={capture} className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800">
-              📸 Capture
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={start} className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800">
+            {value ? '📷 Retake' : '📷 Open Camera'}
+          </button>
+          <button type="button" onClick={() => fileRef.current?.click()} className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
+            Upload File
+          </button>
+          {value ? (
+            <button type="button" onClick={() => onChange(null)} className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
+              Remove
             </button>
-            <button type="button" onClick={stop} className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={start} className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800">
-              {value ? '📷 Retake' : '📷 Open Camera'}
-            </button>
-            <button type="button" onClick={() => fileRef.current?.click()} className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
-              Upload File
-            </button>
-            {value ? (
-              <button type="button" onClick={() => onChange(null)} className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
-                Remove
-              </button>
-            ) : null}
-          </div>
-        )}
+          ) : null}
+        </div>
         <div className="text-xs text-slate-500">Take a photo with the webcam, or upload one · optional</div>
         {error ? <div className="text-xs text-rose-600">{error}</div> : null}
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={onFile} className="hidden" />
