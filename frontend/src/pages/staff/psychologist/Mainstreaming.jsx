@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
+import Modal from '../../../components/ui/Modal'
+import Input from '../../../components/ui/Input'
+import Select from '../../../components/ui/Select'
+import Button from '../../../components/ui/Button'
 import { api } from '../../../lib/api'
 
 const STATUS_META = {
@@ -10,13 +14,98 @@ const STATUS_META = {
   ready: { label: 'Ready for Transition', tone: 'bg-emerald-100 text-emerald-700', bar: 'bg-emerald-500' },
 }
 
+function AssessmentModal({ patients, preset, onClose, onCreated }) {
+  const [f, setF] = useState({ patient_id: preset?.patient_id || '', readiness_score: '', status: 'not_ready', notes: '' })
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }))
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setErr(null)
+    if (!f.patient_id) {
+      setErr('Please choose a student.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.psychologist.addMainstreaming(f)
+      onCreated()
+    } catch (e2) {
+      setErr(e2.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal
+      title="Record Mainstreaming Assessment"
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Cancel
+          </button>
+          <Button type="submit" form="mainstreaming-form" size="lg" disabled={busy}>
+            {busy ? 'Saving…' : 'Save Assessment'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="mainstreaming-form" onSubmit={submit} className="space-y-4">
+        <Select label="Student" value={f.patient_id} onChange={set('patient_id')} disabled={!!preset}>
+          <option value="">Select a student…</option>
+          {patients.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </Select>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input label="Readiness Score (0–100)" type="number" tone="purple" value={f.readiness_score} onChange={set('readiness_score')} />
+          <Select label="Status" value={f.status} onChange={set('status')}>
+            <option value="not_ready">Needs More Support</option>
+            <option value="approaching">Approaching Readiness</option>
+            <option value="ready">Ready for Transition</option>
+          </Select>
+        </div>
+        <label className="block text-sm">
+          <div className="font-semibold text-purple-700">Notes</div>
+          <textarea
+            rows={3}
+            value={f.notes}
+            onChange={set('notes')}
+            className="mt-1 w-full rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
+            placeholder="Basis for the readiness rating…"
+          />
+        </label>
+        {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
+      </form>
+    </Modal>
+  )
+}
+
 function Mainstreaming() {
   const [students, setStudents] = useState([])
+  const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const [modal, setModal] = useState(null)
+  const [notice, setNotice] = useState(null)
+
+  const load = () =>
+    api.psychologist
+      .mainstreaming()
+      .then((d) => {
+        setStudents(d.students)
+        setPatients(d.patients || [])
+      })
+      .catch(() => {})
+
   useEffect(() => {
     let on = true
-    api.psychologist.mainstreaming().then((d) => on && setStudents(d.students)).catch(() => {}).finally(() => { if (on) setLoading(false) })
+    load().finally(() => {
+      if (on) setLoading(false)
+    })
     return () => {
       on = false
     }
@@ -31,13 +120,20 @@ function Mainstreaming() {
     <>
       <StaffHeader title="Mainstreaming" />
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="rounded-xl bg-purple-100 px-4 py-3 text-sm text-purple-900">
-          <div className="font-semibold">📈 Mainstreaming Readiness Tracker</div>
-          <div className="text-xs text-purple-700">
-            Monitor each student&apos;s progress toward transitioning to regular schooling based on
-            accumulated assessment scores.
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 rounded-xl bg-purple-100 px-4 py-3 text-sm text-purple-900">
+            <div className="font-semibold">📈 Mainstreaming Readiness Tracker</div>
+            <div className="text-xs text-purple-700">
+              Monitor each student&apos;s progress toward transitioning to regular schooling based on
+              accumulated assessment scores.
+            </div>
           </div>
+          <Button onClick={() => setModal('new')}>+ New Assessment</Button>
         </div>
+
+        {notice ? (
+          <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
+        ) : null}
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <SearchBar
@@ -77,12 +173,12 @@ function Mainstreaming() {
               <div className="mt-1 h-2 w-full rounded-full bg-purple-100">
                 <div className={`h-full rounded-full ${meta.bar}`} style={{ width: `${s.score}%` }} />
               </div>
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
+              <div className="mt-4">
+                <button
+                  onClick={() => setModal({ patient_id: s.patient_id })}
+                  className="w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+                >
                   ✏ Update Assessment
-                </button>
-                <button className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                  📊 View Details
                 </button>
               </div>
             </article>
@@ -90,12 +186,20 @@ function Mainstreaming() {
           })}
         </div>
 
-        <div className="mt-5 text-center">
-          <button className="rounded-full bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            Click to View More ▾
-          </button>
-        </div>
       </div>
+
+      {modal ? (
+        <AssessmentModal
+          patients={patients}
+          preset={modal === 'new' ? null : modal}
+          onClose={() => setModal(null)}
+          onCreated={() => {
+            setModal(null)
+            setNotice('Mainstreaming assessment saved.')
+            load()
+          }}
+        />
+      ) : null}
     </>
   )
 }

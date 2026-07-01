@@ -109,7 +109,11 @@ export const api = {
     updateRoster: (id, payload) =>
       request(`/api/psychologist/roster/${id}`, { method: 'PATCH', body: payload, auth: true }),
     mainstreaming: () => request('/api/psychologist/mainstreaming', { auth: true }),
+    addMainstreaming: (payload) =>
+      request('/api/psychologist/mainstreaming', { method: 'POST', body: payload, auth: true }),
     interventions: () => request('/api/psychologist/interventions', { auth: true }),
+    addIntervention: (payload) =>
+      request('/api/psychologist/interventions', { method: 'POST', body: payload, auth: true }),
     progress: () => request('/api/psychologist/progress', { auth: true }),
     updateReport: (id, payload) =>
       request(`/api/psychologist/reports/${id}`, { method: 'PATCH', body: payload, auth: true }),

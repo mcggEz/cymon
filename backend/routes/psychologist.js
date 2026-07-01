@@ -79,23 +79,73 @@ router.get('/roster', async (req, res, next) => {
   }
 });
 
+async function clinicPatients(clinicId) {
+  const { data } = await supabase
+    .from('patients')
+    .select('id, first_name, middle_name, last_name')
+    .eq('clinic_id', clinicId)
+    .is('deleted_at', null)
+    .order('first_name', { ascending: true });
+  return (data || []).map((p) => ({ id: p.id, name: patientName(p) }));
+}
+
 router.get('/mainstreaming', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
-      .from('mainstreaming_assessments')
-      .select('id, readiness_score, status, evaluated_on, patients(first_name, middle_name, last_name, clinic_id, clinical_profiles(support_level))')
-      .order('evaluated_on', { ascending: false });
+    const [{ data, error }, patients] = await Promise.all([
+      supabase
+        .from('mainstreaming_assessments')
+        .select('id, readiness_score, status, evaluated_on, patient_id, patients(first_name, middle_name, last_name, clinic_id, clinical_profiles(support_level))')
+        .order('evaluated_on', { ascending: false }),
+      clinicPatients(req.profile.clinic_id),
+    ]);
     if (error) return next(error);
     res.json({
       students: inClinic(data, req.profile.clinic_id).map((m) => ({
         id: m.id,
+        patient_id: m.patient_id,
         name: name(m.patients),
         level: m.patients.clinical_profiles?.support_level || '—',
         score: m.readiness_score,
         status: m.status,
       })),
+      patients,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// record a mainstreaming-readiness assessment
+router.post('/mainstreaming', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, readiness_score, status, notes } = req.body || {};
+    if (!patient_id) return res.status(400).json({ error: 'Patient is required' });
+    if (status !== undefined && !['not_ready', 'approaching', 'ready'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be not_ready, approaching, or ready' });
+    }
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const { data, error } = await supabase
+      .from('mainstreaming_assessments')
+      .insert({
+        patient_id,
+        evaluated_by_id: req.profile.id,
+        readiness_score: readiness_score != null && readiness_score !== '' ? Number(readiness_score) : null,
+        status: status || 'not_ready',
+        notes: notes || null,
+      })
+      .select('id')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ assessment: data });
   } catch (err) {
     next(err);
   }
@@ -104,10 +154,13 @@ router.get('/mainstreaming', async (req, res, next) => {
 router.get('/interventions', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
-      .from('interventions')
-      .select('id, title, plan_date, procedure_count, status, patients(first_name, middle_name, last_name, clinic_id)')
-      .order('plan_date', { ascending: false });
+    const [{ data, error }, patients] = await Promise.all([
+      supabase
+        .from('interventions')
+        .select('id, title, plan_date, procedure_count, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .order('plan_date', { ascending: false }),
+      clinicPatients(req.profile.clinic_id),
+    ]);
     if (error) return next(error);
     res.json({
       items: inClinic(data, req.profile.clinic_id).map((i) => ({
@@ -118,7 +171,44 @@ router.get('/interventions', async (req, res, next) => {
         count: i.procedure_count,
         status: i.status,
       })),
+      patients,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// create an intervention plan
+router.post('/interventions', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, title, plan_date, status, notes } = req.body || {};
+    if (!patient_id || !title) return res.status(400).json({ error: 'Patient and title are required' });
+    if (status !== undefined && !['planned', 'in_progress', 'completed'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be planned, in_progress, or completed' });
+    }
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const { data, error } = await supabase
+      .from('interventions')
+      .insert({
+        patient_id,
+        author_id: req.profile.id,
+        title,
+        plan_date: plan_date || undefined,
+        status: status || 'planned',
+        notes: notes || null,
+      })
+      .select('id')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ intervention: data });
   } catch (err) {
     next(err);
   }

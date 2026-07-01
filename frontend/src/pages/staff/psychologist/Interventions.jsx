@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
+import Modal from '../../../components/ui/Modal'
+import Input from '../../../components/ui/Input'
+import Select from '../../../components/ui/Select'
+import Button from '../../../components/ui/Button'
 import { api } from '../../../lib/api'
 
 const STATUS_META = {
@@ -12,14 +16,102 @@ const STATUS_META = {
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '')
 const PAGE_SIZE = 5
 
+const blankPlan = { patient_id: '', title: '', plan_date: '', status: 'planned', notes: '' }
+
+function NewInterventionModal({ patients, onClose, onCreated }) {
+  const [f, setF] = useState(blankPlan)
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }))
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setErr(null)
+    if (!f.patient_id || !f.title) {
+      setErr('Please choose a client and enter a plan title.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.psychologist.addIntervention(f)
+      onCreated()
+    } catch (e2) {
+      setErr(e2.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal
+      title="New Intervention Plan"
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Cancel
+          </button>
+          <Button type="submit" form="new-intervention-form" size="lg" disabled={busy}>
+            {busy ? 'Saving…' : 'Create Plan'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="new-intervention-form" onSubmit={submit} className="space-y-4">
+        <Select label="Client" value={f.patient_id} onChange={set('patient_id')}>
+          <option value="">Select a client…</option>
+          {patients.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </Select>
+        <Input label="Plan Title" tone="purple" value={f.title} onChange={set('title')} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input label="Plan Date" type="date" tone="purple" value={f.plan_date} onChange={set('plan_date')} />
+          <Select label="Status" value={f.status} onChange={set('status')}>
+            <option value="planned">Planned</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </Select>
+        </div>
+        <label className="block text-sm">
+          <div className="font-semibold text-purple-700">Notes</div>
+          <textarea
+            rows={3}
+            value={f.notes}
+            onChange={set('notes')}
+            className="mt-1 w-full rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
+            placeholder="Goals, procedures, and approach…"
+          />
+        </label>
+        {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
+      </form>
+    </Modal>
+  )
+}
+
 function Interventions() {
   const [items, setItems] = useState([])
+  const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [shown, setShown] = useState(PAGE_SIZE)
+  const [showForm, setShowForm] = useState(false)
+  const [notice, setNotice] = useState(null)
+
+  const load = () =>
+    api.psychologist
+      .interventions()
+      .then((d) => {
+        setItems(d.items)
+        setPatients(d.patients || [])
+      })
+      .catch(() => {})
+
   useEffect(() => {
     let on = true
-    api.psychologist.interventions().then((d) => on && setItems(d.items)).catch(() => {}).finally(() => { if (on) setLoading(false) })
+    load().finally(() => {
+      if (on) setLoading(false)
+    })
     return () => {
       on = false
     }
@@ -43,10 +135,16 @@ function Interventions() {
                 All assigned clients with current Support Level and milestone completion
               </p>
             </div>
-            <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-              + New Report
+            <button
+              onClick={() => setShowForm(true)}
+              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            >
+              + New Plan
             </button>
           </div>
+          {notice ? (
+            <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
+          ) : null}
           <div className="mt-4">
             <SearchBar
               value={query}
@@ -107,6 +205,18 @@ function Interventions() {
           </div>
         ) : null}
       </div>
+
+      {showForm ? (
+        <NewInterventionModal
+          patients={patients}
+          onClose={() => setShowForm(false)}
+          onCreated={() => {
+            setShowForm(false)
+            setNotice('Intervention plan created.')
+            load()
+          }}
+        />
+      ) : null}
     </>
   )
 }
