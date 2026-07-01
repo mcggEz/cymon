@@ -91,9 +91,15 @@ function Login() {
         Back
       </button>
 
-      <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-charcoal/5 bg-white shadow-[0_30px_70px_-20px_rgba(165,122,255,0.2)] grid grid-cols-1 md:grid-cols-12">
+      {/* Ambient glow softens the card against the dark violet background */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[42rem] w-[75rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
+        style={{ background: 'radial-gradient(circle, rgba(165,122,255,0.35) 0%, rgba(221,128,188,0.14) 45%, transparent 70%)' }}
+      />
+
+      <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-white/15 bg-white/95 shadow-[0_30px_90px_-15px_rgba(165,122,255,0.55)] ring-1 ring-violet/10 backdrop-blur-sm grid grid-cols-1 md:grid-cols-12">
         {/* Sidebar Brand Column (Visible on md+) */}
-        <aside className="relative hidden md:flex md:col-span-5 bg-slate-50 border-r border-charcoal/5 p-12 min-h-[32rem] flex-col justify-center overflow-hidden">
+        <aside className="relative hidden md:flex md:col-span-5 bg-gradient-to-br from-purple-50 via-white to-purple-50 border-r border-purple-100/70 p-12 min-h-[32rem] flex-col justify-center overflow-hidden">
           <div className="relative z-10">
             <img src="/logo-cymon.png" alt="CyMon" className="mb-5 block h-16 w-16 rounded-2xl object-cover shadow-sm" />
             <span className="font-serif italic text-6xl font-bold text-charcoal">CyMon</span>
@@ -184,7 +190,7 @@ function Login() {
             fullWidth
             size="lg"
             disabled={submitting}
-            className="bg-violet hover:bg-violet-dark text-white font-mono uppercase tracking-widest text-sm py-3.5 rounded-full mt-2 font-bold shadow-sm cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5"
+            className="bg-violet hover:bg-violet-dark text-white font-sans tracking-wide text-base py-3.5 rounded-full mt-2 font-bold shadow-sm cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5"
           >
             {submitting ? 'Signing in…' : 'Log in'}
           </Button>
