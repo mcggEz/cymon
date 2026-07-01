@@ -1,9 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
-import ProfileSetupPersonal from './pages/client/ProfileSetupPersonal'
-import ProfileSetupGuardian from './pages/client/ProfileSetupGuardian'
-import ProfileSetupClinical from './pages/client/ProfileSetupClinical'
 import ClientLayout from './pages/client/ClientLayout'
 import HomeProgress from './pages/client/HomeProgress'
 import DailyActivity from './pages/client/DailyActivity'
@@ -36,7 +33,6 @@ import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
 import AdminAuditTrail from './pages/staff/admin/AuditTrail'
 import PsychometricianLayout from './pages/staff/PsychometricianLayout'
-import SpeechLayout from './pages/staff/SpeechLayout'
 import OccupationalLayout from './pages/staff/OccupationalLayout'
 import TherapyCaseload from './pages/staff/therapy/Caseload'
 import TherapyRoutedReports from './pages/staff/therapy/RoutedReports'
@@ -54,10 +50,6 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
-
-        <Route path="/setup/personal" element={<ProfileSetupPersonal />} />
-        <Route path="/setup/guardian" element={<ProfileSetupGuardian />} />
-        <Route path="/setup/clinical" element={<ProfileSetupClinical />} />
 
         <Route
           path="/client"
@@ -99,7 +91,7 @@ function App() {
         <Route
           path="/psychometrician"
           element={
-            <RequireAuth roles={['psychometrician']}>
+            <RequireAuth roles={['psychometrician', 'speech_therapist']}>
               <PsychometricianLayout />
             </RequireAuth>
           }
@@ -111,14 +103,8 @@ function App() {
           <Route path="reports" element={<DraftingReports />} />
         </Route>
 
-        {/* Mockup portals — speech & occupational therapist (UX preview, not yet wired) */}
-        <Route path="/speech" element={<SpeechLayout />}>
-          <Route index element={<TherapyCaseload />} />
-          <Route path="reports" element={<TherapyRoutedReports />} />
-          <Route path="sessions" element={<TherapySessionNotes />} />
-          <Route path="goals" element={<TherapyGoals />} />
-        </Route>
-
+        {/* Mockup portal — occupational therapist (UX preview, not yet wired).
+            Speech therapists use the psychometrician portal per the clinic. */}
         <Route path="/occupational" element={<OccupationalLayout />}>
           <Route index element={<TherapyCaseload />} />
           <Route path="reports" element={<TherapyRoutedReports />} />

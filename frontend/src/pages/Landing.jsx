@@ -183,7 +183,7 @@ function Landing() {
               Log In
             </button>
             <button
-              onClick={() => navigate('/setup/personal')}
+              onClick={() => navigate('/login')}
               className={`text-sm font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
                 scrolled ? 'text-charcoal' : 'text-slate-200'
               }`}
@@ -248,7 +248,7 @@ function Landing() {
           <button
             onClick={() => {
               setMobileMenuOpen(false)
-              navigate('/setup/personal')
+              navigate('/login')
             }}
             className="bg-violet hover:bg-violet-dark text-white text-sm font-semibold px-8 py-4 rounded-full transition-colors duration-300 shadow-md cursor-pointer"
           >
@@ -313,14 +313,8 @@ function Landing() {
               </p>
               <div className="flex flex-wrap gap-4 justify-start md:justify-end">
                 <button
-                  onClick={() => navigate('/setup/personal')}
-                  className="bg-violet hover:bg-violet-dark text-white font-sans text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all duration-300 shadow-md transform hover:-translate-y-0.5 cursor-pointer font-bold"
-                >
-                  Enroll a Child
-                </button>
-                <button
                   onClick={() => navigate('/login')}
-                  className="border border-white/20 hover:border-violet text-white font-sans text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all duration-300 bg-white/5 hover:bg-white/10 cursor-pointer font-bold"
+                  className="bg-violet hover:bg-violet-dark text-white font-sans text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all duration-300 shadow-md transform hover:-translate-y-0.5 cursor-pointer font-bold"
                 >
                   Sign In
                 </button>
@@ -659,7 +653,7 @@ function Landing() {
             <h2 className="text-3xl md:text-5xl font-bold leading-tight">Ready to begin your journey to wellness?</h2>
           </div>
           <button
-            onClick={() => navigate('/setup/personal')}
+            onClick={() => navigate('/login')}
             className="w-16 h-16 rounded-full bg-violet hover:bg-white text-white hover:text-charcoal flex items-center justify-center transition-colors duration-300 shadow-lg group focus:outline-none"
           >
             <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

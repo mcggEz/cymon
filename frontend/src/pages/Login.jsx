@@ -55,8 +55,9 @@ function Login() {
 
   const destinationFor = (r) => {
     if (r === 'admin') return '/admin'
-    if (r === 'psychometrician') return '/psychometrician'
+    if (r === 'psychometrician' || r === 'speech_therapist') return '/psychometrician'
     if (r === 'psychologist') return '/psychologist'
+    if (r === 'occupational_therapist') return '/occupational'
     return '/client/home'
   }
 
@@ -186,14 +187,7 @@ function Login() {
           </Button>
 
           <p className="text-center text-sm text-slate-500 mt-2 font-medium">
-            Don&apos;t have an account?{' '}
-            <button
-              type="button"
-              onClick={() => navigate('/setup/personal')}
-              className="font-bold text-violet hover:text-violet-dark cursor-pointer"
-            >
-              Register
-            </button>
+            Need an account? Please contact the ClearMind admin office to be registered.
           </p>
         </form>
       </section>

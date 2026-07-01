@@ -11,9 +11,10 @@ const NAV = [
 
 function PsychometricianLayout() {
   const { profile } = useAuth()
+  const roleLabel = profile?.role === 'speech_therapist' ? 'Speech Therapist' : 'Psychometrician'
   return (
     <StaffLayout
-      user={{ name: profile?.display_name || 'Psychometrician', id: 'Psychometrician' }}
+      user={{ name: profile?.display_name || roleLabel, id: roleLabel }}
       profileTo="/psychometrician"
       nav={NAV}
     />
