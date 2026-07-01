@@ -120,14 +120,15 @@ function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<AdminOverview />} />
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<AdminOverview />} />
           <Route path="patients" element={<AdminPatients />} />
+          <Route path="employees" element={<AdminEmployees />} />
           <Route path="compliance" element={<AdminCompliance />} />
           <Route path="schedule" element={<AdminSchedule />} />
           <Route path="scoring" element={<AdminScoring />} />
           <Route path="documents" element={<AdminDocuments />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
-          <Route path="employees" element={<AdminEmployees />} />
           <Route path="audit" element={<AdminAuditTrail />} />
         </Route>
 
