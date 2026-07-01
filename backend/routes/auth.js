@@ -15,13 +15,18 @@ function ensureConfigured(res) {
 }
 
 async function loadProfile(userId) {
-  const { data, error } = await supabase
+  const base = 'id, role, display_name, email, clinic_id';
+  // extra_roles is added by migration 0017 — fall back if it isn't applied yet
+  let { data, error } = await supabase
     .from('profiles')
-    .select('id, role, display_name, email, clinic_id')
+    .select(`${base}, extra_roles`)
     .eq('id', userId)
     .single();
+  if (error) {
+    ({ data, error } = await supabase.from('profiles').select(base).eq('id', userId).single());
+  }
   if (error) return null;
-  return data;
+  return { ...data, extra_roles: data.extra_roles || [] };
 }
 
 router.post('/signup', async (req, res, next) => {

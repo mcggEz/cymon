@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { useSidebar } from '../../components/sidebarContext'
 import TodayDate from '../../components/ui/TodayDate'
@@ -10,12 +10,44 @@ const Icon = ({ d, className = '' }) => (
   </svg>
 )
 
+// Each role maps to the dashboard it opens. Speech therapists share the
+// psychometrician portal (per the clinic).
+const ROLE_DEST = {
+  admin: { label: 'Administrator', path: '/admin' },
+  psychologist: { label: 'Psychologist', path: '/psychologist' },
+  psychometrician: { label: 'Psychometrician', path: '/psychometrician' },
+  speech_therapist: { label: 'Speech Therapist', path: '/psychometrician' },
+  occupational_therapist: { label: 'Occupational Therapist', path: '/occupational' },
+}
+
+// Distinct dashboards available to a profile (primary role + extra roles),
+// de-duplicated by destination path.
+function roleOptions(profile) {
+  const roles = [profile?.role, ...(profile?.extra_roles || [])].filter(Boolean)
+  const seen = new Set()
+  const out = []
+  for (const r of roles) {
+    const dest = ROLE_DEST[r]
+    if (!dest || seen.has(dest.path)) continue
+    seen.add(dest.path)
+    out.push(dest)
+  }
+  return out
+}
+
 function StaffHeader({ title, subtitle }) {
   const navigate = useNavigate()
-  const { signOut } = useAuth()
+  const location = useLocation()
+  const { signOut, profile } = useAuth()
   const { openSidebar, collapsed, toggleCollapsed } = useSidebar()
 
+  const roles = roleOptions(profile)
+  const activeRole = roles.find(
+    (r) => location.pathname === r.path || location.pathname.startsWith(`${r.path}/`)
+  )
+
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showRoles, setShowRoles] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [unreadCount, setUnreadCount] = useState(3)
   const [notifications, setNotifications] = useState([
@@ -27,6 +59,7 @@ function StaffHeader({ title, subtitle }) {
 
   const logoutRef = useRef(null)
   const notifRef = useRef(null)
+  const roleRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -35,6 +68,9 @@ function StaffHeader({ title, subtitle }) {
       }
       if (notifRef.current && !notifRef.current.contains(event.target)) {
         setShowNotifications(false)
+      }
+      if (roleRef.current && !roleRef.current.contains(event.target)) {
+        setShowRoles(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -72,6 +108,51 @@ function StaffHeader({ title, subtitle }) {
           </div>
         </div>
         <div className="flex items-center gap-3 text-purple-700 relative z-50">
+          {/* Role switcher — only for employees holding more than one role */}
+          {roles.length > 1 ? (
+            <div className="relative" ref={roleRef}>
+              <button
+                onClick={() => {
+                  setShowRoles((v) => !v)
+                  setShowNotifications(false)
+                  setShowLogoutConfirm(false)
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-100"
+                aria-haspopup="true"
+                aria-expanded={showRoles}
+                title="Switch role"
+              >
+                <Icon d="M4 7h13l-3-3M20 17H7l3 3" className="h-4 w-4" />
+                <span className="hidden sm:inline">{activeRole?.label || 'Switch Role'}</span>
+                <Icon d="M6 9l6 6 6-6" className="h-3.5 w-3.5" />
+              </button>
+              {showRoles && (
+                <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-100 bg-white text-left shadow-xl ring-1 ring-black/5 z-50">
+                  <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Switch Dashboard
+                  </div>
+                  {roles.map((r) => {
+                    const isActive = activeRole?.path === r.path
+                    return (
+                      <button
+                        key={r.path}
+                        onClick={() => {
+                          setShowRoles(false)
+                          if (!isActive) navigate(r.path)
+                        }}
+                        className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-purple-50/60 ${
+                          isActive ? 'font-semibold text-purple-700' : 'text-slate-700'
+                        }`}
+                      >
+                        {r.label}
+                        {isActive ? <span className="text-[10px] text-purple-500">Current</span> : null}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
           <TodayDate />
           {/* Notifications Dropdown */}
           <div className="relative" ref={notifRef}>

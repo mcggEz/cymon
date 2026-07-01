@@ -17,7 +17,8 @@ function ensureConfigured(res) {
 }
 
 function requireAdmin(req, res, next) {
-  if (req.profile.role !== 'admin') {
+  const mine = [req.profile.role, ...(req.profile.extra_roles || [])];
+  if (!mine.includes('admin')) {
     return res.status(403).json({ error: 'Admin account required' });
   }
   next();

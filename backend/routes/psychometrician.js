@@ -16,7 +16,8 @@ function ensureConfigured(res) {
 
 function requireRole(...roles) {
   return (req, res, next) => {
-    if (!roles.includes(req.profile.role)) return res.status(403).json({ error: 'Forbidden' });
+    const mine = [req.profile.role, ...(req.profile.extra_roles || [])];
+    if (!mine.some((r) => roles.includes(r))) return res.status(403).json({ error: 'Forbidden' });
     next();
   };
 }

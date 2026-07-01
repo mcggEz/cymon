@@ -19,11 +19,20 @@ async function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const baseCols = 'id, role, display_name, email, clinic_id, deleted_at';
+  // extra_roles is added by migration 0017 — fall back if it isn't applied yet
+  let { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, role, display_name, email, clinic_id, deleted_at')
+    .select(`${baseCols}, extra_roles`)
     .eq('id', data.user.id)
     .single();
+  if (profileError) {
+    ({ data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select(baseCols)
+      .eq('id', data.user.id)
+      .single());
+  }
 
   if (profileError || !profile) {
     return res.status(401).json({ error: 'Profile not found' });
@@ -32,6 +41,7 @@ async function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'This account has been deactivated' });
   }
 
+  profile.extra_roles = profile.extra_roles || [];
   req.user = data.user;
   req.profile = profile;
   req.accessToken = token;

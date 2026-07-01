@@ -25,8 +25,11 @@ function RequireAuth({ roles, children }) {
     return <Navigate to="/login" replace state={{ from: location }} />
   }
 
-  if (roles && profile && !roles.includes(profile.role)) {
-    return <Navigate to="/login" replace />
+  if (roles && profile) {
+    const mine = [profile.role, ...(profile.extra_roles || [])]
+    if (!mine.some((r) => roles.includes(r))) {
+      return <Navigate to="/login" replace />
+    }
   }
 
   return children
