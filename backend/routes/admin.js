@@ -214,7 +214,7 @@ router.get('/announcements', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('announcements')
-      .select('id, title, type, body, publish_date, expires_on, audience, image_url')
+      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url')
       .eq('clinic_id', req.profile.clinic_id)
       .is('deleted_at', null)
       .order('publish_date', { ascending: false });
@@ -228,23 +228,25 @@ router.get('/announcements', async (req, res, next) => {
 router.post('/announcements', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { title, type = 'info', body, publish_date, expires_on, audience } = req.body || {};
+    const { title, type = 'info', priority = 'normal', body, publish_date, expires_on, audience } = req.body || {};
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and body are required' });
     }
+    const safePriority = ['normal', 'important', 'urgent'].includes(priority) ? priority : 'normal';
     const { data, error } = await supabase
       .from('announcements')
       .insert({
         clinic_id: req.profile.clinic_id,
         title,
         type,
+        priority: safePriority,
         body,
         publish_date: publish_date || undefined,
         expires_on: expires_on || null,
         audience: Array.isArray(audience) && audience.length ? audience : ['all'],
         created_by_id: req.profile.id,
       })
-      .select('id, title, type, body, publish_date, expires_on, audience, image_url')
+      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url')
       .single();
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json({ announcement: data });
@@ -318,7 +320,7 @@ router.get('/employees', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, display_name, email, role, avatar_url, created_at, admin_profiles(employee_id, position), staff(license_no, title)')
+      .select('id, display_name, email, role, extra_roles, avatar_url, created_at, admin_profiles(employee_id, position), staff(license_no, title)')
       .eq('clinic_id', req.profile.clinic_id)
       .neq('role', 'client')
       .is('deleted_at', null)
@@ -334,6 +336,7 @@ router.get('/employees', async (req, res, next) => {
           name: p.display_name,
           email: p.email,
           role: p.role,
+          extra_roles: p.extra_roles || [],
           avatar_url: p.avatar_url,
           created_at: p.created_at,
           credential: p.role === 'admin' ? ap.employee_id : st.license_no,
@@ -352,15 +355,19 @@ const STAFF_ROLES = ['psychologist', 'psychometrician', 'occupational_therapist'
 router.post('/employees', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { email, password, display_name, role, phone, employee_id, position, license_no, title, avatar } =
+    const { email, password, display_name, role, extra_roles, phone, employee_id, position, license_no, title, avatar } =
       req.body || {};
 
     if (!email || !password || !display_name || !role) {
       return res.status(400).json({ error: 'Email, password, full name, and role are required' });
     }
-    if (![...STAFF_ROLES, 'admin'].includes(role)) {
+    const ALL_ROLES = [...STAFF_ROLES, 'admin'];
+    if (!ALL_ROLES.includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
+    const extraRoles = Array.isArray(extra_roles)
+      ? [...new Set(extra_roles.filter((r) => ALL_ROLES.includes(r) && r !== role))]
+      : [];
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
@@ -402,7 +409,7 @@ router.post('/employees', async (req, res, next) => {
 
     await supabase
       .from('profiles')
-      .update({ phone: phone || null, ...(avatar_url ? { avatar_url } : {}) })
+      .update({ phone: phone || null, extra_roles: extraRoles, ...(avatar_url ? { avatar_url } : {}) })
       .eq('id', userId);
 
     if (role === 'admin') {

@@ -52,6 +52,7 @@ const empty = {
   confirm: '',
   display_name: '',
   role: '',
+  extra_roles: [],
   phone: '',
   employee_id: '',
   position: '',
@@ -59,9 +60,24 @@ const empty = {
   title: '',
 }
 
+const RoleChips = ({ role, extra = [] }) => {
+  const all = [role, ...extra].filter(Boolean)
+  return (
+    <div className="flex flex-wrap gap-1">
+      {all.map((r) => {
+        const meta = ROLE_META[r] || { label: r, tone: 'bg-slate-100 text-slate-600' }
+        return (
+          <span key={r} className={`rounded-full px-3 py-0.5 text-xs font-semibold ${meta.tone}`}>
+            {meta.label}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function EmployeeModal({ emp, onClose, onDeactivate, busy }) {
   const [confirm, setConfirm] = useState(false)
-  const meta = ROLE_META[emp.role] || { label: emp.role, tone: 'bg-slate-100 text-slate-600' }
   return (
     <Modal title="Employee Details" onClose={onClose} maxWidth="max-w-md">
         <div className="flex items-center gap-3">
@@ -76,8 +92,10 @@ function EmployeeModal({ emp, onClose, onDeactivate, busy }) {
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Role</div>
-            <span className={`mt-1 inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${meta.tone}`}>{meta.label}</span>
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Role(s)</div>
+            <div className="mt-1">
+              <RoleChips role={emp.role} extra={emp.extra_roles} />
+            </div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-slate-500">License / ID</div>
@@ -144,6 +162,13 @@ function Employees() {
   const [roleFilter, setRoleFilter] = useState('all')
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const toggleExtra = (r) =>
+    setForm((f) => ({
+      ...f,
+      extra_roles: f.extra_roles.includes(r)
+        ? f.extra_roles.filter((x) => x !== r)
+        : [...f.extra_roles, r],
+    }))
 
   const deactivate = async (id) => {
     setBusy(true)
@@ -197,6 +222,7 @@ function Employees() {
         password: form.password,
         display_name: form.display_name,
         role: form.role,
+        extra_roles: form.extra_roles.filter((r) => r !== form.role),
         phone: form.phone,
         employee_id: form.employee_id,
         position: form.position,
@@ -310,7 +336,7 @@ function Employees() {
 
             <Section title="Profile" hint="Identity and role within the clinic">
               <Input label="Full Name" tone="purple" value={form.display_name} onChange={(e) => set('display_name', e.target.value)} />
-              <Select label="Role" value={form.role} onChange={(e) => set('role', e.target.value)}>
+              <Select label="Primary Role" value={form.role} onChange={(e) => set('role', e.target.value)}>
                 <option value="">Select a role…</option>
                 {ROLES.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -318,6 +344,29 @@ function Employees() {
                   </option>
                 ))}
               </Select>
+              <div className="sm:col-span-2">
+                <div className="text-xs font-semibold tracking-wider text-purple-700">
+                  ADDITIONAL ROLES <span className="text-slate-400">(optional)</span>
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  For staff who hold more than one role (e.g. Psychologist + Speech Therapist).
+                </div>
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {ROLES.filter((r) => r.value !== form.role).map((r) => (
+                    <label
+                      key={r.value}
+                      className="flex items-center gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.extra_roles.includes(r.value)}
+                        onChange={() => toggleExtra(r.value)}
+                      />
+                      <span>{r.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </Section>
 
             {form.role === 'admin' ? (
@@ -396,7 +445,6 @@ function Employees() {
                 ) : null}
                 {!loadingList &&
                   filtered.map((emp) => {
-                    const meta = ROLE_META[emp.role] || { label: emp.role, tone: 'bg-slate-100 text-slate-600' }
                     return (
                       <tr key={emp.id}>
                         <td className="py-3">
@@ -415,7 +463,7 @@ function Employees() {
                           </div>
                         </td>
                         <td className="py-3">
-                          <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${meta.tone}`}>{meta.label}</span>
+                          <RoleChips role={emp.role} extra={emp.extra_roles} />
                         </td>
                         <td className="py-3 text-slate-700">{emp.credential || '—'}</td>
                         <td className="py-3 text-slate-700">{emp.title || '—'}</td>

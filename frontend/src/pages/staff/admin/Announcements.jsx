@@ -10,6 +10,24 @@ const typeMeta = {
   info: { label: 'INFO', cls: 'bg-sky-100 text-sky-700' },
 }
 
+const priorityMeta = {
+  normal: { label: 'Normal', cls: 'bg-slate-100 text-slate-600' },
+  important: { label: 'Important', cls: 'bg-amber-100 text-amber-700' },
+  urgent: { label: 'Urgent', cls: 'bg-rose-100 text-rose-700' },
+}
+
+// Audience targeting — who is allowed to see the announcement.
+const AUDIENCES = [
+  { value: 'all', label: 'Everyone' },
+  { value: 'all_employees', label: 'All Employees' },
+  { value: 'all_mhp', label: 'All MHP' },
+  { value: 'all_clients', label: 'All Clients / Parents' },
+  { value: 'psychologist', label: 'Psychologists' },
+  { value: 'psychometrician', label: 'Psychometricians' },
+  { value: 'speech_therapist', label: 'Speech Therapists' },
+  { value: 'occupational_therapist', label: 'Occupational Therapists' },
+]
+
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
 
@@ -31,6 +49,8 @@ function Announcements() {
   const [published, setPublished] = useState([])
   const [title, setTitle] = useState('')
   const [type, setType] = useState('urgent')
+  const [priority, setPriority] = useState('normal')
+  const [audience, setAudience] = useState(['all'])
   const [publishDate, setPublishDate] = useState('')
   const [expiresOn, setExpiresOn] = useState('')
   const [body, setBody] = useState('')
@@ -49,6 +69,15 @@ function Announcements() {
     }
   }, [])
 
+  const toggleAudience = (v) => {
+    setAudience((prev) => {
+      // "Everyone" is exclusive; picking anything else clears it and vice-versa.
+      if (v === 'all') return ['all']
+      const next = prev.filter((a) => a !== 'all')
+      return next.includes(v) ? next.filter((a) => a !== v) : [...next, v]
+    })
+  }
+
   const handlePublish = async () => {
     setError(null)
     if (!title || !body) {
@@ -60,12 +89,16 @@ function Announcements() {
       await api.admin.createAnnouncement({
         title,
         type,
+        priority,
+        audience: audience.length ? audience : ['all'],
         body,
         publish_date: publishDate || undefined,
         expires_on: expiresOn || undefined,
       })
       setTitle('')
       setBody('')
+      setPriority('normal')
+      setAudience(['all'])
       setPublishDate('')
       setExpiresOn('')
       await load()
@@ -115,6 +148,20 @@ function Announcements() {
                   <TypeChip active={type === 'info'} onClick={() => setType('info')} label="ℹ General Info" color="bg-sky-100 text-sky-700" />
                 </div>
               </div>
+              <div>
+                <div className="text-xs font-semibold tracking-wider text-purple-700">PRIORITY</div>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {Object.entries(priorityMeta).map(([val, meta]) => (
+                    <TypeChip
+                      key={val}
+                      active={priority === val}
+                      onClick={() => setPriority(val)}
+                      label={meta.label}
+                      color={meta.cls}
+                    />
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-xs font-semibold tracking-wider text-purple-700">PUBLISH DATE</div>
@@ -147,11 +194,16 @@ function Announcements() {
               </div>
               <div>
                 <div className="text-xs font-semibold tracking-wider text-purple-700">AUDIENCE</div>
-                <div className="mt-1 grid grid-cols-2 gap-2 text-sm">
-                  {['All', 'HSN Families', 'MSN Families', 'SummerScape'].map((a, i) => (
-                    <label key={a} className="flex items-center gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2">
-                      <input type="checkbox" defaultChecked={i === 0} />
-                      <span>{a}</span>
+                <div className="mt-1 text-xs text-slate-500">Choose who can see this announcement.</div>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                  {AUDIENCES.map((a) => (
+                    <label key={a.value} className="flex items-center gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={audience.includes(a.value)}
+                        onChange={() => toggleAudience(a.value)}
+                      />
+                      <span>{a.label}</span>
                     </label>
                   ))}
                 </div>
@@ -203,6 +255,16 @@ function Announcements() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-600">{p.body}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                    <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${(priorityMeta[p.priority] || priorityMeta.normal).cls}`}>
+                      {(priorityMeta[p.priority] || priorityMeta.normal).label}
+                    </span>
+                    {(p.audience || ['all']).map((a) => (
+                      <span key={a} className="rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                        {AUDIENCES.find((x) => x.value === a)?.label || a}
+                      </span>
+                    ))}
+                  </div>
                   <div className="mt-1 text-[10px] text-slate-400">{fmtDate(p.publish_date)}</div>
                   <div className="mt-2 flex gap-2 text-xs">
                     <button className="rounded-md border border-purple-200 px-2 py-1 text-purple-700 hover:bg-purple-50">
