@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import StaffHeader from '../StaffHeader'
 import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import { api } from '../../../lib/api'
@@ -25,8 +26,11 @@ const StatCard = ({ value, label, sub, tone, icon }) => {
   )
 }
 
-const QuickAction = ({ icon, label }) => (
-  <button className="flex items-center gap-2 rounded-md bg-purple-700 px-4 py-3 text-left text-sm font-medium text-white hover:bg-purple-800">
+const QuickAction = ({ icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-2 rounded-md bg-purple-700 px-4 py-3 text-left text-sm font-medium text-white hover:bg-purple-800"
+  >
     <span>{icon}</span>
     <span>{label}</span>
   </button>
@@ -42,6 +46,7 @@ const formatTime = (iso) =>
   iso ? new Date(iso).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' }) : ''
 
 function Overview() {
+  const navigate = useNavigate()
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -80,10 +85,10 @@ function Overview() {
           <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">⚡ Quick Actions</div>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <QuickAction icon="📋" label="New Student Admission" />
-              <QuickAction icon="📅" label="View Master Schedule" />
-              <QuickAction icon="🛡" label="Review Compliance Issues" />
-              <QuickAction icon="📢" label="Post Announcement" />
+              <QuickAction icon="📋" label="New Student Admission" onClick={() => navigate('/admin/patients')} />
+              <QuickAction icon="📅" label="View Master Schedule" onClick={() => navigate('/admin/schedule')} />
+              <QuickAction icon="🛡" label="Review Compliance Issues" onClick={() => navigate('/admin/compliance')} />
+              <QuickAction icon="📢" label="Post Announcement" onClick={() => navigate('/admin/announcements')} />
             </div>
           </section>
 
