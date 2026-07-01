@@ -13,6 +13,30 @@ const Sparkle = ({ className = '', style = {} }) => (
   </svg>
 )
 
+// Butterfly motif for the hero — chosen with the client to represent growth,
+// healing, and transformation (replaces the earlier glass-sphere background).
+const Butterfly = ({ className = '', style = {}, from = '#a57aff', to = '#dd80bc', gid, drift = 'animate-drift-a' }) => (
+  <div className={`pointer-events-none z-0 ${drift} ${className}`} style={style} aria-hidden="true">
+    <svg viewBox="0 0 120 120" className="h-full w-full">
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={from} />
+          <stop offset="100%" stopColor={to} />
+        </linearGradient>
+      </defs>
+      <ellipse cx="60" cy="60" rx="2.5" ry="30" fill={`url(#${gid})`} />
+      <g className="animate-flutter" style={{ transformBox: 'fill-box', transformOrigin: '100% 50%' }}>
+        <ellipse cx="40" cy="46" rx="22" ry="16" fill={`url(#${gid})`} opacity="0.9" />
+        <ellipse cx="44" cy="74" rx="16" ry="12" fill={`url(#${gid})`} opacity="0.75" />
+      </g>
+      <g className="animate-flutter" style={{ transformBox: 'fill-box', transformOrigin: '0% 50%' }}>
+        <ellipse cx="80" cy="46" rx="22" ry="16" fill={`url(#${gid})`} opacity="0.9" />
+        <ellipse cx="76" cy="74" rx="16" ry="12" fill={`url(#${gid})`} opacity="0.75" />
+      </g>
+    </svg>
+  </div>
+)
+
 const FeatureItem = ({ n, title, body }) => (
   <div className="border-t border-white/10 pt-5">
     <div className="font-mono text-xs text-violet font-medium">{n}</div>
@@ -238,38 +262,27 @@ function Landing() {
         className="relative min-h-screen flex items-center justify-center pt-32 pb-16 px-6 lg:px-16 overflow-hidden"
         style={{ background: 'radial-gradient(circle at 50% 50%, #22155c 0%, #0d0721 100%)' }}
       >
-        {/* Giant 3D Smooth Glassmorphic Spheres */}
+        {/* Soft ambient glow washes behind the butterflies */}
         <div
-          className="absolute left-[5%] bottom-[-20%] w-[320px] md:w-[680px] h-[320px] md:h-[680px] rounded-full pointer-events-none z-0 border border-white/5 animate-float-slow"
-          style={{
-            background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.15) 0%, rgba(165, 122, 255, 0.1) 40%, rgba(13, 7, 33, 0.8) 80%)',
-            boxShadow: 'inset -20px -20px 50px rgba(165, 122, 255, 0.4), inset 20px 20px 50px rgba(255, 255, 255, 0.15), 0 40px 80px rgba(0, 0, 0, 0.55)',
-            backdropFilter: 'blur(5px)',
-          }}
+          className="absolute left-[2%] bottom-[-10%] w-[360px] md:w-[620px] h-[360px] md:h-[620px] rounded-full pointer-events-none z-0"
+          style={{ background: 'radial-gradient(circle, rgba(165,122,255,0.22) 0%, rgba(13,7,33,0) 70%)' }}
         />
         <div
-          className="absolute right-[-15%] bottom-[10%] w-[380px] md:w-[720px] h-[380px] md:h-[720px] rounded-full pointer-events-none z-0 border border-white/5 animate-float-slower"
-          style={{
-            background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08) 0%, rgba(221, 128, 188, 0.12) 45%, rgba(13, 7, 33, 0.7) 80%)',
-            boxShadow: 'inset -25px -25px 60px rgba(221, 128, 188, 0.35), inset 25px 25px 60px rgba(255, 255, 255, 0.08), 0 45px 90px rgba(0, 0, 0, 0.5)',
-            backdropFilter: 'blur(3px)',
-          }}
+          className="absolute right-[-10%] top-[0%] w-[380px] md:w-[640px] h-[380px] md:h-[640px] rounded-full pointer-events-none z-0"
+          style={{ background: 'radial-gradient(circle, rgba(221,128,188,0.2) 0%, rgba(13,7,33,0) 70%)' }}
         />
-        <div
-          className="absolute left-[3%] top-[8%] w-[200px] md:w-[360px] h-[200px] md:h-[360px] rounded-full pointer-events-none z-0 border border-white/5"
-          style={{
-            background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08) 0%, rgba(165, 122, 255, 0.08) 50%, rgba(13, 7, 33, 0.8) 90%)',
-            boxShadow: 'inset -15px -15px 45px rgba(165, 122, 255, 0.25), inset 15px 15px 45px rgba(255, 255, 255, 0.08), 0 25px 50px rgba(0, 0, 0, 0.4)',
-          }}
-        />
-        <div
-          className="absolute right-[5%] top-[-8%] w-[240px] md:w-[480px] h-[240px] md:h-[480px] rounded-full pointer-events-none z-0 border border-white/5"
-          style={{
-            background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.08) 0%, rgba(221, 128, 188, 0.08) 45%, rgba(13, 7, 33, 0.75) 80%)',
-            boxShadow: 'inset -20px -20px 50px rgba(221, 128, 188, 0.2), inset 20px 20px 50px rgba(255, 255, 255, 0.08), 0 30px 60px rgba(0, 0, 0, 0.35)',
-            backdropFilter: 'blur(2px)',
-          }}
-        />
+
+        {/* Butterfly motif — growth, healing, transformation */}
+        <Butterfly gid="bf1" drift="animate-drift-a" from="#c3a6ff" to="#dd80bc"
+          className="absolute left-[6%] top-[16%] w-[110px] md:w-[190px] h-[110px] md:h-[190px]" style={{ opacity: 0.9 }} />
+        <Butterfly gid="bf2" drift="animate-drift-b" from="#a57aff" to="#8b5cf6"
+          className="absolute right-[10%] top-[12%] w-[90px] md:w-[150px] h-[90px] md:h-[150px]" style={{ opacity: 0.8, animationDelay: '1.2s' }} />
+        <Butterfly gid="bf3" drift="animate-drift-a" from="#dd80bc" to="#a57aff"
+          className="absolute right-[16%] bottom-[14%] w-[130px] md:w-[220px] h-[130px] md:h-[220px]" style={{ opacity: 0.85, animationDelay: '0.6s' }} />
+        <Butterfly gid="bf4" drift="animate-drift-b" from="#b794ff" to="#dd80bc"
+          className="absolute left-[12%] bottom-[8%] w-[70px] md:w-[120px] h-[70px] md:h-[120px] blur-[1px]" style={{ opacity: 0.45, animationDelay: '2s' }} />
+        <Butterfly gid="bf5" drift="animate-drift-a" from="#a57aff" to="#c3a6ff"
+          className="absolute left-[42%] top-[8%] w-[60px] md:w-[96px] h-[60px] md:h-[96px] blur-[1px]" style={{ opacity: 0.4, animationDelay: '2.6s' }} />
 
         {/* Ambient Sparkles */}
         <Sparkle className="absolute left-[16%] top-[26%] w-3 h-3" />

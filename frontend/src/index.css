@@ -13,6 +13,9 @@
   --animate-float-slow: floatSlow 15s ease-in-out infinite;
   --animate-float-slower: floatSlower 20s ease-in-out infinite;
   --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  --animate-drift-a: driftA 16s ease-in-out infinite;
+  --animate-drift-b: driftB 19s ease-in-out infinite;
+  --animate-flutter: flutter 0.9s ease-in-out infinite;
 
   @keyframes floatSlow {
     0%, 100% { transform: translateY(0) rotate(0deg); }
@@ -21,6 +24,18 @@
   @keyframes floatSlower {
     0%, 100% { transform: translateY(0) rotate(0deg); }
     50% { transform: translateY(20px) rotate(-6deg); }
+  }
+  @keyframes driftA {
+    0%, 100% { transform: translate(0, 0) rotate(-4deg); }
+    50% { transform: translate(14px, -26px) rotate(5deg); }
+  }
+  @keyframes driftB {
+    0%, 100% { transform: translate(0, 0) rotate(4deg); }
+    50% { transform: translate(-16px, 22px) rotate(-4deg); }
+  }
+  @keyframes flutter {
+    0%, 100% { transform: scaleX(1); }
+    50% { transform: scaleX(0.6); }
   }
   @keyframes shimmer {
     0% { background-position: 200% 0; }
