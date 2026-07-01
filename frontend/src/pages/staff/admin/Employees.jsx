@@ -158,6 +158,7 @@ function Employees() {
   const [submitting, setSubmitting] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [listError, setListError] = useState(null)
   const [query, setQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const fileRef = useRef(null)
@@ -181,7 +182,14 @@ function Employees() {
     }
   }
 
-  const loadList = () => api.admin.employees().then((d) => setEmployees(d.employees)).catch(() => {})
+  const loadList = () =>
+    api.admin
+      .employees()
+      .then((d) => {
+        setEmployees(d.employees)
+        setListError(null)
+      })
+      .catch((e) => setListError(e.message))
   useEffect(() => {
     loadList().finally(() => setLoadingList(false))
   }, [])
@@ -274,6 +282,11 @@ function Employees() {
 
         {notice && !showForm ? (
           <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
+        ) : null}
+        {listError ? (
+          <div className="mt-4 rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            Couldn&apos;t load employees: {listError}
+          </div>
         ) : null}
 
         {showForm ? (

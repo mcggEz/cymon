@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { useSidebar } from '../../components/sidebarContext'
 import { api } from '../../lib/api'
+import TodayDate from '../../components/ui/TodayDate'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -114,6 +115,7 @@ function PageHeader({ title, subtitle }) {
         </div>
       </div>
       <div className="relative z-50 flex items-center gap-3 text-purple-700">
+        <TodayDate />
         <div className="relative" ref={notifRef}>
           <button
             onClick={toggleNotifs}

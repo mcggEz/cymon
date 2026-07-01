@@ -79,7 +79,7 @@ function Login() {
   return (
     <main
       className="relative min-h-screen overflow-hidden text-charcoal flex flex-col items-center justify-center p-4"
-      style={{ background: 'radial-gradient(circle at 50% 50%, #22155c 0%, #0d0721 100%)' }}
+      style={{ background: 'radial-gradient(circle at 50% 20%, #faf5ff 0%, #ede9fe 45%, #ddd6fe 100%)' }}
     >
       {/* Back Button */}
       <button
@@ -91,13 +91,13 @@ function Login() {
         Back
       </button>
 
-      {/* Ambient glow softens the card against the dark violet background */}
+      {/* Soft ambient glow behind the card */}
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[42rem] w-[75rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
-        style={{ background: 'radial-gradient(circle, rgba(165,122,255,0.35) 0%, rgba(221,128,188,0.14) 45%, transparent 70%)' }}
+        className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[42rem] w-[75rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-3xl"
+        style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(221,128,188,0.12) 45%, transparent 70%)' }}
       />
 
-      <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-white/15 bg-white/95 shadow-[0_30px_90px_-15px_rgba(165,122,255,0.55)] ring-1 ring-violet/10 backdrop-blur-sm grid grid-cols-1 md:grid-cols-12">
+      <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-white/60 bg-white shadow-[0_30px_80px_-25px_rgba(124,58,237,0.35)] ring-1 ring-violet/10 grid grid-cols-1 md:grid-cols-12">
         {/* Sidebar Brand Column (Visible on md+) */}
         <aside className="relative hidden md:flex md:col-span-5 bg-gradient-to-br from-purple-50 via-white to-purple-50 border-r border-purple-100/70 p-12 min-h-[32rem] flex-col justify-center overflow-hidden">
           <div className="relative z-10">

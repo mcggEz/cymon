@@ -448,13 +448,19 @@ router.get('/scoring', async (req, res, next) => {
 router.get('/employees', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, display_name, email, role, extra_roles, avatar_url, created_at, admin_profiles(employee_id, position), staff(license_no, title)')
-      .eq('clinic_id', req.profile.clinic_id)
-      .neq('role', 'client')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+    const baseCols =
+      'id, display_name, email, role, avatar_url, created_at, admin_profiles(employee_id, position), staff(license_no, title)';
+    const listQuery = (cols) =>
+      supabase
+        .from('profiles')
+        .select(cols)
+        .eq('clinic_id', req.profile.clinic_id)
+        .neq('role', 'client')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+    // extra_roles is added by migration 0017; fall back if it isn't applied yet
+    let { data, error } = await listQuery(`${baseCols}, extra_roles`);
+    if (error) ({ data, error } = await listQuery(baseCols));
     if (error) return next(error);
     const one = (x) => (Array.isArray(x) ? x[0] : x) || {};
     res.json({

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { useSidebar } from '../../components/sidebarContext'
+import TodayDate from '../../components/ui/TodayDate'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -73,6 +74,7 @@ function StaffHeader({ title, subtitle }) {
           </div>
         </div>
         <div className="flex items-center gap-3 text-purple-700 relative z-50">
+          <TodayDate />
           {/* Notifications Dropdown */}
           <div className="relative" ref={notifRef}>
             <button
