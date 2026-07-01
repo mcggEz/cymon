@@ -134,7 +134,14 @@ const FORM_LABEL = { complete: 'Complete', pending: 'Pending', in_progress: 'In 
 function toRow(p) {
   return {
     id: p.patient_id,
+    uuid: p.id,
     name: p.name,
+    first_name: p.first_name,
+    middle_name: p.middle_name,
+    last_name: p.last_name,
+    date_of_birth: p.date_of_birth,
+    rawSex: p.sex,
+    rawStatus: p.status,
     age: p.age,
     sex: cap(p.sex),
     status: cap(p.status),
@@ -144,7 +151,77 @@ function toRow(p) {
   }
 }
 
-function ProfileModal({ row, onClose }) {
+function EditPatientModal({ row, onClose, onSaved }) {
+  const [f, setF] = useState({
+    first_name: row.first_name || '',
+    middle_name: row.middle_name || '',
+    last_name: row.last_name || '',
+    date_of_birth: row.date_of_birth || '',
+    sex: row.rawSex || '',
+    status: row.rawStatus || '',
+  })
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setErr(null)
+    if (!f.first_name || !f.last_name) {
+      setErr('First and last name are required.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.admin.updatePatient(row.uuid, f)
+      onSaved()
+    } catch (e2) {
+      setErr(e2.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal
+      title="Edit Patient"
+      subtitle={row.id}
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Cancel
+          </button>
+          <Button type="submit" form="edit-patient-form" size="lg" disabled={busy}>
+            {busy ? 'Saving…' : 'Save Changes'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="edit-patient-form" onSubmit={submit} className="space-y-5">
+        <Section title="Child" hint="Student record">
+          <Input label="First Name" tone="purple" value={f.first_name} onChange={(e) => set('first_name', e.target.value)} />
+          <Input label="Middle Name (optional)" tone="purple" value={f.middle_name} onChange={(e) => set('middle_name', e.target.value)} />
+          <Input label="Last Name" tone="purple" value={f.last_name} onChange={(e) => set('last_name', e.target.value)} />
+          <Input label="Date of Birth" type="date" tone="purple" value={f.date_of_birth} onChange={(e) => set('date_of_birth', e.target.value)} />
+          <Select label="Sex" value={f.sex} onChange={(e) => set('sex', e.target.value)}>
+            <option value="">Select…</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </Select>
+          <Select label="Status" value={f.status} onChange={(e) => set('status', e.target.value)}>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+          </Select>
+        </Section>
+
+        {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
+      </form>
+    </Modal>
+  )
+}
+
+function ProfileModal({ row, onClose, onEdit }) {
   return (
     <Modal
       title="Patient Profile"
@@ -156,7 +233,7 @@ function ProfileModal({ row, onClose }) {
           <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
             Close
           </button>
-          <RowAction variant="edit" className="px-4 py-1.5">
+          <RowAction variant="edit" className="px-4 py-1.5" onClick={() => onEdit(row)}>
             Edit
           </RowAction>
         </div>
@@ -199,6 +276,7 @@ function ProfileModal({ row, onClose }) {
 
 function Patients() {
   const [active, setActive] = useState(null)
+  const [editing, setEditing] = useState(null)
   const [rows, setRows] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -322,7 +400,7 @@ function Patients() {
                       <RowAction variant="view" onClick={() => setActive(r)}>
                         View
                       </RowAction>
-                      <RowAction variant="edit">Edit</RowAction>
+                      <RowAction variant="edit" onClick={() => setEditing(r)}>Edit</RowAction>
                     </div>
                   </td>
                 </tr>
@@ -332,7 +410,27 @@ function Patients() {
           </div>
         </section>
 
-        {active ? <ProfileModal row={active} onClose={() => setActive(null)} /> : null}
+        {active ? (
+          <ProfileModal
+            row={active}
+            onClose={() => setActive(null)}
+            onEdit={(r) => {
+              setActive(null)
+              setEditing(r)
+            }}
+          />
+        ) : null}
+        {editing ? (
+          <EditPatientModal
+            row={editing}
+            onClose={() => setEditing(null)}
+            onSaved={() => {
+              setEditing(null)
+              setNotice('Patient updated.')
+              load()
+            }}
+          />
+        ) : null}
         {showRegister ? (
           <RegisterPatientModal
             onClose={() => setShowRegister(false)}

@@ -81,6 +81,8 @@ export const api = {
     patients: () => request('/api/admin/patients', { auth: true }),
     createPatient: (payload) =>
       request('/api/admin/patients', { method: 'POST', body: payload, auth: true }),
+    updatePatient: (id, payload) =>
+      request(`/api/admin/patients/${id}`, { method: 'PATCH', body: payload, auth: true }),
     compliance: () => request('/api/admin/compliance', { auth: true }),
     schedule: () => request('/api/admin/schedule', { auth: true }),
     createAppointment: (payload) =>

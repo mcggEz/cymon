@@ -96,12 +96,51 @@ router.get('/patients', async (req, res, next) => {
         id: p.id,
         patient_id: p.patient_id,
         name: patientName(p),
+        first_name: p.first_name,
+        middle_name: p.middle_name,
+        last_name: p.last_name,
+        date_of_birth: p.date_of_birth,
         age: ageFromDob(p.date_of_birth),
         sex: p.sex,
         status: p.status,
         admission_form_status: p.admission_form_status,
       })),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/patients/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { first_name, middle_name, last_name, date_of_birth, sex, status } = req.body || {};
+    const patch = {};
+    if (first_name !== undefined) patch.first_name = first_name;
+    if (middle_name !== undefined) patch.middle_name = middle_name || null;
+    if (last_name !== undefined) patch.last_name = last_name;
+    if (date_of_birth !== undefined) patch.date_of_birth = date_of_birth || null;
+    if (sex !== undefined) patch.sex = sex;
+    if (status !== undefined) {
+      if (!['active', 'pending'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+      }
+      patch.status = status;
+    }
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+    const { data, error } = await supabase
+      .from('patients')
+      .update(patch)
+      .eq('id', req.params.id)
+      .eq('clinic_id', req.profile.clinic_id)
+      .is('deleted_at', null)
+      .select('id')
+      .maybeSingle();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Patient not found' });
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

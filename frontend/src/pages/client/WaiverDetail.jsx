@@ -54,17 +54,40 @@ function WaiverDetail() {
   const { id } = useParams()
   const code = decodeURIComponent(id || '')
   const [signature, setSignature] = useState(null)
+  const [agreed, setAgreed] = useState({})
+  const [houseRules, setHouseRules] = useState(false)
+  const [ack, setAck] = useState({ parent_name: '', date: '', child_name: '', relationship: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
+  const provisionKeys = PROVISIONS.map((p) => p.title.split('.')[0])
+  const toggleProvision = (key) => setAgreed((a) => ({ ...a, [key]: !a[key] }))
+  const setAckField = (k) => (e) => setAck((x) => ({ ...x, [k]: e.target.value }))
+
   const handleSubmit = async () => {
     setError(null)
+    if (!provisionKeys.every((k) => agreed[k])) {
+      setError('Please agree to all provisions before submitting.')
+      return
+    }
+    if (!houseRules) {
+      setError('Please acknowledge the clinic house rules.')
+      return
+    }
+    if (!ack.parent_name.trim()) {
+      setError('Parent / guardian full name is required.')
+      return
+    }
+    if (!signature) {
+      setError('Your e-signature is required.')
+      return
+    }
     setSubmitting(true)
     try {
       await api.client.submitWaiver(code, {
-        provisions_agreed: Object.fromEntries(PROVISIONS.map((p) => [p.title.split('.')[0], true])),
+        provisions_agreed: Object.fromEntries(provisionKeys.map((k) => [k, true])),
         house_rules_agreed: true,
-        signature_text: signature ? 'signed' : null,
+        signature_text: ack.parent_name.trim(),
       })
       navigate('/client/waivers')
     } catch (err) {
@@ -113,7 +136,12 @@ function WaiverDetail() {
               <div key={p.title} className="border-l-2 border-purple-300 pl-3">
                 <div className="text-sm font-semibold text-purple-800">{p.title}</div>
                 <p className="mt-1 text-sm text-slate-700">{p.body}</p>
-                <Checkbox className="mt-2" label={`I agree to the terms in ${p.title.split('.')[0]}.`} />
+                <Checkbox
+                  className="mt-2"
+                  label={`I agree to the terms in ${p.title.split('.')[0]}.`}
+                  checked={!!agreed[p.title.split('.')[0]]}
+                  onChange={() => toggleProvision(p.title.split('.')[0])}
+                />
               </div>
             ))}
           </div>
@@ -126,7 +154,12 @@ function WaiverDetail() {
               <li key={r}>{r}</li>
             ))}
           </ul>
-          <Checkbox className="mt-3" label="I acknowledge and agree to abide by these house rules." />
+          <Checkbox
+            className="mt-3"
+            label="I acknowledge and agree to abide by these house rules."
+            checked={houseRules}
+            onChange={(e) => setHouseRules(e.target.checked)}
+          />
         </section>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-emerald-50 p-5">
@@ -139,10 +172,10 @@ function WaiverDetail() {
           </p>
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="Parent / Guardian Full Name" tone="purple" />
-            <Input label="Date" type="date" tone="purple" />
-            <Input label="Child / Student Full Name" tone="purple" />
-            <Input label="Relationship" tone="purple" />
+            <Input label="Parent / Guardian Full Name" tone="purple" value={ack.parent_name} onChange={setAckField('parent_name')} />
+            <Input label="Date" type="date" tone="purple" value={ack.date} onChange={setAckField('date')} />
+            <Input label="Child / Student Full Name" tone="purple" value={ack.child_name} onChange={setAckField('child_name')} />
+            <Input label="Relationship" tone="purple" value={ack.relationship} onChange={setAckField('relationship')} />
           </div>
 
           <SignaturePad
