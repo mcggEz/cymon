@@ -255,6 +255,97 @@ router.post('/announcements', async (req, res, next) => {
   }
 });
 
+router.patch('/announcements/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { title, type, priority, body, publish_date, expires_on, audience } = req.body || {};
+    const patch = {};
+    if (title !== undefined) patch.title = title;
+    if (type !== undefined) patch.type = type;
+    if (priority !== undefined)
+      patch.priority = ['normal', 'important', 'urgent'].includes(priority) ? priority : 'normal';
+    if (body !== undefined) patch.body = body;
+    if (publish_date !== undefined) patch.publish_date = publish_date || null;
+    if (expires_on !== undefined) patch.expires_on = expires_on || null;
+    if (audience !== undefined)
+      patch.audience = Array.isArray(audience) && audience.length ? audience : ['all'];
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+    const { data, error } = await supabase
+      .from('announcements')
+      .update(patch)
+      .eq('id', req.params.id)
+      .eq('clinic_id', req.profile.clinic_id)
+      .is('deleted_at', null)
+      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url')
+      .maybeSingle();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Announcement not found' });
+    res.json({ announcement: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/announcements/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data, error } = await supabase
+      .from('announcements')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .eq('clinic_id', req.profile.clinic_id)
+      .is('deleted_at', null)
+      .select('id')
+      .maybeSingle();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Announcement not found' });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// read-only audit trail for the compliance page
+router.get('/audit', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: rows, error } = await supabase
+      .from('audit_log')
+      .select('id, action, entity_type, summary, severity, created_at, actor_id')
+      .eq('clinic_id', req.profile.clinic_id)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) return next(error);
+
+    const actorIds = [...new Set((rows || []).map((r) => r.actor_id).filter(Boolean))];
+    const { data: actors } = await supabase
+      .from('profiles')
+      .select('id, display_name, role')
+      .in('id', actorIds.length ? actorIds : ['00000000-0000-0000-0000-000000000000']);
+    const byId = Object.fromEntries((actors || []).map((a) => [a.id, a]));
+
+    res.json({
+      logs: (rows || []).map((l) => {
+        const a = byId[l.actor_id];
+        return {
+          id: l.id,
+          created_at: l.created_at,
+          actor: a ? a.display_name : 'System',
+          actor_role: a ? a.role : null,
+          action: l.action,
+          entity_type: l.entity_type,
+          summary: l.summary,
+          severity: l.severity,
+        };
+      }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/scoring', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {

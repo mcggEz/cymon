@@ -57,6 +57,8 @@ function Announcements() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   const load = () => api.admin.announcements().then((d) => setPublished(d.announcements)).catch(() => {})
   useEffect(() => {
@@ -78,34 +80,72 @@ function Announcements() {
     })
   }
 
-  const handlePublish = async () => {
+  const resetForm = () => {
+    setEditingId(null)
+    setTitle('')
+    setBody('')
+    setType('urgent')
+    setPriority('normal')
+    setAudience(['all'])
+    setPublishDate('')
+    setExpiresOn('')
+  }
+
+  const toInputDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '')
+
+  const startEdit = (p) => {
+    setError(null)
+    setEditingId(p.id)
+    setTitle(p.title || '')
+    setBody(p.body || '')
+    setType(p.type || 'info')
+    setPriority(p.priority || 'normal')
+    setAudience(p.audience && p.audience.length ? p.audience : ['all'])
+    setPublishDate(toInputDate(p.publish_date))
+    setExpiresOn(toInputDate(p.expires_on))
+  }
+
+  const handleSave = async () => {
     setError(null)
     if (!title || !body) {
       setError('Title and message body are required.')
       return
     }
     setSubmitting(true)
+    const payload = {
+      title,
+      type,
+      priority,
+      audience: audience.length ? audience : ['all'],
+      body,
+      publish_date: publishDate || undefined,
+      expires_on: expiresOn || undefined,
+    }
     try {
-      await api.admin.createAnnouncement({
-        title,
-        type,
-        priority,
-        audience: audience.length ? audience : ['all'],
-        body,
-        publish_date: publishDate || undefined,
-        expires_on: expiresOn || undefined,
-      })
-      setTitle('')
-      setBody('')
-      setPriority('normal')
-      setAudience(['all'])
-      setPublishDate('')
-      setExpiresOn('')
+      if (editingId) {
+        await api.admin.updateAnnouncement(editingId, payload)
+      } else {
+        await api.admin.createAnnouncement(payload)
+      }
+      resetForm()
       await load()
     } catch (err) {
       setError(err.message)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    setDeletingId(id)
+    try {
+      await api.admin.deleteAnnouncement(id)
+      if (editingId === id) resetForm()
+      await load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -127,7 +167,7 @@ function Announcements() {
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
           <section className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
             <header className="bg-purple-700 px-5 py-3 text-white">
-              <div className="text-lg font-bold">✏ New Announcement</div>
+              <div className="text-lg font-bold">{editingId ? '✏ Edit Announcement' : '✏ New Announcement'}</div>
               <div className="text-xs opacity-80">Publish to all or specific audience</div>
             </header>
             <form className="space-y-4 p-5">
@@ -221,14 +261,32 @@ function Announcements() {
               {error ? (
                 <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">{error}</div>
               ) : null}
-              <button
-                type="button"
-                onClick={handlePublish}
-                disabled={submitting}
-                className="w-full rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
-              >
-                {submitting ? 'Publishing…' : '📣 Publish Announcement'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={submitting}
+                  className="flex-1 rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+                >
+                  {submitting
+                    ? editingId
+                      ? 'Saving…'
+                      : 'Publishing…'
+                    : editingId
+                      ? '💾 Save Changes'
+                      : '📣 Publish Announcement'}
+                </button>
+                {editingId ? (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    disabled={submitting}
+                    className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                ) : null}
+              </div>
             </form>
           </section>
 
@@ -247,7 +305,7 @@ function Announcements() {
               ) : null}
               {!loading &&
                 published.map((p) => (
-                <li key={p.id} className="rounded-md border border-purple-200 bg-white p-3">
+                <li key={p.id} className={`rounded-md border bg-white p-3 ${editingId === p.id ? 'border-purple-500 ring-1 ring-purple-300' : 'border-purple-200'}`}>
                   <div className="flex items-start justify-between">
                     <div className="text-sm font-semibold text-purple-800">{p.title}</div>
                     <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${(typeMeta[p.type] || typeMeta.info).cls}`}>
@@ -267,11 +325,20 @@ function Announcements() {
                   </div>
                   <div className="mt-1 text-[10px] text-slate-400">{fmtDate(p.publish_date)}</div>
                   <div className="mt-2 flex gap-2 text-xs">
-                    <button className="rounded-md border border-purple-200 px-2 py-1 text-purple-700 hover:bg-purple-50">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(p)}
+                      className="rounded-md border border-purple-200 px-2 py-1 text-purple-700 hover:bg-purple-50"
+                    >
                       ✏ Edit
                     </button>
-                    <button className="rounded-md border border-purple-200 px-2 py-1 text-purple-700 hover:bg-purple-50">
-                      🗑 Remove
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p.id)}
+                      disabled={deletingId === p.id}
+                      className="rounded-md border border-rose-200 px-2 py-1 text-rose-600 hover:bg-rose-50 disabled:opacity-60"
+                    >
+                      {deletingId === p.id ? 'Removing…' : '🗑 Remove'}
                     </button>
                   </div>
                 </li>

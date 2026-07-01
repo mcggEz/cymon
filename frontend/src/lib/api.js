@@ -89,6 +89,11 @@ export const api = {
     announcements: () => request('/api/admin/announcements', { auth: true }),
     createAnnouncement: (payload) =>
       request('/api/admin/announcements', { method: 'POST', body: payload, auth: true }),
+    updateAnnouncement: (id, payload) =>
+      request(`/api/admin/announcements/${id}`, { method: 'PATCH', body: payload, auth: true }),
+    deleteAnnouncement: (id) =>
+      request(`/api/admin/announcements/${id}`, { method: 'DELETE', auth: true }),
+    audit: () => request('/api/admin/audit', { auth: true }),
     scoring: () => request('/api/admin/scoring', { auth: true }),
     employees: () => request('/api/admin/employees', { auth: true }),
     createEmployee: (payload) =>
