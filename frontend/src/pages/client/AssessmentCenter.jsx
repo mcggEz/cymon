@@ -67,28 +67,41 @@ function AssessmentCard({ a, onOpen }) {
   )
 }
 
+// The professional scoring guide (score, interpretation, level) stays confidential
+// to the clinic. Patients only see that the assessment is Done and may request a
+// viewing, which is subject to clinic approval.
 function RecordCard({ r }) {
+  const [requested, setRequested] = useState(false)
   return (
     <article className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
       <div className="h-3 bg-gradient-to-r from-purple-600 to-purple-800" />
-      <div className="flex items-center justify-between gap-4 p-5">
+      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-700">
             {r.icon || '⊕'}
           </div>
           <div>
             <div className="text-base font-semibold text-purple-800">{r.title}</div>
-            <div className="text-xs text-slate-500">
-              📅 Submitted: {fmtDate(r.submitted_at)} · Status: {r.status}
-            </div>
+            <div className="text-xs text-slate-500">📅 Submitted: {fmtDate(r.submitted_at)}</div>
           </div>
         </div>
-        {r.total_score != null ? (
-          <span className="rounded-md bg-purple-100 px-3 py-2 text-sm font-semibold text-purple-800">
-            {r.total_score}
-            {r.max_score != null ? ` / ${r.max_score}` : ''}
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Done
           </span>
-        ) : null}
+          {requested ? (
+            <span className="rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+              Request sent — pending clinic approval
+            </span>
+          ) : (
+            <button
+              onClick={() => setRequested(true)}
+              className="rounded-md border border-purple-300 px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-50"
+            >
+              Request for Viewing
+            </button>
+          )}
+        </div>
       </div>
     </article>
   )
@@ -140,9 +153,10 @@ function AssessmentCenter() {
                 <span className="text-base font-bold">Official Clinical Results</span>
               </div>
               <p className="mt-2 text-sm text-slate-700">
-                To protect your child&apos;s sensitive data, official interpretations, diagnoses, and
-                program recommendations are discussed onsite. The scores below are your submitted
-                responses.
+                To protect your child&apos;s sensitive data, scores, official interpretations,
+                diagnoses, and program recommendations are kept confidential and discussed onsite.
+                Use <span className="font-semibold">Request for Viewing</span> to ask the clinic for
+                access — subject to approval.
               </p>
             </div>
 
