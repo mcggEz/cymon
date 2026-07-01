@@ -10,7 +10,25 @@ const Icon = ({ d, className = '' }) => (
 
 function StaffLayout({ user, profileTo, nav, outletContext }) {
   const [open, setOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('cymon.sidebarCollapsed') === '1'
+    } catch {
+      return false
+    }
+  })
   const close = () => setOpen(false)
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      const next = !c
+      try {
+        localStorage.setItem('cymon.sidebarCollapsed', next ? '1' : '0')
+      } catch {
+        // ignore storage errors (private mode)
+      }
+      return next
+    })
+
   return (
     <SidebarContext.Provider value={{ openSidebar: () => setOpen(true) }}>
       <div className="flex h-dvh bg-[#efeaf7]">
@@ -19,8 +37,9 @@ function StaffLayout({ user, profileTo, nav, outletContext }) {
         ) : null}
         <aside
           className={[
-            'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-gradient-to-b from-purple-700 to-purple-900 text-white transition-transform duration-300',
+            'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-gradient-to-b from-purple-700 to-purple-900 text-white transition-all duration-300',
             'lg:static lg:z-auto lg:translate-x-0',
+            collapsed ? 'lg:w-20' : 'lg:w-64',
             open ? 'translate-x-0' : '-translate-x-full',
           ].join(' ')}
         >
@@ -32,50 +51,71 @@ function StaffLayout({ user, profileTo, nav, outletContext }) {
           >
             <Icon d="M6 6l12 12M18 6L6 18" />
           </button>
+
+          {/* Desktop collapse / expand toggle */}
+          <div className={['hidden pt-3 lg:flex', collapsed ? 'justify-center px-2' : 'justify-end px-3'].join(' ')}>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="rounded-md p-1.5 text-white/70 hover:bg-white/10"
+            >
+              <Icon d={collapsed ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
+            </button>
+          </div>
+
           <Link
             to={profileTo}
             onClick={close}
-            className="flex items-center gap-3 px-5 py-5 hover:bg-white/5"
+            title={user.name}
+            className={['flex items-center gap-3 py-4 hover:bg-white/5', collapsed ? 'px-5 lg:justify-center lg:px-0' : 'px-5'].join(' ')}
           >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
-            <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-semibold leading-tight">{user.name}</div>
-            <div className="text-[10px] tracking-wider text-purple-200/80">{user.id}</div>
-          </div>
-          <Icon d="M9 6l6 6-6 6" />
-        </Link>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
+              <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
+            </div>
+            <div className={['flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
+              <div className="text-sm font-semibold leading-tight">{user.name}</div>
+              <div className="text-[10px] tracking-wider text-purple-200/80">{user.id}</div>
+            </div>
+            <span className={collapsed ? 'lg:hidden' : ''}>
+              <Icon d="M9 6l6 6-6 6" />
+            </span>
+          </Link>
 
-        <nav className="flex-1 px-3">
-          {nav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={close}
-              className={({ isActive }) =>
-                [
-                  'mt-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  isActive ? 'bg-white/15 text-white' : 'text-purple-100/90 hover:bg-white/10',
-                ].join(' ')
-              }
-            >
-              <Icon d={item.d} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+          <nav className={['flex-1', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>
+            {nav.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={close}
+                title={item.label}
+                className={({ isActive }) =>
+                  [
+                    'mt-1 flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors',
+                    collapsed ? 'px-3 lg:justify-center lg:px-0' : 'px-3',
+                    isActive ? 'bg-white/15 text-white' : 'text-purple-100/90 hover:bg-white/10',
+                  ].join(' ')
+                }
+              >
+                <Icon d={item.d} className="shrink-0" />
+                <span className={collapsed ? 'lg:hidden' : ''}>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
 
-        <div className="px-5 pb-5 pt-4 flex items-center justify-center gap-2.5">
-          <img src="/logo-cymon.png" alt="CyMon" className="h-9 w-9 rounded-lg object-cover" />
-          <div className="font-serif italic text-2xl font-semibold text-white">CyMon</div>
+          <div className={['flex items-center justify-center gap-2.5 pb-5 pt-4', collapsed ? 'px-5 lg:px-2' : 'px-5'].join(' ')}>
+            <img src="/logo-cymon.png" alt="CyMon" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+            <div className={['font-serif text-2xl font-semibold italic text-white', collapsed ? 'lg:hidden' : ''].join(' ')}>
+              CyMon
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <Outlet context={outletContext} />
         </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Outlet context={outletContext} />
-      </div>
       </div>
     </SidebarContext.Provider>
   )
