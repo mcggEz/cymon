@@ -5,6 +5,7 @@ import Select from '../../components/ui/Select'
 import Button from '../../components/ui/Button'
 import ProfileSetupLayout from './ProfileSetupLayout'
 import { useAuth } from '../../auth/useAuth'
+import { mergeSetupDraft, getSetupDraft } from './setupDraft'
 
 const CameraIcon = () => (
   <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
@@ -33,11 +34,26 @@ function ProfileSetupPersonal() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+  const [child, setChild] = useState(() => ({
+    first_name: '',
+    middle_name: '',
+    last_name: '',
+    nick_name: '',
+    date_of_birth: '',
+    sex: '',
+    home_address: '',
+    contact_number: '',
+    nationality: '',
+    preferred_language: '',
+    school: '',
+    grade_level: '',
+    ...(getSetupDraft().patient || {}),
+  }))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
+
+  const setC = (k) => (e) => setChild((c) => ({ ...c, [k]: e.target.value }))
 
   const handleNext = async () => {
     setError(null)
@@ -55,13 +71,22 @@ function ProfileSetupPersonal() {
       setError('Passwords do not match.')
       return
     }
+    if (!child.first_name || !child.last_name) {
+      setError("Child's first and last name are required.")
+      return
+    }
+    if (!child.date_of_birth || !child.sex) {
+      setError("Child's date of birth and sex are required.")
+      return
+    }
 
     setSubmitting(true)
-    const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || email
+    const displayName = [child.first_name, child.last_name].filter(Boolean).join(' ').trim() || email
 
     try {
       const data = await signUp({ email, password, displayName, role: 'client' })
       if (data.session) {
+        mergeSetupDraft({ patient: child })
         navigate('/setup/guardian')
       } else {
         setNotice(
@@ -135,22 +160,12 @@ function ProfileSetupPersonal() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Input
-          label="First Name"
-          tone="purple"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-        <Input label="Middle Name" tone="purple" />
-        <Input
-          label="Last Name"
-          tone="purple"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
-        <Input label="Nick Name" tone="purple" />
-        <Input label="Date of Birth" type="date" tone="purple" />
-        <Select label="Sex" placeholder="Select">
+        <Input label="First Name" tone="purple" value={child.first_name} onChange={setC('first_name')} />
+        <Input label="Middle Name" tone="purple" value={child.middle_name} onChange={setC('middle_name')} />
+        <Input label="Last Name" tone="purple" value={child.last_name} onChange={setC('last_name')} />
+        <Input label="Nick Name" tone="purple" value={child.nick_name} onChange={setC('nick_name')} />
+        <Input label="Date of Birth" type="date" tone="purple" value={child.date_of_birth} onChange={setC('date_of_birth')} />
+        <Select label="Sex" placeholder="Select" value={child.sex} onChange={setC('sex')}>
           <option value="male">Male</option>
           <option value="female">Female</option>
         </Select>
@@ -159,15 +174,15 @@ function ProfileSetupPersonal() {
       <SectionDivider label="CONTACT & LOCATION" />
 
       <div className="grid grid-cols-1 gap-4">
-        <Input label="Home Address" tone="purple" />
+        <Input label="Home Address" tone="purple" value={child.home_address} onChange={setC('home_address')} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Input label="Contact Number" tone="purple" />
-          <Input label="Nationality" tone="purple" />
-          <Input label="Preferred Language" tone="purple" />
+          <Input label="Contact Number" tone="purple" value={child.contact_number} onChange={setC('contact_number')} />
+          <Input label="Nationality" tone="purple" value={child.nationality} onChange={setC('nationality')} />
+          <Input label="Preferred Language" tone="purple" value={child.preferred_language} onChange={setC('preferred_language')} />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label="School / Institution" tone="purple" />
-          <Input label="Grade / Year Level" tone="purple" />
+          <Input label="School / Institution" tone="purple" value={child.school} onChange={setC('school')} />
+          <Input label="Grade / Year Level" tone="purple" value={child.grade_level} onChange={setC('grade_level')} />
         </div>
       </div>
 
