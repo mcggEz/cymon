@@ -5,17 +5,6 @@ import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
 import { useAuth } from '../auth/useAuth'
 
-const BrandMark = ({ className = '' }) => (
-  <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-    <path
-      d="M32 10c-4 6-10 8-16 8 0 10 6 18 16 22 10-4 16-12 16-22-6 0-12-2-16-8z"
-      fill="currentColor"
-      opacity="0.9"
-    />
-    <circle cx="32" cy="30" r="3" fill="white" />
-  </svg>
-)
-
 const ArrowLeft = ({ className = '' }) => (
   <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
     <path
@@ -102,6 +91,7 @@ function Login() {
         {/* Sidebar Brand Column (Visible on md+) */}
         <aside className="relative hidden md:flex md:col-span-5 bg-slate-50 border-r border-charcoal/5 p-12 min-h-[32rem] flex-col justify-center overflow-hidden">
           <div className="relative z-10">
+            <img src="/logo-cymon.png" alt="CyMon" className="mb-5 block h-16 w-16 rounded-2xl object-cover shadow-sm" />
             <span className="font-serif italic text-6xl font-bold text-charcoal">CyMon</span>
             <p className="mt-4 max-w-xs text-sm text-slate-600 leading-relaxed">
               Compassionate care, organized. A digital home for the SPED program at ClearMind Psychological Services.
@@ -115,11 +105,11 @@ function Login() {
           className="p-8 md:p-12 md:col-span-7 flex flex-col gap-5 justify-center"
         >
           {/* Mobile-only logo */}
-          <div className="md:hidden flex items-center gap-2 mb-2 text-violet">
-            <BrandMark className="h-7 w-7 text-violet" />
+          <div className="md:hidden flex items-center gap-2 mb-2">
+            <img src="/logo-cymon.png" alt="CyMon" className="h-8 w-8 rounded-lg object-cover" />
             <div className="leading-tight text-left">
-              <div className="text-sm font-bold text-charcoal">ClearMind</div>
-              <div className="font-mono text-[7px] tracking-[0.2em] text-slate-400">PSYCHOLOGICAL SERVICES</div>
+              <div className="text-sm font-bold text-charcoal">CyMon</div>
+              <div className="font-mono text-[7px] tracking-[0.2em] text-slate-400">CLEARMIND · PSYCHOLOGICAL SERVICES</div>
             </div>
           </div>
 
