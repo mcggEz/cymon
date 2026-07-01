@@ -671,7 +671,7 @@ function Landing() {
 
       {/* Footer */}
       <footer id="contact" className="bg-cream text-charcoal py-16 lg:py-24 px-6 lg:px-16 border-t border-charcoal/5">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-12 md:gap-8 items-start mb-16">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-8 items-start mb-16">
           {/* Col 1: Contact */}
           <div className="space-y-4">
             <span className="text-slate-400 font-mono text-xs uppercase tracking-widest block">// Contact</span>
@@ -712,19 +712,6 @@ function Landing() {
               <a href="#platform" className="hover:text-violet transition-colors">Platform</a>
               <a href="#portals" className="hover:text-violet transition-colors">Portals</a>
               <a href="#news" className="hover:text-violet transition-colors">Announcements</a>
-            </div>
-          </div>
-
-          {/* Col 3: Compliance & Social */}
-          <div className="space-y-4">
-            <span className="text-slate-400 font-mono text-xs uppercase tracking-widest block">// Privacy Compliance</span>
-            <p className="text-xs text-slate-700 leading-relaxed">
-              This system fully complies with the Data Privacy Act of 2012 (DPA 2012) and National Privacy Commission Circular 2023-04.
-            </p>
-            <div className="pt-2">
-              <span className="inline-flex items-center space-x-2 border border-charcoal/20 px-4 py-2 rounded-full font-mono text-[10px] uppercase tracking-wider text-charcoal">
-                🛡️ Encryption Secured
-              </span>
             </div>
           </div>
         </div>
