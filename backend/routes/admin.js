@@ -698,6 +698,22 @@ router.post('/patients', async (req, res, next) => {
       .single();
     if (error) return res.status(400).json({ error: error.message });
 
+    const photoMatch = /^data:(image\/(png|jpe?g|webp));base64,(.+)$/.exec(child.photo || '');
+    if (photoMatch) {
+      const ext = photoMatch[2] === 'jpeg' || photoMatch[2] === 'jpg' ? 'jpg' : photoMatch[2];
+      const buffer = Buffer.from(photoMatch[3], 'base64');
+      if (buffer.length <= 5 * 1024 * 1024) {
+        const path = `patients/${patient.id}/${require('crypto').randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('photos')
+          .upload(path, buffer, { contentType: photoMatch[1], upsert: true });
+        if (!upErr) {
+          const photo_url = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+          await supabase.from('patients').update({ photo_url }).eq('id', patient.id);
+        }
+      }
+    }
+
     await Promise.all([
       supabase.from('clinical_profiles').insert({ patient_id: patient.id }),
       guardian.full_name

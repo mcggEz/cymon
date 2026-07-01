@@ -8,6 +8,7 @@ import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
+import PhotoCapture from '../../../components/ui/PhotoCapture'
 
 const tone = {
   emerald: 'bg-emerald-100 text-emerald-700',
@@ -39,6 +40,7 @@ function RegisterPatientModal({ onClose, onCreated }) {
   })
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [photo, setPhoto] = useState(null)
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
 
   const submit = async (e) => {
@@ -67,6 +69,7 @@ function RegisterPatientModal({ onClose, onCreated }) {
           last_name: f.last_name,
           date_of_birth: f.date_of_birth,
           sex: f.sex,
+          photo,
         },
         guardian: {
           full_name: f.guardian_name,
@@ -104,6 +107,13 @@ function RegisterPatientModal({ onClose, onCreated }) {
           <Input label="Parent Email" type="email" tone="purple" value={f.parent_email} onChange={(e) => set('parent_email', e.target.value)} />
           <Input label="Temporary Password" type="password" tone="purple" value={f.parent_password} onChange={(e) => set('parent_password', e.target.value)} />
         </Section>
+
+        <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          <div className="text-sm font-semibold text-purple-800">Patient Photo</div>
+          <div className="mt-4">
+            <PhotoCapture value={photo} onChange={setPhoto} />
+          </div>
+        </section>
 
         <Section title="Child" hint="The enrolled student">
           <Input label="First Name" tone="purple" value={f.first_name} onChange={(e) => set('first_name', e.target.value)} />
