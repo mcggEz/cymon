@@ -78,24 +78,66 @@ function PreviewModal({ row, onClose }) {
   )
 }
 
+const blankLog = {
+  patient_id: '',
+  session_number: '',
+  session_date: '',
+  activity_title: '',
+  target_domain: '',
+  objectives: '',
+  procedure: '',
+  observations: '',
+}
+
 function ActivityLog() {
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
+  const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState(blankLog)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [notice, setNotice] = useState(null)
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  const load = () =>
+    api.psychometrician
+      .activityLogs()
+      .then((d) => {
+        setRows(d.rows)
+        setPatients(d.patients || [])
+      })
+      .catch(() => {})
 
   useEffect(() => {
     let on = true
-    api.psychometrician
-      .activityLogs()
-      .then((d) => on && setRows(d.rows))
-      .catch(() => {})
-      .finally(() => {
-        if (on) setLoading(false)
-      })
+    load().finally(() => {
+      if (on) setLoading(false)
+    })
     return () => {
       on = false
     }
   }, [])
+
+  const save = async (status) => {
+    setError(null)
+    setNotice(null)
+    if (!form.patient_id || !form.activity_title) {
+      setError('Please choose a student and enter an activity title.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      await api.psychometrician.addActivityLog({ ...form, status })
+      setForm(blankLog)
+      setNotice(status === 'pending' ? 'Activity report submitted for review.' : 'Draft saved.')
+      await load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <>
@@ -188,89 +230,76 @@ function ActivityLog() {
           <div className="mt-5 rounded-md border border-purple-200 bg-purple-50 p-4">
             <div className="text-sm font-semibold text-purple-800">⏱ Activity Details</div>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label className="text-xs sm:col-span-2">
+                <div className="font-semibold text-purple-700">NAME OF THE STUDENT *</div>
+                <select
+                  value={form.patient_id}
+                  onChange={set('patient_id')}
+                  className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm"
+                >
+                  <option value="">Select a student…</option>
+                  {patients.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </label>
               <label className="text-xs">
                 <div className="font-semibold text-purple-700">SESSION NUMBER</div>
-                <input className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="12" />
+                <input type="number" value={form.session_number} onChange={set('session_number')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="12" />
               </label>
               <label className="text-xs">
                 <div className="font-semibold text-purple-700">DATE OF THE ACTIVITY</div>
-                <input type="date" className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" />
-              </label>
-              <label className="text-xs">
-                <div className="font-semibold text-purple-700">NAME OF THE STUDENT</div>
-                <input className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="Jordan Smith" />
+                <input type="date" value={form.session_date} onChange={set('session_date')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" />
               </label>
               <label className="text-xs">
                 <div className="font-semibold text-purple-700">TARGETED DOMAINS</div>
-                <input className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="Motor Skills" />
+                <input value={form.target_domain} onChange={set('target_domain')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="Motor Skills" />
               </label>
-              <label className="text-xs sm:col-span-2">
-                <div className="font-semibold text-purple-700">TITLE OF THE ACTIVITY</div>
-                <input className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="Sensory Integration Play" />
+              <label className="text-xs">
+                <div className="font-semibold text-purple-700">TITLE OF THE ACTIVITY *</div>
+                <input value={form.activity_title} onChange={set('activity_title')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="Sensory Integration Play" />
               </label>
               <label className="text-xs sm:col-span-2">
                 <div className="font-semibold text-purple-700">OBJECTIVES</div>
-                <textarea rows={2} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm" />
+                <textarea rows={2} value={form.objectives} onChange={set('objectives')} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm" />
               </label>
               <label className="text-xs sm:col-span-2">
                 <div className="font-semibold text-purple-700">ACTIVITY PROCEDURE</div>
-                <textarea rows={3} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm" />
+                <textarea rows={3} value={form.procedure} onChange={set('procedure')} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm" />
               </label>
             </div>
           </div>
 
           <div className="mt-5 rounded-md border border-purple-200 bg-purple-50 p-4">
             <div className="text-sm font-semibold text-purple-800">🧠 Behavioral Observations</div>
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                    <th className="py-2 text-left">No.</th>
-                    <th className="py-2 text-left">Name of Student</th>
-                    <th className="py-2 text-left">Responses / Displayed Behavior</th>
-                    <th className="py-2 text-left">Act</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="py-2">1</td>
-                    <td className="py-2">Jordan Smith</td>
-                    <td className="py-2">
-                      <input className="h-8 w-full rounded-md border border-purple-200 bg-white px-2 text-xs" defaultValue="Initially hesitant. Engaged for 3 minutes before withdrawing." />
-                    </td>
-                    <td className="py-2">
-                      <button className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">−</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <button className="mt-2 rounded-md border border-purple-300 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-white">
-              + Add Student Observation
+            <textarea
+              rows={4}
+              value={form.observations}
+              onChange={set('observations')}
+              placeholder="Responses and displayed behavior during the session…"
+              className="mt-3 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm"
+            />
+          </div>
+
+          {error ? <div className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+          {notice ? <div className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</div> : null}
+
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              onClick={() => save('draft')}
+              disabled={submitting}
+              className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+            >
+              💾 Save Draft
+            </button>
+            <button
+              onClick={() => save('pending')}
+              disabled={submitting}
+              className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+            >
+              {submitting ? 'Saving…' : 'Submit Daily Activity Report'}
             </button>
           </div>
-
-          <div className="mt-5 rounded-md border border-purple-200 bg-purple-50 p-4">
-            <div className="text-sm font-semibold text-purple-800">⚖ Authentication & Approval</div>
-            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <div className="text-xs font-semibold text-purple-700">PREPARED BY:</div>
-                <div className="mt-1 h-20 rounded-md border border-purple-200 bg-white" />
-                <button className="mt-2 rounded-md border border-purple-300 px-3 py-1 text-xs text-purple-700 hover:bg-white">
-                  Clear Canvas
-                </button>
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-purple-700">SIGNATURE</div>
-                <div className="mt-1 h-20 rounded-md border border-purple-200 bg-white" />
-                <div className="mt-1 text-xs text-slate-500">Dr. Erika Faustino</div>
-              </div>
-            </div>
-          </div>
-
-          <button className="mt-5 w-full rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800">
-            Submit Daily Activity Report
-          </button>
         </section>
 
         {active ? <PreviewModal row={active} onClose={() => setActive(null)} /> : null}

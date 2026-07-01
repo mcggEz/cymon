@@ -177,10 +177,18 @@ router.get('/reports', async (req, res, next) => {
 router.get('/activity-logs', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
-      .from('session_logs')
-      .select('id, session_number, session_date, activity_title, status, patients(first_name, middle_name, last_name, clinic_id)')
-      .order('session_date', { ascending: false });
+    const [{ data, error }, { data: roster }] = await Promise.all([
+      supabase
+        .from('session_logs')
+        .select('id, session_number, session_date, activity_title, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .order('session_date', { ascending: false }),
+      supabase
+        .from('patients')
+        .select('id, first_name, middle_name, last_name')
+        .eq('clinic_id', req.profile.clinic_id)
+        .is('deleted_at', null)
+        .order('first_name', { ascending: true }),
+    ]);
     if (error) return next(error);
     res.json({
       rows: inClinic(data, req.profile.clinic_id).map((r) => ({
@@ -191,7 +199,49 @@ router.get('/activity-logs', async (req, res, next) => {
         detail: r.activity_title,
         status: r.status,
       })),
+      patients: (roster || []).map((p) => ({ id: p.id, name: patientName(p) })),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// create a session activity log (FO-07)
+router.post('/activity-logs', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status } =
+      req.body || {};
+    if (!patient_id || !activity_title) {
+      return res.status(400).json({ error: 'Patient and activity title are required' });
+    }
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const safeStatus = ['draft', 'pending'].includes(status) ? status : 'draft';
+    const { data, error } = await supabase
+      .from('session_logs')
+      .insert({
+        patient_id,
+        author_id: req.profile.id,
+        session_number: session_number ? Number(session_number) : null,
+        session_date: session_date || undefined,
+        activity_title,
+        target_domain: target_domain || null,
+        objectives: objectives || null,
+        procedure: procedure || null,
+        observations: observations || null,
+        status: safeStatus,
+      })
+      .select('id')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ log: data });
   } catch (err) {
     next(err);
   }
