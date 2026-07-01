@@ -30,7 +30,7 @@ function StaffLayout({ user, nav, outletContext }) {
     })
 
   return (
-    <SidebarContext.Provider value={{ openSidebar: () => setOpen(true) }}>
+    <SidebarContext.Provider value={{ openSidebar: () => setOpen(true), collapsed, toggleCollapsed }}>
       <div className="flex h-dvh bg-[#efeaf7]">
         {open ? (
           <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={close} aria-hidden="true" />
@@ -55,26 +55,16 @@ function StaffLayout({ user, nav, outletContext }) {
           <div
             className={[
               'flex items-center gap-3 py-4',
-              collapsed ? 'px-5 lg:justify-between lg:gap-1 lg:px-2' : 'px-5',
+              collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5',
             ].join(' ')}
           >
-            <div className={['flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 h-12 w-12', collapsed ? 'lg:h-10 lg:w-10' : ''].join(' ')}>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
               <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
             </div>
             <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
               <div className="truncate text-sm font-semibold leading-tight">{user.name}</div>
               <div className="text-[10px] tracking-wider text-purple-200/80">{user.id}</div>
             </div>
-            {/* Show / hide sidebar (desktop) */}
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'}
-              title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
-              className="hidden shrink-0 rounded-md p-1.5 text-white/70 hover:bg-white/10 lg:inline-flex"
-            >
-              <Icon d={collapsed ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
-            </button>
           </div>
 
           <nav className={['flex-1', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>

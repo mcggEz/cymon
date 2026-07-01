@@ -114,7 +114,7 @@ function DailyActivity() {
 
   return (
     <>
-      <PageHeader title="Daily Activity Log" subtitle="March 29, 2026" />
+      <PageHeader title="Daily Activity Log" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Log Leo&apos;s daily observations to help Dr. Jinky design more effective therapy.

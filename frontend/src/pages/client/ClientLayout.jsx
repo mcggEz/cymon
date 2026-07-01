@@ -17,7 +17,7 @@ const NAV = [
   { to: '/client/waivers', label: 'Consents & Waivers', d: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4' },
 ]
 
-function Sidebar({ open, collapsed, onNavigate, onToggleCollapse }) {
+function Sidebar({ open, collapsed, onNavigate }) {
   return (
     <aside
       className={[
@@ -36,32 +36,20 @@ function Sidebar({ open, collapsed, onNavigate, onToggleCollapse }) {
         <Icon d="M6 6l12 12M18 6L6 18" />
       </button>
 
-      <div className={['flex items-center gap-2 py-4', collapsed ? 'px-5 lg:gap-1 lg:px-2' : 'px-5'].join(' ')}>
-        <Link
-          to="/client/profile"
-          onClick={onNavigate}
-          title="Leo Cruz"
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-md hover:opacity-90"
-        >
-          <div className={['flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 h-12 w-12', collapsed ? 'lg:h-10 lg:w-10' : ''].join(' ')}>
-            <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
-          </div>
-          <div className={['min-w-0', collapsed ? 'lg:hidden' : ''].join(' ')}>
-            <div className="truncate text-base font-semibold leading-tight">Leo Cruz</div>
-            <div className="text-[10px] tracking-wider text-purple-200/80">CMPS-2026-001</div>
-          </div>
-        </Link>
-        {/* Show / hide sidebar (desktop) */}
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'}
-          title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
-          className="hidden shrink-0 rounded-md p-1.5 text-white/70 hover:bg-white/10 lg:inline-flex"
-        >
-          <Icon d={collapsed ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
-        </button>
-      </div>
+      <Link
+        to="/client/profile"
+        onClick={onNavigate}
+        title="Leo Cruz"
+        className={['flex items-center gap-3 py-4 hover:bg-white/5', collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5'].join(' ')}
+      >
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
+          <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
+        </div>
+        <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
+          <div className="truncate text-base font-semibold leading-tight">Leo Cruz</div>
+          <div className="text-[10px] tracking-wider text-purple-200/80">CMPS-2026-001</div>
+        </div>
+      </Link>
 
       <nav className={['flex-1', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>
         {NAV.map((item) => (
@@ -116,7 +104,7 @@ function ClientLayout() {
     })
 
   return (
-    <SidebarContext.Provider value={{ openSidebar: () => setOpen(true) }}>
+    <SidebarContext.Provider value={{ openSidebar: () => setOpen(true), collapsed, toggleCollapsed }}>
       <div className="flex h-dvh bg-[#efeaf7]">
         {open ? (
           <div
@@ -125,12 +113,7 @@ function ClientLayout() {
             aria-hidden="true"
           />
         ) : null}
-        <Sidebar
-          open={open}
-          collapsed={collapsed}
-          onNavigate={() => setOpen(false)}
-          onToggleCollapse={toggleCollapsed}
-        />
+        <Sidebar open={open} collapsed={collapsed} onNavigate={() => setOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Outlet />
         </div>

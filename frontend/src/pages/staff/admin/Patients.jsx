@@ -369,7 +369,7 @@ function Patients() {
 
   return (
     <>
-      <StaffHeader title="Patient Management" subtitle="Monday, March 30, 2026 — Clinic Operations" />
+      <StaffHeader title="Patient Management" subtitle="Clinic Operations" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between gap-3">
           <div>

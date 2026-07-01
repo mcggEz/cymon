@@ -70,7 +70,7 @@ function Overview() {
 
   return (
     <>
-      <StaffHeader title="Dashboard Overview" subtitle="Monday, March 30, 2026 — Clinic Operations" showSearch={false} />
+      <StaffHeader title="Dashboard Overview" subtitle="Clinic Operations" showSearch={false} />
       <div className="flex-1 overflow-y-auto p-6">
         {error ? (
           <div className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>

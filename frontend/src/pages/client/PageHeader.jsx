@@ -23,20 +23,10 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString()
 }
 
-const Butterfly = ({ className = '' }) => (
-  <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
-    <ellipse cx="60" cy="60" rx="2.5" ry="30" fill="currentColor" />
-    <ellipse cx="40" cy="46" rx="22" ry="16" fill="currentColor" opacity="0.85" />
-    <ellipse cx="80" cy="46" rx="22" ry="16" fill="currentColor" opacity="0.85" />
-    <ellipse cx="44" cy="74" rx="16" ry="12" fill="currentColor" opacity="0.7" />
-    <ellipse cx="76" cy="74" rx="16" ry="12" fill="currentColor" opacity="0.7" />
-  </svg>
-)
-
 function PageHeader({ title, subtitle }) {
   const navigate = useNavigate()
   const { signOut } = useAuth()
-  const { openSidebar } = useSidebar()
+  const { openSidebar, collapsed, toggleCollapsed } = useSidebar()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showNotifs, setShowNotifs] = useState(false)
   const [notifications, setNotifications] = useState([])
@@ -108,7 +98,15 @@ function PageHeader({ title, subtitle }) {
         >
           <Icon d="M4 6h16M4 12h16M4 18h16" />
         </button>
-        <Butterfly className="h-8 w-8 shrink-0 text-purple-700" />
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'}
+          title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
+          className="hidden shrink-0 rounded-md p-2 text-purple-700 hover:bg-purple-50 lg:inline-flex"
+        >
+          <Icon d="M4 5h16v14H4zM9 5v14" />
+        </button>
         <div>
           <div className="text-lg font-semibold text-purple-800 leading-tight">{title}</div>
           {subtitle ? <div className="text-xs text-slate-500">{subtitle}</div> : null}
