@@ -77,7 +77,10 @@ function Login() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-cream text-charcoal flex flex-col items-center justify-center p-4">
+    <main
+      className="relative min-h-screen overflow-hidden text-charcoal flex flex-col items-center justify-center p-4"
+      style={{ background: 'radial-gradient(circle at 50% 50%, #22155c 0%, #0d0721 100%)' }}
+    >
       {/* Back Button */}
       <button
         type="button"
