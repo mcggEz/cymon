@@ -102,6 +102,8 @@ export const api = {
       request('/api/admin/employees', { method: 'POST', body: payload, auth: true }),
     setEmployeeActive: (id, active) =>
       request(`/api/admin/employees/${id}`, { method: 'PATCH', body: { active }, auth: true }),
+    setEmployeeRoles: (id, payload) =>
+      request(`/api/admin/employees/${id}`, { method: 'PATCH', body: payload, auth: true }),
   },
   psychologist: {
     approvals: () => request('/api/psychologist/approvals', { auth: true }),

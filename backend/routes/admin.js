@@ -450,7 +450,7 @@ router.get('/employees', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
     const baseCols =
-      'id, display_name, email, role, avatar_url, created_at, admin_profiles(employee_id, position), staff(license_no, title)';
+      'id, display_name, email, role, phone, avatar_url, created_at, admin_profiles(employee_id, position), staff(license_no, title)';
     const listQuery = (cols) =>
       supabase
         .from('profiles')
@@ -472,10 +472,15 @@ router.get('/employees', async (req, res, next) => {
           id: p.id,
           name: p.display_name,
           email: p.email,
+          phone: p.phone,
           role: p.role,
           extra_roles: p.extra_roles || [],
           avatar_url: p.avatar_url,
           created_at: p.created_at,
+          employee_id: ap.employee_id,
+          position: ap.position,
+          license_no: st.license_no,
+          staff_title: st.title,
           credential: p.role === 'admin' ? ap.employee_id : st.license_no,
           title: p.role === 'admin' ? ap.position : st.title,
         };
@@ -567,17 +572,11 @@ router.post('/employees', async (req, res, next) => {
   }
 });
 
-// activate / deactivate an employee (soft-delete + ban from signing in)
+// update an employee: activate/deactivate, or change their roles
 router.patch('/employees/:id', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { active } = req.body || {};
-    if (typeof active !== 'boolean') {
-      return res.status(400).json({ error: 'active (boolean) is required' });
-    }
-    if (req.params.id === req.profile.id) {
-      return res.status(400).json({ error: 'You cannot change your own account here' });
-    }
+    const { active, role, extra_roles } = req.body || {};
     const { data: emp } = await supabase
       .from('profiles')
       .select('id, role, clinic_id')
@@ -586,14 +585,41 @@ router.patch('/employees/:id', async (req, res, next) => {
     if (!emp || emp.clinic_id !== req.profile.clinic_id || emp.role === 'client') {
       return res.status(404).json({ error: 'Employee not found' });
     }
-    const { error } = await supabase
-      .from('profiles')
-      .update({ deleted_at: active ? null : new Date().toISOString() })
-      .eq('id', emp.id);
-    if (error) return res.status(400).json({ error: error.message });
-    // block / restore their ability to sign in
-    await supabase.auth.admin.updateUserById(emp.id, { ban_duration: active ? 'none' : '876000h' });
-    res.json({ ok: true });
+
+    // role / extra-roles update
+    if (role !== undefined || extra_roles !== undefined) {
+      const ALL_ROLES = [...STAFF_ROLES, 'admin'];
+      const upd = {};
+      if (role !== undefined) {
+        if (!ALL_ROLES.includes(role)) return res.status(400).json({ error: 'Invalid primary role' });
+        upd.role = role;
+      }
+      const primary = role !== undefined ? role : emp.role;
+      if (extra_roles !== undefined) {
+        upd.extra_roles = Array.isArray(extra_roles)
+          ? [...new Set(extra_roles.filter((r) => ALL_ROLES.includes(r) && r !== primary))]
+          : [];
+      }
+      const { error } = await supabase.from('profiles').update(upd).eq('id', emp.id);
+      if (error) return res.status(400).json({ error: error.message });
+      return res.json({ ok: true });
+    }
+
+    // activate / deactivate (soft-delete + ban from signing in)
+    if (typeof active === 'boolean') {
+      if (req.params.id === req.profile.id) {
+        return res.status(400).json({ error: 'You cannot change your own account here' });
+      }
+      const { error } = await supabase
+        .from('profiles')
+        .update({ deleted_at: active ? null : new Date().toISOString() })
+        .eq('id', emp.id);
+      if (error) return res.status(400).json({ error: error.message });
+      await supabase.auth.admin.updateUserById(emp.id, { ban_duration: active ? 'none' : '876000h' });
+      return res.json({ ok: true });
+    }
+
+    return res.status(400).json({ error: 'Nothing to update' });
   } catch (err) {
     next(err);
   }

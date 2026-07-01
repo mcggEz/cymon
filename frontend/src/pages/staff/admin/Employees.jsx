@@ -76,12 +76,48 @@ const RoleChips = ({ role, extra = [] }) => {
   )
 }
 
-function EmployeeModal({ emp, onClose, onDeactivate, busy }) {
+const Info = ({ label, value }) => (
+  <div>
+    <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+    <div className="font-medium text-purple-800">{value || '—'}</div>
+  </div>
+)
+
+function EmployeeModal({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
   const [confirm, setConfirm] = useState(false)
+  const [editingRoles, setEditingRoles] = useState(false)
+  const [role, setRole] = useState(emp.role)
+  const [extra, setExtra] = useState(emp.extra_roles || [])
+  const [savingRoles, setSavingRoles] = useState(false)
+  const [roleErr, setRoleErr] = useState(null)
+  const isAdmin = emp.role === 'admin'
+
+  const toggleExtra = (r) => setExtra((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]))
+
+  const startEdit = () => {
+    setRoleErr(null)
+    setRole(emp.role)
+    setExtra(emp.extra_roles || [])
+    setEditingRoles(true)
+  }
+
+  const saveRoles = async () => {
+    setRoleErr(null)
+    setSavingRoles(true)
+    try {
+      await onSaveRoles(emp.id, { role, extra_roles: extra.filter((r) => r !== role) })
+      setEditingRoles(false)
+    } catch (e) {
+      setRoleErr(e.message)
+    } finally {
+      setSavingRoles(false)
+    }
+  }
+
   return (
-    <Modal title="Employee Details" onClose={onClose} maxWidth="max-w-md">
+    <Modal title="Employee Details" onClose={onClose} maxWidth="max-w-lg">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-sm font-bold text-purple-700">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-sm font-bold text-purple-700">
             {emp.avatar_url ? <img src={emp.avatar_url} alt="" className="h-full w-full object-cover" /> : initialsOf(emp.name)}
           </div>
           <div>
@@ -91,27 +127,75 @@ function EmployeeModal({ emp, onClose, onDeactivate, busy }) {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Role(s)</div>
-            <div className="mt-1">
-              <RoleChips role={emp.role} extra={emp.extra_roles} />
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">License / ID</div>
-            <div className="font-medium text-purple-800">{emp.credential || '—'}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Title</div>
-            <div className="font-medium text-purple-800">{emp.title || '—'}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Joined</div>
-            <div className="font-medium text-purple-800">{fmtDate(emp.created_at)}</div>
-          </div>
+          <Info label="Email" value={emp.email} />
+          <Info label="Phone" value={emp.phone} />
+          {isAdmin ? (
+            <>
+              <Info label="Employee ID" value={emp.employee_id} />
+              <Info label="Position" value={emp.position} />
+            </>
+          ) : (
+            <>
+              <Info label="PRC License No." value={emp.license_no} />
+              <Info label="Title" value={emp.staff_title} />
+            </>
+          )}
+          <Info label="Joined" value={fmtDate(emp.created_at)} />
         </div>
 
-        <div className="mt-6 border-t border-slate-100 pt-4">
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Role(s)</div>
+            {!editingRoles ? (
+              <button onClick={startEdit} className="text-xs font-semibold text-purple-700 hover:text-purple-900">
+                ✎ Edit Roles
+              </button>
+            ) : null}
+          </div>
+
+          {editingRoles ? (
+            <div className="mt-2 space-y-3">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-purple-700">Primary Role</div>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm"
+                >
+                  {ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-purple-700">Additional Roles</div>
+                <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {ROLES.filter((r) => r.value !== role).map((r) => (
+                    <label key={r.value} className="flex items-center gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-xs">
+                      <input type="checkbox" checked={extra.includes(r.value)} onChange={() => toggleExtra(r.value)} />
+                      <span>{r.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {roleErr ? <div className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{roleErr}</div> : null}
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setEditingRoles(false)} className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                  Cancel
+                </button>
+                <button onClick={saveRoles} disabled={savingRoles} className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800 disabled:opacity-60">
+                  {savingRoles ? 'Saving…' : 'Save Roles'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2">
+              <RoleChips role={emp.role} extra={emp.extra_roles} />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 border-t border-slate-100 pt-4">
           {confirm ? (
             <div className="space-y-2">
               <p className="text-xs text-slate-600">Deactivating blocks this employee from signing in. Continue?</p>
@@ -179,6 +263,16 @@ function Employees() {
       await loadList()
     } finally {
       setBusy(false)
+    }
+  }
+
+  const saveRoles = async (id, payload) => {
+    await api.admin.setEmployeeRoles(id, payload)
+    const d = await api.admin.employees().catch(() => null)
+    if (d) {
+      setEmployees(d.employees)
+      const updated = d.employees.find((e) => e.id === id)
+      if (updated) setViewing(updated)
     }
   }
 
@@ -495,7 +589,7 @@ function Employees() {
         </section>
 
         {viewing ? (
-          <EmployeeModal emp={viewing} onClose={() => setViewing(null)} onDeactivate={deactivate} busy={busy} />
+          <EmployeeModal emp={viewing} onClose={() => setViewing(null)} onDeactivate={deactivate} onSaveRoles={saveRoles} busy={busy} />
         ) : null}
       </div>
     </>
