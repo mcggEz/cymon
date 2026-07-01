@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
+import NotFound from './pages/NotFound'
 import ClientLayout from './pages/client/ClientLayout'
 import HomeProgress from './pages/client/HomeProgress'
 import DailyActivity from './pages/client/DailyActivity'
@@ -139,7 +140,7 @@ function App() {
           <Route path="audit" element={<AdminAuditTrail />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

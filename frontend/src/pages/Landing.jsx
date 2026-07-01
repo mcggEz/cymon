@@ -182,14 +182,6 @@ function Landing() {
             >
               Log In
             </button>
-            <button
-              onClick={() => navigate('/login')}
-              className={`text-sm font-semibold hover:text-violet transition-colors duration-300 cursor-pointer ${
-                scrolled ? 'text-charcoal' : 'text-slate-200'
-              }`}
-            >
-              Get Started
-            </button>
           </div>
 
           {/* Mobile Toggle */}
@@ -241,18 +233,9 @@ function Landing() {
               setMobileMenuOpen(false)
               navigate('/login')
             }}
-            className="text-white text-xl font-semibold tracking-wide hover:text-violet"
-          >
-            Log in
-          </button>
-          <button
-            onClick={() => {
-              setMobileMenuOpen(false)
-              navigate('/login')
-            }}
             className="bg-violet hover:bg-violet-dark text-white text-sm font-semibold px-8 py-4 rounded-full transition-colors duration-300 shadow-md cursor-pointer"
           >
-            Get Started
+            Log in
           </button>
         </div>
       </header>
@@ -311,15 +294,6 @@ function Landing() {
               <p className="text-slate-200/90 text-base md:text-lg leading-relaxed max-w-md font-light">
                 ClearMind Psychological Services provides compassionate and professional mental health support, tailored to meet the unique needs of individuals, couples, and families.
               </p>
-              <div className="flex flex-wrap gap-4 justify-start md:justify-end">
-                <button
-                  onClick={() => navigate('/login')}
-                  className="bg-violet hover:bg-violet-dark text-white font-sans text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all duration-300 shadow-md transform hover:-translate-y-0.5 cursor-pointer font-bold"
-                >
-                  Sign In
-                </button>
-              </div>
-
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
+import LoadingScreen from '../components/ui/LoadingScreen'
 import { useAuth } from '../auth/useAuth'
 
 const ArrowLeft = ({ className = '' }) => (
@@ -77,10 +78,12 @@ function Login() {
   }
 
   return (
-    <main
-      className="relative min-h-screen overflow-hidden text-charcoal flex flex-col items-center justify-center p-4"
-      style={{ background: 'radial-gradient(circle at 50% 20%, #ede9fe 0%, #d8ccf7 45%, #c4b5fd 100%)' }}
-    >
+    <>
+      {submitting ? <LoadingScreen label="Signing in…" /> : null}
+      <main
+        className="relative min-h-screen overflow-hidden text-charcoal flex flex-col items-center justify-center p-4"
+        style={{ background: 'radial-gradient(circle at 50% 20%, #ede9fe 0%, #d8ccf7 45%, #c4b5fd 100%)' }}
+      >
       {/* Back Button */}
       <button
         type="button"
@@ -200,7 +203,8 @@ function Login() {
           </p>
         </form>
       </section>
-    </main>
+      </main>
+    </>
   )
 }
 
