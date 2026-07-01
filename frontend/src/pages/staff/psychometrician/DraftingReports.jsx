@@ -34,9 +34,12 @@ function PreviewModal({ row, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
       <div className="w-full max-w-2xl rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
         <div className="flex items-start justify-between border-b border-purple-100 pb-3">
-          <div>
-            <div className="text-xl font-bold text-purple-800">Behavioral Assessment Report</div>
-            <div className="text-xs text-slate-500">{row.name} · Updated Mar 28, 2026</div>
+          <div className="flex items-start gap-3">
+            <Avatar name={row.name} src={row.avatar_url} size="lg" />
+            <div>
+              <div className="text-xl font-bold text-purple-800">Behavioral Assessment Report</div>
+              <div className="text-xs text-slate-500">{row.name} · Updated Mar 28, 2026</div>
+            </div>
           </div>
           <button onClick={onClose} className="text-2xl text-slate-400 hover:text-slate-700">×</button>
         </div>
