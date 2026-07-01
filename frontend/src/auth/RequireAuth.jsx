@@ -8,11 +8,14 @@ function RequireAuth({ roles, children }) {
   if (loading) {
     return (
       <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-[#efeaf7] text-purple-700">
-        <img
-          src="/logo-cymon.png"
-          alt="CyMon"
-          className="h-16 w-16 animate-pulse rounded-2xl object-cover shadow-sm"
-        />
+        <div className="relative h-20 w-20">
+          <div className="absolute inset-0 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
+          <img
+            src="/logo-cymon.png"
+            alt="CyMon"
+            className="absolute inset-2 h-16 w-16 rounded-full object-cover shadow-sm"
+          />
+        </div>
         <div className="text-sm font-medium tracking-wide text-purple-700/80">Loading…</div>
       </div>
     )

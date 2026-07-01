@@ -39,7 +39,7 @@ function StaffLayout({ user, nav, outletContext }) {
           className={[
             'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-gradient-to-b from-purple-700 to-purple-900 text-white transition-all duration-300',
             'lg:static lg:z-auto lg:translate-x-0',
-            collapsed ? 'lg:w-20' : 'lg:w-64',
+            collapsed ? 'lg:w-24' : 'lg:w-64',
             open ? 'translate-x-0' : '-translate-x-full',
           ].join(' ')}
         >
@@ -55,10 +55,10 @@ function StaffLayout({ user, nav, outletContext }) {
           <div
             className={[
               'flex items-center gap-3 py-4',
-              collapsed ? 'px-5 lg:flex-col lg:items-center lg:gap-2 lg:px-2' : 'px-5',
+              collapsed ? 'px-5 lg:justify-between lg:gap-1 lg:px-2' : 'px-5',
             ].join(' ')}
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
+            <div className={['flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 h-12 w-12', collapsed ? 'lg:h-10 lg:w-10' : ''].join(' ')}>
               <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
             </div>
             <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
