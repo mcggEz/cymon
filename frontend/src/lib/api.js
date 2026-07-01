@@ -115,6 +115,8 @@ export const api = {
     addIntervention: (payload) =>
       request('/api/psychologist/interventions', { method: 'POST', body: payload, auth: true }),
     progress: () => request('/api/psychologist/progress', { auth: true }),
+    addProgressReport: (payload) =>
+      request('/api/psychologist/progress', { method: 'POST', body: payload, auth: true }),
     updateReport: (id, payload) =>
       request(`/api/psychologist/reports/${id}`, { method: 'PATCH', body: payload, auth: true }),
   },

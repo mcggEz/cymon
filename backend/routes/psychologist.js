@@ -217,11 +217,14 @@ router.post('/interventions', async (req, res, next) => {
 router.get('/progress', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
-      .from('assessment_reports')
-      .select('id, title, period, trend, status, patients(first_name, middle_name, last_name, clinic_id)')
-      .eq('report_type', 'progress_summary')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, patients] = await Promise.all([
+      supabase
+        .from('assessment_reports')
+        .select('id, title, period, trend, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .eq('report_type', 'progress_summary')
+        .order('created_at', { ascending: false }),
+      clinicPatients(req.profile.clinic_id),
+    ]);
     if (error) return next(error);
     res.json({
       items: inClinic(data, req.profile.clinic_id).map((r) => ({
@@ -231,7 +234,42 @@ router.get('/progress', async (req, res, next) => {
         trend: r.trend,
         status: r.status,
       })),
+      patients,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// generate a progress-summary report (FO-08) draft
+router.post('/progress', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, title, period, trend } = req.body || {};
+    if (!patient_id || !title) return res.status(400).json({ error: 'Patient and title are required' });
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const { data, error } = await supabase
+      .from('assessment_reports')
+      .insert({
+        patient_id,
+        report_type: 'progress_summary',
+        title,
+        period: period || null,
+        trend: trend || null,
+        status: 'draft',
+        prepared_by_id: req.profile.id,
+      })
+      .select('id')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ report: data });
   } catch (err) {
     next(err);
   }
