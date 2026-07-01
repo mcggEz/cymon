@@ -103,9 +103,16 @@ function App() {
           <Route path="reports" element={<DraftingReports />} />
         </Route>
 
-        {/* Mockup portal — occupational therapist (UX preview, not yet wired).
+        {/* Occupational therapist portal (UX preview — mock data).
             Speech therapists use the psychometrician portal per the clinic. */}
-        <Route path="/occupational" element={<OccupationalLayout />}>
+        <Route
+          path="/occupational"
+          element={
+            <RequireAuth roles={['occupational_therapist']}>
+              <OccupationalLayout />
+            </RequireAuth>
+          }
+        >
           <Route index element={<TherapyCaseload />} />
           <Route path="reports" element={<TherapyRoutedReports />} />
           <Route path="sessions" element={<TherapySessionNotes />} />

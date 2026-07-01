@@ -1,4 +1,5 @@
 import StaffLayout from './StaffLayout'
+import { useAuth } from '../../auth/useAuth'
 
 const NAV = [
   { to: '/occupational', label: 'Caseload', d: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0', end: true },
@@ -8,9 +9,10 @@ const NAV = [
 ]
 
 function OccupationalLayout() {
+  const { profile } = useAuth()
   return (
     <StaffLayout
-      user={{ name: 'Occupational Therapist', id: 'Occupational / Physical Therapy' }}
+      user={{ name: profile?.display_name || 'Occupational Therapist', id: 'Occupational Therapist' }}
       profileTo="/occupational"
       nav={NAV}
       outletContext={{ discipline: 'Occupational' }}
