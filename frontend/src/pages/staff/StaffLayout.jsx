@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { SidebarContext } from '../../components/sidebarContext'
+import { useAuth } from '../../auth/useAuth'
+import { roleOptions } from '../../lib/roleNav'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -28,6 +30,15 @@ function StaffLayout({ user, nav, outletContext }) {
       }
       return next
     })
+
+  const { profile } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [roleOpen, setRoleOpen] = useState(false)
+  const roles = roleOptions(profile)
+  const activeRole = roles.find(
+    (r) => location.pathname === r.path || location.pathname.startsWith(`${r.path}/`)
+  )
 
   return (
     <SidebarContext.Provider value={{ openSidebar: () => setOpen(true), collapsed, toggleCollapsed }}>
@@ -66,6 +77,49 @@ function StaffLayout({ user, nav, outletContext }) {
               <div className="text-[10px] tracking-wider text-purple-200/80">{user.id}</div>
             </div>
           </div>
+
+          {/* Change role — for employees holding more than one dashboard */}
+          {roles.length > 1 ? (
+            <div className={['px-3 pb-2', collapsed ? 'lg:hidden' : ''].join(' ')}>
+              <button
+                type="button"
+                onClick={() => setRoleOpen((o) => !o)}
+                className="flex w-full items-center justify-between rounded-md bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
+                aria-expanded={roleOpen}
+              >
+                <span className="flex items-center gap-2">
+                  <Icon d="M4 7h13l-3-3M20 17H7l3 3" />
+                  Change Role
+                </span>
+                <Icon d="M6 9l6 6 6-6" className="h-4 w-4" />
+              </button>
+              {roleOpen ? (
+                <div className="mt-1 space-y-0.5 rounded-md bg-black/10 p-1">
+                  {roles.map((r) => {
+                    const isActive = activeRole?.path === r.path
+                    return (
+                      <button
+                        key={r.path}
+                        type="button"
+                        onClick={() => {
+                          setRoleOpen(false)
+                          close()
+                          if (!isActive) navigate(r.path)
+                        }}
+                        className={[
+                          'flex w-full items-center justify-between rounded px-2 py-1.5 text-xs',
+                          isActive ? 'bg-white/15 font-semibold text-white' : 'text-purple-100/90 hover:bg-white/10',
+                        ].join(' ')}
+                      >
+                        {r.label}
+                        {isActive ? <span className="text-[10px] text-purple-200/70">Current</span> : null}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <nav className={['flex-1', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>
             {nav.map((item) => (
