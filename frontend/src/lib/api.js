@@ -84,6 +84,10 @@ export const api = {
     updatePatient: (id, payload) =>
       request(`/api/admin/patients/${id}`, { method: 'PATCH', body: payload, auth: true }),
     compliance: () => request('/api/admin/compliance', { auth: true }),
+    remindCompliance: (id) =>
+      request(`/api/admin/compliance/${id}/remind`, { method: 'POST', auth: true }),
+    processCompliance: (id) =>
+      request(`/api/admin/compliance/${id}`, { method: 'PATCH', body: { status: 'submitted' }, auth: true }),
     schedule: () => request('/api/admin/schedule', { auth: true }),
     createAppointment: (payload) =>
       request('/api/admin/schedule', { method: 'POST', body: payload, auth: true }),
