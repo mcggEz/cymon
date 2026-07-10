@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
@@ -46,7 +46,7 @@ const EyeIcon = ({ open, className = '' }) => (
 
 function Login() {
   const navigate = useNavigate()
-  const { signIn } = useAuth()
+  const { signIn, session, profile, loading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -61,6 +61,10 @@ function Login() {
     if (r === 'occupational_therapist') return '/occupational'
     return '/client/home'
   }
+
+  // Already signed in? Don't show the login form — send them to their dashboard.
+  if (loading) return <LoadingScreen />
+  if (session && profile) return <Navigate to={destinationFor(profile.role)} replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
