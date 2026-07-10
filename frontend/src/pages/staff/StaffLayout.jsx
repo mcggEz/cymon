@@ -57,8 +57,26 @@ function StaffLayout({ user, nav, outletContext }) {
   // active role is the stored pick among those matching the current path.
   const matching = roles.filter(onPath)
   const activeRole = matching.find((r) => r.role === activeRoleKey) || matching[0] || null
-  const subtitle = roles.length > 1 && activeRole ? activeRole.label : user.id
   const multiRole = roles.length > 1
+  const activeLabel = activeRole ? activeRole.label : user.id
+
+  // Always-visible role chip. Static for a single-role employee; a dropdown
+  // trigger (with caret) for anyone holding more than one role.
+  const roleChip = multiRole ? (
+    <button
+      type="button"
+      onClick={() => setRoleOpen((o) => !o)}
+      aria-expanded={roleOpen}
+      className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white hover:bg-white/25"
+    >
+      {activeLabel}
+      <Icon d="M6 9l6 6 6-6" className={['h-3 w-3 transition-transform', roleOpen ? 'rotate-180' : ''].join(' ')} />
+    </button>
+  ) : (
+    <span className="mt-1 inline-flex items-center rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-purple-100/90">
+      {activeLabel}
+    </span>
+  )
 
   const identity = (
     <>
@@ -66,16 +84,8 @@ function StaffLayout({ user, nav, outletContext }) {
         <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
       </div>
       <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
-        <div className="flex items-center gap-1">
-          <span className="truncate text-sm font-semibold leading-tight">{user.name}</span>
-          {multiRole ? (
-            <Icon
-              d="M6 9l6 6 6-6"
-              className={['h-4 w-4 shrink-0 text-purple-200/80 transition-transform', roleOpen ? 'rotate-180' : ''].join(' ')}
-            />
-          ) : null}
-        </div>
-        <div className="text-[10px] tracking-wider text-purple-200/80">{subtitle}</div>
+        <div className="truncate text-sm font-semibold leading-tight">{user.name}</div>
+        {roleChip}
       </div>
     </>
   )
@@ -103,30 +113,16 @@ function StaffLayout({ user, nav, outletContext }) {
             <Icon d="M6 6l12 12M18 6L6 18" />
           </button>
 
-          {/* Profile — the name doubles as the role switcher when the
-              employee holds more than one role. */}
-          {multiRole ? (
-            <button
-              type="button"
-              onClick={() => setRoleOpen((o) => !o)}
-              aria-expanded={roleOpen}
-              className={[
-                'flex w-full items-center gap-3 py-4 text-left hover:bg-white/5',
-                collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5',
-              ].join(' ')}
-            >
-              {identity}
-            </button>
-          ) : (
-            <div
-              className={[
-                'flex items-center gap-3 py-4',
-                collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5',
-              ].join(' ')}
-            >
-              {identity}
-            </div>
-          )}
+          {/* Profile row. The role chip under the name (in `identity`) is the
+              switch trigger when the employee holds more than one role. */}
+          <div
+            className={[
+              'flex items-center gap-3 py-4',
+              collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5',
+            ].join(' ')}
+          >
+            {identity}
+          </div>
 
           {multiRole && roleOpen ? (
             <div className={['px-3 pb-2', collapsed ? 'lg:hidden' : ''].join(' ')}>
