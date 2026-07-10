@@ -1,6 +1,7 @@
 const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
 const { patientName } = require('../lib/names');
+const { SURVEY } = require('../lib/survey');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -718,6 +719,62 @@ router.post('/patient/photo', requireAuth, requireClient, async (req, res, next)
     const { error } = await supabase.from('patients').update({ photo_url }).eq('id', patient.id);
     if (error) return res.status(400).json({ error: error.message });
     res.json({ photo_url });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// the research/usability survey definition + whether this caregiver already answered
+router.get('/survey', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: existing } = await supabase
+      .from('survey_responses')
+      .select('id, created_at')
+      .eq('respondent_profile_id', req.profile.id)
+      .maybeSingle();
+    res.json({ survey: SURVEY, submitted: Boolean(existing), submittedAt: existing ? existing.created_at : null });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// submit the survey (once per caregiver)
+router.post('/survey', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { answers } = req.body || {};
+    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+      return res.status(400).json({ error: 'answers are required' });
+    }
+    const missing = SURVEY.questions.filter(
+      (q) => q.required && (answers[q.key] === undefined || answers[q.key] === null || answers[q.key] === '')
+    );
+    if (missing.length) {
+      return res.status(400).json({ error: `Please answer: ${missing.map((q) => q.label).join('; ')}` });
+    }
+
+    const { data: patient } = await supabase
+      .from('patients')
+      .select('id')
+      .eq('caregiver_id', req.profile.id)
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle();
+
+    const { error } = await supabase.from('survey_responses').insert({
+      clinic_id: req.profile.clinic_id,
+      patient_id: patient ? patient.id : null,
+      respondent_profile_id: req.profile.id,
+      answers,
+    });
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({ error: 'You have already submitted the survey. Thank you!' });
+      }
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(201).json({ ok: true });
   } catch (err) {
     next(err);
   }
