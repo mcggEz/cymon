@@ -35,9 +35,59 @@ function StaffLayout({ user, nav, outletContext }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [roleOpen, setRoleOpen] = useState(false)
+  const [activeRoleKey, setActiveRoleKey] = useState(() => {
+    try {
+      return localStorage.getItem('cymon.activeRole') || ''
+    } catch {
+      return ''
+    }
+  })
+  const pickRole = (roleKey) => {
+    try {
+      localStorage.setItem('cymon.activeRole', roleKey)
+    } catch {
+      // ignore storage errors (private mode)
+    }
+    setActiveRoleKey(roleKey)
+  }
+
   const roles = roleOptions(profile)
-  const activeRole = roles.find(
-    (r) => location.pathname === r.path || location.pathname.startsWith(`${r.path}/`)
+  const onPath = (r) => location.pathname === r.path || location.pathname.startsWith(`${r.path}/`)
+  // Several roles can share one dashboard (e.g. psychologist + speech), so the
+  // active role is the stored pick among those matching the current path.
+  const matching = roles.filter(onPath)
+  const activeRole = matching.find((r) => r.role === activeRoleKey) || matching[0] || null
+  const multiRole = roles.length > 1
+  const activeLabel = activeRole ? activeRole.label : user.id
+
+  // Always-visible role chip. Static for a single-role employee; a dropdown
+  // trigger (with caret) for anyone holding more than one role.
+  const roleChip = multiRole ? (
+    <button
+      type="button"
+      onClick={() => setRoleOpen((o) => !o)}
+      aria-expanded={roleOpen}
+      className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white hover:bg-white/25"
+    >
+      {activeLabel}
+      <Icon d="M6 9l6 6 6-6" className={['h-3 w-3 transition-transform', roleOpen ? 'rotate-180' : ''].join(' ')} />
+    </button>
+  ) : (
+    <span className="mt-1 inline-flex items-center rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-purple-100/90">
+      {activeLabel}
+    </span>
+  )
+
+  const identity = (
+    <>
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
+        <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
+      </div>
+      <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
+        <div className="truncate text-sm font-semibold leading-tight">{user.name}</div>
+        {roleChip}
+      </div>
+    </>
   )
 
   return (
@@ -63,61 +113,43 @@ function StaffLayout({ user, nav, outletContext }) {
             <Icon d="M6 6l12 12M18 6L6 18" />
           </button>
 
+          {/* Profile row. The role chip under the name (in `identity`) is the
+              switch trigger when the employee holds more than one role. */}
           <div
             className={[
               'flex items-center gap-3 py-4',
               collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5',
             ].join(' ')}
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
-              <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
-            </div>
-            <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
-              <div className="truncate text-sm font-semibold leading-tight">{user.name}</div>
-              <div className="text-[10px] tracking-wider text-purple-200/80">{user.id}</div>
-            </div>
+            {identity}
           </div>
 
-          {/* Change role — for employees holding more than one dashboard */}
-          {roles.length > 1 ? (
+          {multiRole && roleOpen ? (
             <div className={['px-3 pb-2', collapsed ? 'lg:hidden' : ''].join(' ')}>
-              <button
-                type="button"
-                onClick={() => setRoleOpen((o) => !o)}
-                className="flex w-full items-center justify-between rounded-md bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
-                aria-expanded={roleOpen}
-              >
-                <span className="flex items-center gap-2">
-                  <Icon d="M4 7h13l-3-3M20 17H7l3 3" />
-                  Change Role
-                </span>
-                <Icon d="M6 9l6 6 6-6" className="h-4 w-4" />
-              </button>
-              {roleOpen ? (
-                <div className="mt-1 space-y-0.5 rounded-md bg-black/10 p-1">
-                  {roles.map((r) => {
-                    const isActive = activeRole?.path === r.path
-                    return (
-                      <button
-                        key={r.path}
-                        type="button"
-                        onClick={() => {
-                          setRoleOpen(false)
-                          close()
-                          if (!isActive) navigate(r.path)
-                        }}
-                        className={[
-                          'flex w-full items-center justify-between rounded px-2 py-1.5 text-xs',
-                          isActive ? 'bg-white/15 font-semibold text-white' : 'text-purple-100/90 hover:bg-white/10',
-                        ].join(' ')}
-                      >
-                        {r.label}
-                        {isActive ? <span className="text-[10px] text-purple-200/70">Current</span> : null}
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : null}
+              <div className="space-y-0.5 rounded-md bg-black/10 p-1">
+                {roles.map((r) => {
+                  const isActive = activeRole?.role === r.role
+                  return (
+                    <button
+                      key={r.role}
+                      type="button"
+                      onClick={() => {
+                        setRoleOpen(false)
+                        close()
+                        pickRole(r.role)
+                        if (!onPath(r)) navigate(r.path)
+                      }}
+                      className={[
+                        'flex w-full items-center justify-between rounded px-2 py-1.5 text-xs',
+                        isActive ? 'bg-white/15 font-semibold text-white' : 'text-purple-100/90 hover:bg-white/10',
+                      ].join(' ')}
+                    >
+                      {r.label}
+                      {isActive ? <span className="text-[10px] text-purple-200/70">Current</span> : null}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           ) : null}
 

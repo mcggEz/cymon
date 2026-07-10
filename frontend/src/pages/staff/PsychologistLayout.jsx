@@ -15,7 +15,7 @@ function PsychologistLayout() {
   const { profile } = useAuth()
   return (
     <StaffLayout
-      user={{ name: profile?.display_name || 'Psychologist', id: 'Clinical Psychologist' }}
+      user={{ name: profile?.display_name || 'Psychologist', id: 'Psychologist' }}
       profileTo="/psychologist"
       nav={NAV}
     />

@@ -35,11 +35,6 @@ import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
 import AdminAuditTrail from './pages/staff/admin/AuditTrail'
 import PsychometricianLayout from './pages/staff/PsychometricianLayout'
-import OccupationalLayout from './pages/staff/OccupationalLayout'
-import TherapyCaseload from './pages/staff/therapy/Caseload'
-import TherapyRoutedReports from './pages/staff/therapy/RoutedReports'
-import TherapySessionNotes from './pages/staff/therapy/SessionNotes'
-import TherapyGoals from './pages/staff/therapy/Goals'
 import Tasks from './pages/staff/psychometrician/Tasks'
 import PmAssessments from './pages/staff/psychometrician/Assessments'
 import DataReview from './pages/staff/psychometrician/DataReview'
@@ -76,7 +71,7 @@ function App() {
         <Route
           path="/psychologist"
           element={
-            <RequireAuth roles={['psychologist']}>
+            <RequireAuth roles={['psychologist', 'speech_therapist', 'occupational_therapist']}>
               <PsychologistLayout />
             </RequireAuth>
           }
@@ -93,7 +88,7 @@ function App() {
         <Route
           path="/psychometrician"
           element={
-            <RequireAuth roles={['psychometrician', 'speech_therapist']}>
+            <RequireAuth roles={['psychometrician']}>
               <PsychometricianLayout />
             </RequireAuth>
           }
@@ -103,22 +98,6 @@ function App() {
           <Route path="data-review" element={<DataReview />} />
           <Route path="activity" element={<PmActivityLog />} />
           <Route path="reports" element={<DraftingReports />} />
-        </Route>
-
-        {/* Occupational therapist portal (UX preview — mock data).
-            Speech therapists use the psychometrician portal per the clinic. */}
-        <Route
-          path="/occupational"
-          element={
-            <RequireAuth roles={['occupational_therapist']}>
-              <OccupationalLayout />
-            </RequireAuth>
-          }
-        >
-          <Route index element={<TherapyCaseload />} />
-          <Route path="reports" element={<TherapyRoutedReports />} />
-          <Route path="sessions" element={<TherapySessionNotes />} />
-          <Route path="goals" element={<TherapyGoals />} />
         </Route>
 
         <Route

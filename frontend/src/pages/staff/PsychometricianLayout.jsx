@@ -1,5 +1,6 @@
 import StaffLayout from './StaffLayout'
 import { useAuth } from '../../auth/useAuth'
+import { ROLE_DEST } from '../../lib/roleNav'
 
 const NAV = [
   { to: '/psychometrician', label: 'Tasks', d: 'M5 5h14v14H5zM9 9h6M9 13h6M9 17h4', end: true },
@@ -11,7 +12,7 @@ const NAV = [
 
 function PsychometricianLayout() {
   const { profile } = useAuth()
-  const roleLabel = profile?.role === 'speech_therapist' ? 'Speech Therapist' : 'Psychometrician'
+  const roleLabel = ROLE_DEST[profile?.role]?.label || 'Psychometrician'
   return (
     <StaffLayout
       user={{ name: profile?.display_name || roleLabel, id: roleLabel }}
