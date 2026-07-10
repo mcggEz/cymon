@@ -75,6 +75,8 @@ export const api = {
     assessmentTemplate: (id) => request(`/api/client/assessments/${id}`, { auth: true }),
     submitAssessment: (id, payload) =>
       request(`/api/client/assessments/${id}/submit`, { method: 'POST', body: payload, auth: true }),
+    survey: () => request('/api/client/survey', { auth: true }),
+    submitSurvey: (payload) => request('/api/client/survey', { method: 'POST', body: payload, auth: true }),
   },
   admin: {
     overview: () => request('/api/admin/overview', { auth: true }),
@@ -97,6 +99,7 @@ export const api = {
       request(`/api/admin/announcements/${id}`, { method: 'DELETE', auth: true }),
     audit: () => request('/api/admin/audit', { auth: true }),
     scoring: () => request('/api/admin/scoring', { auth: true }),
+    surveys: () => request('/api/admin/surveys', { auth: true }),
     employees: () => request('/api/admin/employees', { auth: true }),
     createEmployee: (payload) =>
       request('/api/admin/employees', { method: 'POST', body: payload, auth: true }),

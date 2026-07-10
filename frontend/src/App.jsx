@@ -12,6 +12,7 @@ import Announcement from './pages/client/Announcement'
 import Appointments from './pages/client/Appointments'
 import Waivers from './pages/client/Waivers'
 import WaiverDetail from './pages/client/WaiverDetail'
+import Survey from './pages/client/Survey'
 import RequireAuth from './auth/RequireAuth'
 
 import PsychologistLayout from './pages/staff/PsychologistLayout'
@@ -33,6 +34,7 @@ import AdminDocuments from './pages/staff/admin/DocumentVault'
 import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
 import AdminAuditTrail from './pages/staff/admin/AuditTrail'
+import AdminSurveyResults from './pages/staff/admin/SurveyResults'
 import PsychometricianLayout from './pages/staff/PsychometricianLayout'
 import OccupationalLayout from './pages/staff/OccupationalLayout'
 import TherapyCaseload from './pages/staff/therapy/Caseload'
@@ -70,6 +72,7 @@ function App() {
           <Route path="appointments" element={<Appointments />} />
           <Route path="waivers" element={<Waivers />} />
           <Route path="waivers/:id" element={<WaiverDetail />} />
+          <Route path="survey" element={<Survey />} />
         </Route>
 
         <Route
@@ -138,6 +141,7 @@ function App() {
           <Route path="documents" element={<AdminDocuments />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="audit" element={<AdminAuditTrail />} />
+          <Route path="surveys" element={<AdminSurveyResults />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
