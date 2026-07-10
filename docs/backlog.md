@@ -10,15 +10,19 @@ reads from a real `/api/...` endpoint. One concern per branch. Conventional Comm
 
 ---
 
-## In progress / shipped this loop
+## Shipped this loop (open PRs, off `main`)
 
 - [x] **#11 Assessment activation workflow** — Admin activates → MHP requests/assigns → patient answers. (PR #3, needs migration `0019`)
 - [x] **Rename Document Vault → Clinical Records** (PR #4)
-- [ ] **OT + Speech Therapist share the Psychologist portal** — route `occupational_therapist` + `speech_therapist` to `/psychologist`; delete the mock `/occupational` portal (hardcoded data); update backend `requireRole`. *(current)*
+- [x] **Backlog + blockers docs** (PR #5)
+- [x] **OT + Speech Therapist share the Psychologist portal** — deleted the mock `/occupational` portal. (PR #6)
+- [x] **Patient research survey** — prompt + form + `survey_responses` + admin results, editable question set. (PR #7, needs migration `0020`)
+- [x] **Dynamic client sidebar** — removed hardcoded "Leo Cruz"/"CMPS-2026-001". (PR #8)
+
+> Note: PRs #4/#6/#7 all touch `App.jsx`; merge in order and expect trivial rebases.
 
 ## Unblocked — do next
 
-- [ ] **Patient research survey** — post-login prompt + patient-facing form + `survey_responses` table + admin results view. Questions ship as an editable default set (data, not code). Serves the adviser's "test the system + collect survey data" ask.
 - [ ] **Wire remaining dead buttons to real endpoints** (kill hardcoded/no-op UI):
   - [ ] Admin Compliance — Remind / Process actions (no endpoints yet)
   - [ ] Psychometrician Drafting Reports — report editor body + Save Draft/Finalize (needs `assessment_reports.content` PATCH)
