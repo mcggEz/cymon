@@ -1,18 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const Sparkle = ({ className = '', style = {} }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className={`text-white/50 pointer-events-none animate-pulse ${className}`}
-    style={style}
-    aria-hidden="true"
-  >
-    <path d="M12 0L14.8 9.2L24 12L14.8 14.8L12 24L9.2 14.8L0 12L9.2 9.2Z" />
-  </svg>
-)
-
 const FeatureItem = ({ n, title, body }) => (
   <div className="border-t border-white/10 pt-5">
     <div className="font-mono text-xs text-violet font-medium">{n}</div>
@@ -218,46 +206,65 @@ function Landing() {
 
       {/* Hero Section */}
       <section
-        className="relative min-h-screen flex items-center justify-center pt-32 pb-16 px-6 lg:px-16 overflow-hidden"
-        style={{ background: 'radial-gradient(circle at 50% 50%, #22155c 0%, #0d0721 100%)' }}
+        className="relative flex min-h-screen items-center overflow-hidden px-6 pt-32 pb-20 lg:px-16"
+        style={{ background: 'linear-gradient(155deg, #17141f 0%, #221a37 55%, #2b1c44 100%)' }}
       >
-        {/* Soft ambient glow washes behind the butterflies */}
+        {/* Two restrained ambient glows — depth without noise */}
         <div
-          className="absolute left-[2%] bottom-[-10%] w-[360px] md:w-[620px] h-[360px] md:h-[620px] rounded-full pointer-events-none z-0"
-          style={{ background: 'radial-gradient(circle, rgba(165,122,255,0.22) 0%, rgba(13,7,33,0) 70%)' }}
+          className="pointer-events-none absolute -right-40 -top-24 h-[520px] w-[520px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(165,122,255,0.16) 0%, rgba(23,20,31,0) 70%)' }}
         />
         <div
-          className="absolute right-[-10%] top-[0%] w-[380px] md:w-[640px] h-[380px] md:h-[640px] rounded-full pointer-events-none z-0"
-          style={{ background: 'radial-gradient(circle, rgba(221,128,188,0.2) 0%, rgba(13,7,33,0) 70%)' }}
+          className="pointer-events-none absolute -left-32 bottom-[-18%] h-[460px] w-[460px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(221,128,188,0.10) 0%, rgba(23,20,31,0) 70%)' }}
         />
 
-        {/* Ambient Sparkles */}
-        <Sparkle className="absolute left-[16%] top-[26%] w-3 h-3" />
-        <Sparkle className="absolute left-[8%] top-[48%] w-4 h-4" />
-        <Sparkle className="absolute right-[30%] top-[32%] w-3.5 h-3.5" style={{ animationDelay: '1s' }} />
-        <Sparkle className="absolute right-[14%] top-[45%] w-3 h-3" style={{ animationDelay: '1.5s' }} />
-        <Sparkle className="absolute left-[36%] bottom-[35%] w-4 h-4" style={{ animationDelay: '2s' }} />
-        <Sparkle className="absolute right-[42%] bottom-[20%] w-3 h-3" style={{ animationDelay: '0.5s' }} />
+        <div className="relative z-20 mx-auto w-full max-w-7xl">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-violet" />
+              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-200/80">
+                ClearMind Psychological Services
+              </span>
+            </div>
 
-        <div className="max-w-7xl w-full mx-auto min-h-[calc(100vh-12rem)] flex flex-col justify-between relative z-20">
-          {/* Middle-Left Title Block */}
-          <div className="flex-1 flex flex-col justify-center text-left py-12 md:py-16">
-            <h1 className="text-5xl md:text-[6.5rem] font-light tracking-tight text-white leading-[0.95] max-w-5xl select-none font-sans">
-              Compassionate care,<br />
+            <h1 className="mt-6 font-sans text-4xl font-semibold leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
+              Compassionate care,
+              <br />
               <span className="text-violet">simplified.</span>
             </h1>
-          </div>
 
-          {/* Bottom Grid Layout */}
-          <div className="grid md:grid-cols-12 gap-8 items-end w-full">
-            {/* Bottom-Left Space (Indicator Removed) */}
-            <div className="md:col-span-6" />
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
+              One secure platform for assessments, intervention plans, and family updates — so
+              clinicians spend less time on paperwork and more time with the children in their care.
+            </p>
 
-            {/* Bottom-Right: Description, Actions & Privacy Notices */}
-            <div className="md:col-span-6 flex flex-col items-start md:items-end space-y-6 text-left md:text-right">
-              <p className="text-slate-200/90 text-base md:text-lg leading-relaxed max-w-md font-light">
-                ClearMind Psychological Services provides compassionate and professional mental health support, tailored to meet the unique needs of individuals, couples, and families.
-              </p>
+            <div className="mt-9 flex flex-col gap-3 min-[360px]:flex-row min-[360px]:items-center">
+              <button
+                onClick={() => navigate('/login')}
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-violet px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet/25 transition-colors hover:bg-violet-dark"
+              >
+                Access the portal
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <a
+                href="#platform"
+                className="inline-flex items-center justify-center rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10"
+              >
+                Explore the platform
+              </a>
+            </div>
+
+            <div className="mt-12 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-slate-400">
+              <span>SPED Program</span>
+              <span className="text-white/20">/</span>
+              <span>Assessments</span>
+              <span className="text-white/20">/</span>
+              <span>Intervention Planning</span>
+              <span className="text-white/20">/</span>
+              <span>Family Portal</span>
             </div>
           </div>
         </div>
