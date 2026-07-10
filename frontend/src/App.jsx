@@ -70,7 +70,7 @@ function App() {
         <Route
           path="/psychologist"
           element={
-            <RequireAuth roles={['psychologist']}>
+            <RequireAuth roles={['psychologist', 'speech_therapist', 'occupational_therapist']}>
               <PsychologistLayout />
             </RequireAuth>
           }
@@ -85,9 +85,9 @@ function App() {
         </Route>
 
         <Route
-          path="/clinical"
+          path="/psychometrician"
           element={
-            <RequireAuth roles={['psychometrician', 'speech_therapist', 'occupational_therapist']}>
+            <RequireAuth roles={['psychometrician']}>
               <PsychometricianLayout />
             </RequireAuth>
           }

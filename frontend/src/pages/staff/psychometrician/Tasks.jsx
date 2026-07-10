@@ -101,7 +101,7 @@ function Tasks() {
                 </span>
                 <button
                   onClick={() =>
-                    navigate(t.status === 'COMPLETED' ? '/clinical/reports' : '/clinical/assessments')
+                    navigate(t.status === 'COMPLETED' ? '/psychometrician/reports' : '/psychometrician/assessments')
                   }
                   className={[
                     'rounded-md px-3 py-2 text-sm font-medium',

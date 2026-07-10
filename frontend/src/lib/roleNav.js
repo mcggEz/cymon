@@ -1,11 +1,12 @@
 // Maps each role to the dashboard it opens. Speech and occupational therapists
-// share the psychometrician portal (per the clinic); psychologist stands alone.
+// share the psychologist portal (per the clinic); psychometrician stands alone
+// (it has its own assessment-focused tools).
 export const ROLE_DEST = {
   admin: { label: 'Administrator', path: '/admin' },
   psychologist: { label: 'Psychologist', path: '/psychologist' },
-  psychometrician: { label: 'Psychometrician', path: '/clinical' },
-  speech_therapist: { label: 'Speech Therapist', path: '/clinical' },
-  occupational_therapist: { label: 'Occupational Therapist', path: '/clinical' },
+  psychometrician: { label: 'Psychometrician', path: '/psychometrician' },
+  speech_therapist: { label: 'Speech Therapist', path: '/psychologist' },
+  occupational_therapist: { label: 'Occupational Therapist', path: '/psychologist' },
 }
 
 // Every role a profile holds (primary + extra), de-duplicated by role. Roles

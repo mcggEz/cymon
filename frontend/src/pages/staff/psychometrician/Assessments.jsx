@@ -180,7 +180,7 @@ function Assessments() {
             </div>
             <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
               {visibleLogs.map((t) => (
-                <ToolCard key={t.id} t={t} half onLaunch={() => navigate('/clinical/activity')} />
+                <ToolCard key={t.id} t={t} half onLaunch={() => navigate('/psychometrician/activity')} />
               ))}
             </div>
           </>
