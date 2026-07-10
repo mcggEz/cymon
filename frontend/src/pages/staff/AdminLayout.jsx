@@ -9,7 +9,7 @@ const NAV = [
   { to: '/admin/schedule', label: 'Schedule', d: 'M4 7h16v13H4zM4 11h16M8 3v4M16 3v4' },
   { to: '/admin/scoring', label: 'Scoring Analytics', d: 'M4 20l5-9 4 5 7-12' },
   { to: '/admin/assessments', label: 'Assessment Services', d: 'M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9l2 2 4-4' },
-  { to: '/admin/documents', label: 'Document Vault', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
+  { to: '/admin/records', label: 'Clinical Records', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
   { to: '/admin/announcements', label: 'Announcements', d: 'M4 11l16-7v16zM4 11v4l3 1v4' },
   { to: '/admin/audit', label: 'Audit Trail', d: 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z' },
 ]

@@ -333,7 +333,7 @@ function ProfileModal({ row, onClose, onEdit }) {
         </div>
         <p className="mt-2 text-sm text-slate-700">
           No active medical alerts. Patient is currently enrolled in the Standard SPED Program. See
-          Document Vault for latest Assessment Reports.
+          Clinical Records for latest Assessment Reports.
         </p>
     </Modal>
   )
