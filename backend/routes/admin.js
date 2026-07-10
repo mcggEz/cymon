@@ -197,6 +197,56 @@ router.get('/compliance', async (req, res, next) => {
   }
 });
 
+// remind the caregiver about a pending/overdue waiver
+router.post('/compliance/:id/remind', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: w } = await supabase
+      .from('waiver_submissions')
+      .select('id, status, document_type_code, patients(caregiver_id, clinic_id, first_name), document_types(title)')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!w || !w.patients || w.patients.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Compliance item not found' });
+    }
+    const docTitle = w.document_types ? w.document_types.title : w.document_type_code;
+    await createNotification({
+      clinicId: w.patients.clinic_id,
+      recipientId: w.patients.caregiver_id,
+      type: 'waiver',
+      title: 'Document reminder',
+      body: `${docTitle} for ${w.patients.first_name} is ${w.status === 'overdue' ? 'overdue' : 'awaiting your signature'}. Please complete it under Consents & Waivers.`,
+      link: '/client/waivers',
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// mark a compliance item as processed (document received / submitted)
+router.patch('/compliance/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: w } = await supabase
+      .from('waiver_submissions')
+      .select('id, patients(clinic_id)')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!w || !w.patients || w.patients.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Compliance item not found' });
+    }
+    const { error } = await supabase
+      .from('waiver_submissions')
+      .update({ status: 'submitted' })
+      .eq('id', req.params.id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/schedule', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {

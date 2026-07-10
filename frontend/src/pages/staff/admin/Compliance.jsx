@@ -36,20 +36,41 @@ function Compliance() {
   const [query, setQuery] = useState('')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState(null)
+  const [notice, setNotice] = useState(null)
+
+  const load = () => api.admin.compliance().then(setData).catch(() => {})
 
   useEffect(() => {
-    let on = true
-    api.admin
-      .compliance()
-      .then((d) => on && setData(d))
-      .catch(() => {})
-      .finally(() => {
-        if (on) setLoading(false)
-      })
-    return () => {
-      on = false
-    }
+    load().finally(() => setLoading(false))
   }, [])
+
+  const remind = async (r) => {
+    setBusyId(r.id)
+    setNotice(null)
+    try {
+      await api.admin.remindCompliance(r.id)
+      setNotice(`Reminder sent to ${r.parent} about ${r.student}'s ${r.doc}.`)
+    } catch (e) {
+      setNotice(`Could not send reminder: ${e.message}`)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const markProcessed = async (r) => {
+    setBusyId(r.id)
+    setNotice(null)
+    try {
+      await api.admin.processCompliance(r.id)
+      setNotice(`Marked ${r.student}'s ${r.doc} as received.`)
+      await load()
+    } catch (e) {
+      setNotice(`Could not process: ${e.message}`)
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   const summary = data?.summary
   const rows = (data?.rows || []).map(toRow)
@@ -83,6 +104,9 @@ function Compliance() {
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Monitor missing documents, overdue forms, and pending signatures
         </div>
+        {notice ? (
+          <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
+        ) : null}
 
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.overdue ?? '—'} label="Overdue" color="text-rose-600" />
@@ -160,11 +184,19 @@ function Compliance() {
                     <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>● {r.label}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
-                        <button className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50">
+                        <button
+                          onClick={() => remind(r)}
+                          disabled={busyId === r.id}
+                          className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
+                        >
                           Remind
                         </button>
-                        <button className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50">
-                          Process
+                        <button
+                          onClick={() => markProcessed(r)}
+                          disabled={busyId === r.id}
+                          className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
+                        >
+                          {busyId === r.id ? '…' : 'Process'}
                         </button>
                       </div>
                     </td>
