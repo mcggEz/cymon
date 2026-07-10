@@ -22,7 +22,7 @@ function requireRole(...roles) {
   };
 }
 
-router.use(requireAuth, requireRole('psychologist', 'admin'));
+router.use(requireAuth, requireRole('psychologist', 'occupational_therapist', 'speech_therapist', 'admin'));
 
 const name = patientName;
 const inClinic = (rows, clinic) => (rows || []).filter((r) => r.patients && r.patients.clinic_id === clinic);

@@ -1,5 +1,6 @@
 import StaffLayout from './StaffLayout'
 import { useAuth } from '../../auth/useAuth'
+import { ROLE_DEST } from '../../lib/roleNav'
 
 const NAV = [
   { to: '/psychologist', label: 'Approvals', d: 'M9 12l2 2 4-4M5 6h14v14H5z', end: true },
@@ -13,9 +14,10 @@ const NAV = [
 
 function PsychologistLayout() {
   const { profile } = useAuth()
+  const roleLabel = ROLE_DEST[profile?.role]?.label || 'Clinical Staff'
   return (
     <StaffLayout
-      user={{ name: profile?.display_name || 'Psychologist', id: 'Clinical Psychologist' }}
+      user={{ name: profile?.display_name || roleLabel, id: roleLabel }}
       profileTo="/psychologist"
       nav={NAV}
     />

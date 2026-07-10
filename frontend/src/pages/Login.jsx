@@ -56,9 +56,10 @@ function Login() {
 
   const destinationFor = (r) => {
     if (r === 'admin') return '/admin'
-    if (r === 'psychometrician' || r === 'speech_therapist') return '/psychometrician'
-    if (r === 'psychologist') return '/psychologist'
-    if (r === 'occupational_therapist') return '/occupational'
+    if (r === 'psychometrician') return '/psychometrician'
+    if (r === 'psychologist' || r === 'occupational_therapist' || r === 'speech_therapist') {
+      return '/psychologist'
+    }
     return '/client/home'
   }
 
