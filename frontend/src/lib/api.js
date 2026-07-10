@@ -97,6 +97,11 @@ export const api = {
       request(`/api/admin/announcements/${id}`, { method: 'DELETE', auth: true }),
     audit: () => request('/api/admin/audit', { auth: true }),
     scoring: () => request('/api/admin/scoring', { auth: true }),
+    assessments: () => request('/api/admin/assessments', { auth: true }),
+    setAssessmentActive: (id, is_active) =>
+      request(`/api/admin/assessments/${id}`, { method: 'PATCH', body: { is_active }, auth: true }),
+    resolveAssessmentRequest: (id, status) =>
+      request(`/api/admin/assessment-requests/${id}`, { method: 'PATCH', body: { status }, auth: true }),
     employees: () => request('/api/admin/employees', { auth: true }),
     createEmployee: (payload) =>
       request('/api/admin/employees', { method: 'POST', body: payload, auth: true }),
@@ -132,6 +137,8 @@ export const api = {
       request('/api/psychometrician/activity-logs', { method: 'POST', body: payload, auth: true }),
     assignAssessment: (payload) =>
       request('/api/psychometrician/assignments', { method: 'POST', body: payload, auth: true }),
+    requestAssessment: (payload) =>
+      request('/api/psychometrician/assessment-requests', { method: 'POST', body: payload, auth: true }),
     updateSubmission: (id, payload) =>
       request(`/api/psychometrician/submissions/${id}`, { method: 'PATCH', body: payload, auth: true }),
     updateReport: (id, payload) =>

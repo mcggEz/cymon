@@ -29,6 +29,7 @@ import AdminPatients from './pages/staff/admin/Patients'
 import AdminCompliance from './pages/staff/admin/Compliance'
 import AdminSchedule from './pages/staff/admin/Schedule'
 import AdminScoring from './pages/staff/admin/ScoringAnalytics'
+import AdminAssessments from './pages/staff/admin/Assessments'
 import AdminDocuments from './pages/staff/admin/DocumentVault'
 import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
@@ -135,6 +136,7 @@ function App() {
           <Route path="compliance" element={<AdminCompliance />} />
           <Route path="schedule" element={<AdminSchedule />} />
           <Route path="scoring" element={<AdminScoring />} />
+          <Route path="assessments" element={<AdminAssessments />} />
           <Route path="documents" element={<AdminDocuments />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="audit" element={<AdminAuditTrail />} />
