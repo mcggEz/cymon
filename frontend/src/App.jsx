@@ -6,7 +6,7 @@ import ClientLayout from './pages/client/ClientLayout'
 import HomeProgress from './pages/client/HomeProgress'
 import DailyActivity from './pages/client/DailyActivity'
 import MyProfile from './pages/client/MyProfile'
-import AssessmentCenter from './pages/client/AssessmentCenter'
+import AssessmentServices from './pages/client/AssessmentServices'
 import AssessmentDetail from './pages/client/AssessmentDetail'
 import Announcement from './pages/client/Announcement'
 import Appointments from './pages/client/Appointments'
@@ -29,7 +29,7 @@ import AdminPatients from './pages/staff/admin/Patients'
 import AdminCompliance from './pages/staff/admin/Compliance'
 import AdminSchedule from './pages/staff/admin/Schedule'
 import AdminScoring from './pages/staff/admin/ScoringAnalytics'
-import AdminDocuments from './pages/staff/admin/DocumentVault'
+import AdminClinicalRecords from './pages/staff/admin/ClinicalRecords'
 import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
 import AdminAuditTrail from './pages/staff/admin/AuditTrail'
@@ -64,7 +64,7 @@ function App() {
           <Route path="home" element={<HomeProgress />} />
           <Route path="activity" element={<DailyActivity />} />
           <Route path="profile" element={<MyProfile />} />
-          <Route path="assessments" element={<AssessmentCenter />} />
+          <Route path="assessments" element={<AssessmentServices />} />
           <Route path="assessments/:id" element={<AssessmentDetail />} />
           <Route path="announcements" element={<Announcement />} />
           <Route path="appointments" element={<Appointments />} />
@@ -135,7 +135,7 @@ function App() {
           <Route path="compliance" element={<AdminCompliance />} />
           <Route path="schedule" element={<AdminSchedule />} />
           <Route path="scoring" element={<AdminScoring />} />
-          <Route path="documents" element={<AdminDocuments />} />
+          <Route path="records" element={<AdminClinicalRecords />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="audit" element={<AdminAuditTrail />} />
         </Route>

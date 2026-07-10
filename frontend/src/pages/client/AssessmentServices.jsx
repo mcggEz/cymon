@@ -107,7 +107,7 @@ function RecordCard({ r }) {
   )
 }
 
-function AssessmentCenter() {
+function AssessmentServices() {
   const [tab, setTab] = useState('all')
   const [assigned, setAssigned] = useState([])
   const [records, setRecords] = useState([])
@@ -198,4 +198,4 @@ function AssessmentCenter() {
   )
 }
 
-export default AssessmentCenter
+export default AssessmentServices

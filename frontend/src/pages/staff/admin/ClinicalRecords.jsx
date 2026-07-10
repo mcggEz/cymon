@@ -46,7 +46,7 @@ RECOMMENDATIONS:
   )
 }
 
-function DocumentVault() {
+function ClinicalRecords() {
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -77,9 +77,9 @@ function DocumentVault() {
 
   return (
     <>
-      <StaffHeader title="Document Vault" />
+      <StaffHeader title="Clinical Records" />
       <div className="flex-1 overflow-y-auto p-6">
-        <h1 className="text-3xl font-bold text-purple-800">Document Vault</h1>
+        <h1 className="text-3xl font-bold text-purple-800">Clinical Records</h1>
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Finalized clinic document records
         </div>
@@ -164,4 +164,4 @@ function DocumentVault() {
   )
 }
 
-export default DocumentVault
+export default ClinicalRecords
