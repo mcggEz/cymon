@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, Link } from 'react-router-dom'
 import { SidebarContext } from '../../components/sidebarContext'
+import { api } from '../../lib/api'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -17,7 +18,8 @@ const NAV = [
   { to: '/client/waivers', label: 'Consents & Waivers', d: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4' },
 ]
 
-function Sidebar({ open, collapsed, onNavigate }) {
+function Sidebar({ open, collapsed, onNavigate, name, patientId }) {
+  const displayName = name || 'My Account'
   return (
     <aside
       className={[
@@ -39,15 +41,17 @@ function Sidebar({ open, collapsed, onNavigate }) {
       <Link
         to="/client/profile"
         onClick={onNavigate}
-        title="Leo Cruz"
+        title={displayName}
         className={['flex items-center gap-3 py-4 hover:bg-white/5', collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5'].join(' ')}
       >
         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
           <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" className="h-6 w-6" />
         </div>
         <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
-          <div className="truncate text-base font-semibold leading-tight">Leo Cruz</div>
-          <div className="text-[10px] tracking-wider text-purple-200/80">CMPS-2026-001</div>
+          <div className="truncate text-base font-semibold leading-tight">{displayName}</div>
+          {patientId ? (
+            <div className="text-[10px] tracking-wider text-purple-200/80">{patientId}</div>
+          ) : null}
         </div>
       </Link>
 
@@ -85,6 +89,18 @@ function Sidebar({ open, collapsed, onNavigate }) {
 
 function ClientLayout() {
   const [open, setOpen] = useState(false)
+  const [child, setChild] = useState({ name: '', patientId: '' })
+
+  useEffect(() => {
+    let on = true
+    api.client
+      .getPatient()
+      .then((d) => on && setChild({ name: d.patient.full_name, patientId: d.patient.patient_id }))
+      .catch(() => {})
+    return () => {
+      on = false
+    }
+  }, [])
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('cymon.sidebarCollapsed') === '1'
@@ -113,7 +129,13 @@ function ClientLayout() {
             aria-hidden="true"
           />
         ) : null}
-        <Sidebar open={open} collapsed={collapsed} onNavigate={() => setOpen(false)} />
+        <Sidebar
+          open={open}
+          collapsed={collapsed}
+          onNavigate={() => setOpen(false)}
+          name={child.name}
+          patientId={child.patientId}
+        />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Outlet />
         </div>
