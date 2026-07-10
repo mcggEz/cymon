@@ -85,7 +85,7 @@ function App() {
         </Route>
 
         <Route
-          path="/psychometrician"
+          path="/clinical"
           element={
             <RequireAuth roles={['psychometrician', 'speech_therapist', 'occupational_therapist']}>
               <PsychometricianLayout />

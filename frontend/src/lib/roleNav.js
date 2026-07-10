@@ -3,9 +3,9 @@
 export const ROLE_DEST = {
   admin: { label: 'Administrator', path: '/admin' },
   psychologist: { label: 'Psychologist', path: '/psychologist' },
-  psychometrician: { label: 'Psychometrician', path: '/psychometrician' },
-  speech_therapist: { label: 'Speech Therapist', path: '/psychometrician' },
-  occupational_therapist: { label: 'Occupational Therapist', path: '/psychometrician' },
+  psychometrician: { label: 'Psychometrician', path: '/clinical' },
+  speech_therapist: { label: 'Speech Therapist', path: '/clinical' },
+  occupational_therapist: { label: 'Occupational Therapist', path: '/clinical' },
 }
 
 // Every role a profile holds (primary + extra), de-duplicated by role. Roles
