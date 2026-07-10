@@ -61,7 +61,47 @@ function LaunchModal({ test, patients, onClose, onAssign, assigning }) {
   )
 }
 
-function ToolCard({ t, onLaunch, half = false }) {
+function RequestModal({ test, onClose, onSubmit, submitting }) {
+  const [note, setNote] = useState('')
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
+      <div className="w-full max-w-md rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
+        <h2 className="text-xl font-bold text-purple-800">Request Activation</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Ask Admin to make <span className="font-medium text-purple-700">{test.title}</span> available.
+        </p>
+
+        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">NOTE (OPTIONAL)</div>
+        <textarea
+          className="mt-1 w-full rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
+          rows={3}
+          placeholder="e.g. Needed for an incoming patient's evaluation."
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onSubmit(note)}
+            disabled={submitting}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+          >
+            {submitting ? 'Sending…' : 'Send Request →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ToolCard({ t, onLaunch, onRequest, requested, half = false }) {
+  const available = t.active !== false
   return (
     <article className={`rounded-2xl border border-purple-200 bg-white p-5 shadow-sm ${half ? '' : 'sm:max-w-md'}`}>
       <div className="flex items-start justify-between">
@@ -76,12 +116,25 @@ function ToolCard({ t, onLaunch, half = false }) {
       <p className="mt-1 text-sm text-slate-600">{t.desc}</p>
       <div className="mt-4 flex items-center justify-between">
         <span className="text-xs text-slate-500">⏱ {t.duration}</span>
-        <button
-          onClick={onLaunch}
-          className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-800"
-        >
-          Launch Tool
-        </button>
+        {available ? (
+          <button
+            onClick={onLaunch}
+            className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-800"
+          >
+            Launch Tool
+          </button>
+        ) : requested ? (
+          <span className="rounded-md bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
+            Requested
+          </span>
+        ) : (
+          <button
+            onClick={onRequest}
+            className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
+          >
+            Request Activation
+          </button>
+        )}
       </div>
     </article>
   )
@@ -89,10 +142,13 @@ function ToolCard({ t, onLaunch, half = false }) {
 
 function Assessments() {
   const [active, setActive] = useState(null)
+  const [requestTarget, setRequestTarget] = useState(null)
   const [tests, setTests] = useState([])
   const [patients, setPatients] = useState([])
+  const [requested, setRequested] = useState([])
   const [loading, setLoading] = useState(true)
   const [assigning, setAssigning] = useState(false)
+  const [requesting, setRequesting] = useState(false)
   const [notice, setNotice] = useState(null)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
@@ -129,9 +185,25 @@ function Assessments() {
     }
   }
 
+  const submitRequest = async (note) => {
+    setRequesting(true)
+    try {
+      await api.psychometrician.requestAssessment({ template_id: requestTarget.id, note })
+      setRequested((ids) => [...ids, requestTarget.id])
+      setNotice(`Requested “${requestTarget.title}” — Admin will review and activate it.`)
+      setRequestTarget(null)
+    } catch (e) {
+      setNotice(`Could not request: ${e.message}`)
+    } finally {
+      setRequesting(false)
+    }
+  }
+
   const q = query.trim().toLowerCase()
   const matches = (t) => !q || [t.title, t.code, t.desc].some((v) => (v || '').toLowerCase().includes(q))
   const visibleTests = tests.filter(matches)
+  const availableTests = visibleTests.filter((t) => t.active !== false)
+  const unavailableTests = visibleTests.filter((t) => t.active === false)
   const visibleLogs = LOGS.filter(matches)
 
   return (
@@ -165,13 +237,35 @@ function Assessments() {
             ? Array.from({ length: 2 }).map((_, i) => (
                 <Skeleton key={i} className="h-40 w-full" rounded="rounded-2xl" />
               ))
-            : visibleTests.map((t) => (
+            : availableTests.map((t) => (
                 <ToolCard key={t.id} t={t} half onLaunch={() => setActive(t)} />
               ))}
-          {!loading && q && visibleTests.length === 0 ? (
-            <p className="text-sm text-slate-500">No standardized tests match your search.</p>
+          {!loading && q && availableTests.length === 0 ? (
+            <p className="text-sm text-slate-500">No available tests match your search.</p>
           ) : null}
         </div>
+
+        {!loading && unavailableTests.length > 0 ? (
+          <>
+            <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
+              NOT YET AVAILABLE
+            </div>
+            <div className="mt-1 text-sm text-slate-500">
+              Ask Admin to activate these before you can assign them.
+            </div>
+            <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {unavailableTests.map((t) => (
+                <ToolCard
+                  key={t.id}
+                  t={t}
+                  half
+                  requested={requested.includes(t.id)}
+                  onRequest={() => setRequestTarget(t)}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
 
         {visibleLogs.length > 0 ? (
           <>
@@ -193,6 +287,15 @@ function Assessments() {
             onClose={() => setActive(null)}
             onAssign={assign}
             assigning={assigning}
+          />
+        ) : null}
+
+        {requestTarget ? (
+          <RequestModal
+            test={requestTarget}
+            onClose={() => setRequestTarget(null)}
+            onSubmit={submitRequest}
+            submitting={requesting}
           />
         ) : null}
       </div>

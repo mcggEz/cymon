@@ -81,7 +81,7 @@ router.get('/assessments', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
     const [{ data: tests }, { data: sessions }, { data: roster }] = await Promise.all([
-      supabase.from('assessment_templates').select('id, document_type_code, title, est_minutes, icon, document_types(description)').eq('is_active', true),
+      supabase.from('assessment_templates').select('id, document_type_code, title, est_minutes, icon, is_active, document_types(description)').order('title', { ascending: true }),
       supabase
         .from('appointments')
         .select('id, starts_at, patients(first_name, middle_name, last_name)')
@@ -103,6 +103,7 @@ router.get('/assessments', async (req, res, next) => {
         desc: t.document_types ? t.document_types.description : '',
         duration: t.est_minutes ? `Est. ${t.est_minutes} mins` : '',
         icon: t.icon,
+        active: t.is_active,
       })),
       sessions: (sessions || []).map((s) => ({
         id: s.id,
@@ -291,6 +292,67 @@ router.post('/assignments', async (req, res, next) => {
       link: '/client/assessments',
     });
     res.status(201).json({ assignment: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// request that Admin activate (make available) an assessment template (feature #11)
+router.post('/assessment-requests', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { template_id, note } = req.body || {};
+    if (!template_id) return res.status(400).json({ error: 'template_id is required' });
+
+    const { data: tpl } = await supabase
+      .from('assessment_templates')
+      .select('id, title, is_active')
+      .eq('id', template_id)
+      .maybeSingle();
+    if (!tpl) return res.status(404).json({ error: 'Assessment not found' });
+    if (tpl.is_active) return res.status(409).json({ error: 'That assessment is already available' });
+
+    const { data: existing } = await supabase
+      .from('assessment_activation_requests')
+      .select('id')
+      .eq('template_id', template_id)
+      .eq('clinic_id', req.profile.clinic_id)
+      .eq('status', 'pending')
+      .maybeSingle();
+    if (existing) return res.status(409).json({ error: 'A request for this assessment is already pending' });
+
+    const { data, error } = await supabase
+      .from('assessment_activation_requests')
+      .insert({
+        clinic_id: req.profile.clinic_id,
+        template_id,
+        requested_by_id: req.profile.id,
+        note: note || null,
+        status: 'pending',
+      })
+      .select('id')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('clinic_id', req.profile.clinic_id)
+      .eq('role', 'admin')
+      .is('deleted_at', null);
+    await Promise.all(
+      (admins || []).map((a) =>
+        createNotification({
+          clinicId: req.profile.clinic_id,
+          recipientId: a.id,
+          type: 'assessment',
+          title: 'Assessment activation requested',
+          body: `${req.profile.display_name || 'A professional'} requested that ${tpl.title} be made available.`,
+          link: '/admin/assessments',
+        }),
+      ),
+    );
+    res.status(201).json({ request: data });
   } catch (err) {
     next(err);
   }

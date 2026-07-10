@@ -794,4 +794,122 @@ router.post('/patients', async (req, res, next) => {
   }
 });
 
+// ---------- assessment activation (feature #11) ----------
+// Admin controls which assessment templates are "available". MHPs file activation
+// requests; the admin activates a template (is_active) and/or resolves the request.
+
+router.get('/assessments', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const [{ data: templates, error: tErr }, { data: requests, error: rErr }] = await Promise.all([
+      supabase
+        .from('assessment_templates')
+        .select('id, title, document_type_code, est_minutes, is_active, document_types(description)')
+        .order('title', { ascending: true }),
+      supabase
+        .from('assessment_activation_requests')
+        .select('id, note, status, created_at, template_id, assessment_templates(title), requested_by:requested_by_id(display_name)')
+        .eq('clinic_id', req.profile.clinic_id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true }),
+    ]);
+    if (tErr) return next(tErr);
+    if (rErr) return next(rErr);
+    res.json({
+      templates: (templates || []).map((t) => ({
+        id: t.id,
+        title: t.title,
+        code: t.document_type_code,
+        desc: t.document_types ? t.document_types.description : '',
+        duration: t.est_minutes ? `Est. ${t.est_minutes} mins` : '',
+        active: t.is_active,
+      })),
+      requests: (requests || []).map((r) => ({
+        id: r.id,
+        note: r.note,
+        templateId: r.template_id,
+        templateTitle: r.assessment_templates ? r.assessment_templates.title : '—',
+        requestedBy: r.requested_by ? r.requested_by.display_name : 'A professional',
+        createdAt: r.created_at,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// activate / deactivate an assessment template
+router.patch('/assessments/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { is_active } = req.body || {};
+    if (typeof is_active !== 'boolean') {
+      return res.status(400).json({ error: 'is_active (boolean) is required' });
+    }
+    const { data, error } = await supabase
+      .from('assessment_templates')
+      .update({ is_active })
+      .eq('id', req.params.id)
+      .select('id')
+      .maybeSingle();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Assessment not found' });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// approve (activates the template) or decline an MHP activation request
+router.patch('/assessment-requests/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { status } = req.body || {};
+    if (!['approved', 'declined'].includes(status)) {
+      return res.status(400).json({ error: 'status must be approved or declined' });
+    }
+    const { data: reqRow } = await supabase
+      .from('assessment_activation_requests')
+      .select('id, clinic_id, template_id, requested_by_id, status, assessment_templates(title)')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!reqRow || reqRow.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    if (reqRow.status !== 'pending') {
+      return res.status(409).json({ error: 'Request already resolved' });
+    }
+
+    if (status === 'approved') {
+      const { error: actErr } = await supabase
+        .from('assessment_templates')
+        .update({ is_active: true })
+        .eq('id', reqRow.template_id);
+      if (actErr) return res.status(400).json({ error: actErr.message });
+    }
+
+    const { error } = await supabase
+      .from('assessment_activation_requests')
+      .update({ status, resolved_by_id: req.profile.id, resolved_at: new Date().toISOString() })
+      .eq('id', reqRow.id);
+    if (error) return res.status(400).json({ error: error.message });
+
+    const title = reqRow.assessment_templates ? reqRow.assessment_templates.title : 'An assessment';
+    await createNotification({
+      clinicId: reqRow.clinic_id,
+      recipientId: reqRow.requested_by_id,
+      type: 'assessment',
+      title: status === 'approved' ? 'Assessment activated' : 'Assessment request declined',
+      body:
+        status === 'approved'
+          ? `${title} is now available — you can assign it to a patient.`
+          : `Your request to activate ${title} was declined.`,
+      link: '/psychometrician/assessments',
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
