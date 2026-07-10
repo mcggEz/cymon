@@ -35,10 +35,29 @@ function StaffLayout({ user, nav, outletContext }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [roleOpen, setRoleOpen] = useState(false)
+  const [activeRoleKey, setActiveRoleKey] = useState(() => {
+    try {
+      return localStorage.getItem('cymon.activeRole') || ''
+    } catch {
+      return ''
+    }
+  })
+  const pickRole = (roleKey) => {
+    try {
+      localStorage.setItem('cymon.activeRole', roleKey)
+    } catch {
+      // ignore storage errors (private mode)
+    }
+    setActiveRoleKey(roleKey)
+  }
+
   const roles = roleOptions(profile)
-  const activeRole = roles.find(
-    (r) => location.pathname === r.path || location.pathname.startsWith(`${r.path}/`)
-  )
+  const onPath = (r) => location.pathname === r.path || location.pathname.startsWith(`${r.path}/`)
+  // Several roles can share one dashboard (e.g. psychologist + speech), so the
+  // active role is the stored pick among those matching the current path.
+  const matching = roles.filter(onPath)
+  const activeRole = matching.find((r) => r.role === activeRoleKey) || matching[0] || null
+  const subtitle = roles.length > 1 && activeRole ? activeRole.label : user.id
 
   return (
     <SidebarContext.Provider value={{ openSidebar: () => setOpen(true), collapsed, toggleCollapsed }}>
@@ -74,7 +93,7 @@ function StaffLayout({ user, nav, outletContext }) {
             </div>
             <div className={['min-w-0 flex-1', collapsed ? 'lg:hidden' : ''].join(' ')}>
               <div className="truncate text-sm font-semibold leading-tight">{user.name}</div>
-              <div className="text-[10px] tracking-wider text-purple-200/80">{user.id}</div>
+              <div className="text-[10px] tracking-wider text-purple-200/80">{subtitle}</div>
             </div>
           </div>
 
@@ -96,15 +115,16 @@ function StaffLayout({ user, nav, outletContext }) {
               {roleOpen ? (
                 <div className="mt-1 space-y-0.5 rounded-md bg-black/10 p-1">
                   {roles.map((r) => {
-                    const isActive = activeRole?.path === r.path
+                    const isActive = activeRole?.role === r.role
                     return (
                       <button
-                        key={r.path}
+                        key={r.role}
                         type="button"
                         onClick={() => {
                           setRoleOpen(false)
                           close()
-                          if (!isActive) navigate(r.path)
+                          pickRole(r.role)
+                          if (!onPath(r)) navigate(r.path)
                         }}
                         className={[
                           'flex w-full items-center justify-between rounded px-2 py-1.5 text-xs',
