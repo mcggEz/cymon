@@ -22,7 +22,7 @@ function requireRole(...roles) {
   };
 }
 
-router.use(requireAuth, requireRole('psychometrician', 'admin'));
+router.use(requireAuth, requireRole('psychometrician', 'speech_therapist', 'occupational_therapist', 'admin'));
 
 const SESSION_LABEL = {
   mmse: 'MMSE Assessment',
