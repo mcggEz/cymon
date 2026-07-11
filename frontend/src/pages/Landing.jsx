@@ -222,9 +222,7 @@ function Landing() {
         <div className="relative z-20 mx-auto w-full max-w-7xl">
           <div className="max-w-3xl">
             <h1 className="font-sans text-4xl font-semibold leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
-              Clarity of Mind,
-              <br />
-              <span className="text-violet">Journey to Wellness.</span>
+              Clarity of Mind, <span className="text-violet">Journey to Wellness.</span>
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
@@ -242,22 +240,6 @@ function Landing() {
                   <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-              <a
-                href="#platform"
-                className="inline-flex items-center justify-center rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10"
-              >
-                Explore the platform
-              </a>
-            </div>
-
-            <div className="mt-12 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-slate-400">
-              <span>SPED Program</span>
-              <span className="text-white/20">/</span>
-              <span>Assessments</span>
-              <span className="text-white/20">/</span>
-              <span>Intervention Planning</span>
-              <span className="text-white/20">/</span>
-              <span>Family Portal</span>
             </div>
           </div>
         </div>
