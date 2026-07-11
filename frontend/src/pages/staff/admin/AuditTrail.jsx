@@ -98,30 +98,30 @@ function AuditTrail() {
           </div>
         </div>
 
-        <div className="bg-white border border-purple-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-purple-100">
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Timestamp</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Actor</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Action</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Detail</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono text-center">Severity</th>
+                <tr className="text-xs font-semibold tracking-wider text-purple-700">
+                  <th className="py-3 text-left">Timestamp</th>
+                  <th className="py-3 text-left">Actor</th>
+                  <th className="py-3 text-left">Action</th>
+                  <th className="py-3 text-left">Detail</th>
+                  <th className="py-3 text-left">Severity</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-purple-50">
+              <tbody className="divide-y divide-purple-100">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={`s${i}`}>
-                      <td colSpan="5" className="px-5 py-3">
+                      <td colSpan="5" className="py-3">
                         <Skeleton className="h-6 w-full" />
                       </td>
                     </tr>
                   ))
                 ) : filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-5 py-8 text-center text-sm text-slate-400 font-light">
+                    <td colSpan="5" className="py-6 text-center text-sm text-slate-500">
                       {logs.length === 0 ? 'No audit activity recorded yet.' : 'No matching audit logs found.'}
                     </td>
                   </tr>
@@ -132,24 +132,24 @@ function AuditTrail() {
                       <tr
                         key={log.id}
                         onClick={() => setSelectedLog(log)}
-                        className="hover:bg-slate-50/30 cursor-pointer transition-colors group"
+                        className="group cursor-pointer transition-colors hover:bg-purple-50/40"
                       >
-                        <td className="px-5 py-4 text-xs font-mono text-slate-500 whitespace-nowrap">{fmtDateTime(log.created_at)}</td>
-                        <td className="px-5 py-4 text-sm font-semibold text-slate-800 whitespace-nowrap">
+                        <td className="py-3 text-xs font-mono text-slate-500 whitespace-nowrap">{fmtDateTime(log.created_at)}</td>
+                        <td className="py-3 text-sm font-semibold text-slate-800 whitespace-nowrap">
                           {log.actor}
                           {log.actor_role ? (
                             <span className="ml-1 text-[10px] font-normal text-slate-400">({titleCase(log.actor_role)})</span>
                           ) : null}
                         </td>
-                        <td className="px-5 py-4 text-xs whitespace-nowrap">
+                        <td className="py-3 text-xs whitespace-nowrap">
                           <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
                             {titleCase(log.action)}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-sm text-slate-600 font-light max-w-xs md:max-w-md truncate group-hover:text-slate-800 transition-colors">
+                        <td className="py-3 text-sm text-slate-600 font-light max-w-xs md:max-w-md truncate group-hover:text-slate-800 transition-colors">
                           {log.summary}
                         </td>
-                        <td className="px-5 py-4 text-center whitespace-nowrap">
+                        <td className="py-3 text-center whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1 font-semibold px-2 py-1 rounded-full text-[10px] uppercase tracking-wider border ${sev.cls}`}>
                             {sev.label}
                           </span>
