@@ -5,18 +5,20 @@ import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
 import Modal from '../../../components/ui/Modal'
+import { useAuth } from '../../../auth/useAuth'
 
 const STATUS_META = {
   draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700' },
   submitted: { label: 'SUBMITTED', tone: 'bg-sky-100 text-sky-700' },
-  processed: { label: 'PROCESSED & DRAFTED', tone: 'bg-sky-100 text-sky-700' },
-  scored: { label: 'APPROVED BY RPSY', tone: 'bg-emerald-100 text-emerald-700' },
+  processed: { label: 'PROCESSED', tone: 'bg-sky-100 text-sky-700' },
+  scored: { label: 'APPROVED', tone: 'bg-emerald-100 text-emerald-700' },
   flagged: { label: 'FLAGGED', tone: 'bg-rose-100 text-rose-700' },
 }
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
-function ChecklistModal({ row, onClose, onProcess, processing }) {
-  const done = row.status === 'processed' || row.status === 'scored'
+function ChecklistModal({ row, onClose, onProcess, onApprove, canApprove, processing }) {
+  const processed = row.status === 'processed' || row.status === 'scored'
+  const approved = row.status === 'scored'
   return (
     <Modal
       title="Caregiver Observation Checklist"
@@ -34,19 +36,29 @@ function ChecklistModal({ row, onClose, onProcess, processing }) {
             >
               Close Viewer
             </button>
-            {done ? (
-              <span className="rounded-md bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-700">
-                Processed
-              </span>
-            ) : (
+            {!processed ? (
               <button
                 onClick={() => onProcess(row.id)}
                 disabled={processing}
                 className="rounded-md bg-purple-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
               >
-                {processing ? 'Processing…' : 'Mark as Processed'}
+                {processing ? 'Working…' : 'Mark as Processed'}
               </button>
-            )}
+            ) : null}
+            {canApprove && !approved ? (
+              <button
+                onClick={() => onApprove(row.id)}
+                disabled={processing}
+                className="rounded-md bg-emerald-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+              >
+                {processing ? 'Working…' : 'Approve'}
+              </button>
+            ) : null}
+            {approved ? (
+              <span className="rounded-md bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-700">
+                Approved
+              </span>
+            ) : null}
           </div>
         </div>
       }
@@ -125,6 +137,8 @@ function StatCard({ value, label, loading }) {
 }
 
 function DataReview() {
+  const { profile } = useAuth()
+  const canApprove = ['psychologist', 'admin'].includes(profile?.role)
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
   const [summary, setSummary] = useState(null)
@@ -165,9 +179,20 @@ function DataReview() {
     }
   }
 
+  const markApproved = async (id) => {
+    setProcessing(true)
+    try {
+      await api.psychometrician.updateSubmission(id, { status: 'scored' })
+      await load()
+      setActive(null)
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   return (
     <>
-      <StaffHeader title="Caregiver Data Review" />
+      <StaffHeader title="Data Review" />
       <div className="flex-1 overflow-y-auto p-6">
         <h1 className="text-2xl font-bold text-purple-800">Submitted Checklists</h1>
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
@@ -273,6 +298,8 @@ function DataReview() {
             row={active}
             onClose={() => setActive(null)}
             onProcess={markProcessed}
+            onApprove={markApproved}
+            canApprove={canApprove}
             processing={processing}
           />
         ) : null}

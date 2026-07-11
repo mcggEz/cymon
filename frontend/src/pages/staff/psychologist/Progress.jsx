@@ -118,7 +118,7 @@ function Progress() {
 
   return (
     <>
-      <StaffHeader title="Progress" />
+      <StaffHeader title="Monthly Summary Progress" />
       <div className="flex-1 overflow-y-auto p-6">
         <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">

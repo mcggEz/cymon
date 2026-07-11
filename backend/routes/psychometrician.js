@@ -22,7 +22,7 @@ function requireRole(...roles) {
   };
 }
 
-router.use(requireAuth, requireRole('psychometrician', 'admin', 'speech_therapist', 'occupational_therapist'));
+router.use(requireAuth, requireRole('psychometrician', 'admin', 'speech_therapist', 'occupational_therapist', 'psychologist'));
 
 const SESSION_LABEL = {
   mmse: 'MMSE Assessment',
@@ -476,6 +476,70 @@ router.patch('/reports/:id', async (req, res, next) => {
     const { error } = await supabase.from('assessment_reports').update(upd).eq('id', req.params.id);
     if (error) return res.status(400).json({ error: error.message });
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Combined status ledger: Daily Activity Reports (session_logs) + Monthly
+// Summary Progress reports (assessment_reports, progress_summary), each
+// normalized to draft / submitted / approved.
+const DAILY_STATUS = { draft: 'draft', pending: 'submitted', approved: 'approved' };
+const PROGRESS_STATUS = {
+  draft: 'draft',
+  in_progress: 'draft',
+  revise_requested: 'draft',
+  ready_for_review: 'submitted',
+  approved: 'approved',
+  finalized: 'approved',
+};
+
+router.get('/drafting-reports', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const [{ data: daily, error: e1 }, { data: progress, error: e2 }] = await Promise.all([
+      supabase
+        .from('session_logs')
+        .select('id, session_date, activity_title, status, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
+        .order('session_date', { ascending: false }),
+      supabase
+        .from('assessment_reports')
+        .select('id, title, status, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
+        .eq('report_type', 'progress_summary')
+        .order('updated_at', { ascending: false }),
+    ]);
+    if (e1) return next(e1);
+    if (e2) return next(e2);
+    const rows = [
+      ...inClinic(daily, req.profile.clinic_id).map((r) => ({
+        id: r.id,
+        type: 'daily_activity',
+        typeLabel: 'Daily Activity Report',
+        name: name(r.patients),
+        sid: r.patients.patient_id,
+        title: r.activity_title || 'Daily Activity Report',
+        date: r.session_date,
+        status: DAILY_STATUS[r.status] || 'draft',
+      })),
+      ...inClinic(progress, req.profile.clinic_id).map((r) => ({
+        id: r.id,
+        type: 'progress_summary',
+        typeLabel: 'Monthly Summary Progress',
+        name: name(r.patients),
+        sid: r.patients.patient_id,
+        title: r.title || 'Monthly Summary Progress',
+        date: r.updated_at,
+        status: PROGRESS_STATUS[r.status] || 'draft',
+      })),
+    ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    res.json({
+      summary: {
+        draft: rows.filter((r) => r.status === 'draft').length,
+        submitted: rows.filter((r) => r.status === 'submitted').length,
+        approved: rows.filter((r) => r.status === 'approved').length,
+      },
+      rows,
+    });
   } catch (err) {
     next(err);
   }

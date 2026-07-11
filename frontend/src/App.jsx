@@ -16,12 +16,7 @@ import RequireAuth from './auth/RequireAuth'
 
 import PsychologistLayout from './pages/staff/PsychologistLayout'
 import Approvals from './pages/staff/psychologist/Approvals'
-import RosterOverview from './pages/staff/psychologist/RosterOverview'
-import Mainstreaming from './pages/staff/psychologist/Mainstreaming'
-import Interventions from './pages/staff/psychologist/Interventions'
 import Progress from './pages/staff/psychologist/Progress'
-import IntakeInterview from './pages/staff/psychologist/IntakeInterview'
-import ProgressNotes from './pages/staff/psychologist/ProgressNotes'
 
 import AdminLayout from './pages/staff/AdminLayout'
 import AdminOverview from './pages/staff/admin/Overview'
@@ -77,12 +72,10 @@ function App() {
           }
         >
           <Route index element={<Approvals />} />
-          <Route path="roster" element={<RosterOverview />} />
-          <Route path="intake" element={<IntakeInterview />} />
-          <Route path="progress-notes" element={<ProgressNotes />} />
-          <Route path="mainstreaming" element={<Mainstreaming />} />
-          <Route path="interventions" element={<Interventions />} />
+          <Route path="data-review" element={<DataReview />} />
+          <Route path="activity" element={<PmActivityLog />} />
           <Route path="progress" element={<Progress />} />
+          <Route path="reports" element={<DraftingReports />} />
         </Route>
 
         <Route
@@ -97,6 +90,7 @@ function App() {
           <Route path="assessments" element={<PmAssessments />} />
           <Route path="data-review" element={<DataReview />} />
           <Route path="activity" element={<PmActivityLog />} />
+          <Route path="progress" element={<Progress />} />
           <Route path="reports" element={<DraftingReports />} />
         </Route>
 
@@ -116,6 +110,9 @@ function App() {
           <Route path="schedule" element={<AdminSchedule />} />
           <Route path="scoring" element={<AdminScoring />} />
           <Route path="assessments" element={<AdminAssessments />} />
+          <Route path="activity" element={<PmActivityLog />} />
+          <Route path="progress" element={<Progress />} />
+          <Route path="reports" element={<DraftingReports />} />
           <Route path="records" element={<AdminClinicalRecords />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="audit" element={<AdminAuditTrail />} />

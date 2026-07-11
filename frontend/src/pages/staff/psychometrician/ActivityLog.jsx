@@ -143,7 +143,7 @@ function ActivityLog() {
 
   return (
     <>
-      <StaffHeader title="Daily Activity Logging" />
+      <StaffHeader title="Daily Activity Report" />
       <div className="flex-1 overflow-y-auto p-6">
         <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">

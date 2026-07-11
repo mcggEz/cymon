@@ -135,6 +135,7 @@ export const api = {
     assessments: () => request('/api/psychometrician/assessments', { auth: true }),
     dataReview: () => request('/api/psychometrician/data-review', { auth: true }),
     reports: () => request('/api/psychometrician/reports', { auth: true }),
+    draftingReports: () => request('/api/psychometrician/drafting-reports', { auth: true }),
     activityLogs: () => request('/api/psychometrician/activity-logs', { auth: true }),
     addActivityLog: (payload) =>
       request('/api/psychometrician/activity-logs', { method: 'POST', body: payload, auth: true }),
