@@ -9,6 +9,7 @@ import Button from '../../../components/ui/Button'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
 import StudentAdmissionForm from './StudentAdmissionForm'
+import StudentAdmissionDocument from './StudentAdmissionDocument'
 
 const tone = {
   emerald: 'bg-emerald-100 text-emerald-700',
@@ -127,6 +128,7 @@ function EditPatientModal({ row, onClose, onSaved }) {
 function Patients() {
   const [active, setActive] = useState(null)
   const [detail, setDetail] = useState(null)
+  const [viewDoc, setViewDoc] = useState(false)
   const [editing, setEditing] = useState(null)
   const [rows, setRows] = useState([])
   const [error, setError] = useState(null)
@@ -150,6 +152,7 @@ function Patients() {
   const closeDetail = () => {
     setActive(null)
     setDetail(null)
+    setViewDoc(false)
   }
 
   useEffect(() => {
@@ -343,9 +346,21 @@ function Patients() {
                 <Field label="Admission Form" value={active.form} />
               </dl>
 
-              <button onClick={() => { setEditing(active) }} className="mt-5 w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-                Edit
-              </button>
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setViewDoc(true)}
+                  disabled={!detail}
+                  className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
+                >
+                  View as Form
+                </button>
+                <button
+                  onClick={() => setEditing(active)}
+                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+                >
+                  Edit
+                </button>
+              </div>
             </aside>
           </>
         ) : null}
@@ -370,6 +385,9 @@ function Patients() {
             }}
             onClose={() => setOpenAdmissionForm(false)}
           />
+        ) : null}
+        {viewDoc && detail ? (
+          <StudentAdmissionDocument detail={detail} onClose={() => setViewDoc(false)} />
         ) : null}
       </div>
     </>

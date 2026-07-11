@@ -87,52 +87,63 @@ function Progress() {
           </div>
         </section>
 
-        <div className="mt-5 flex flex-col gap-4">
-          {loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 w-full" rounded="rounded-2xl" />
-            ))
-          ) : visible.length === 0 ? (
-            <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
-              {q ? 'No reports match your search.' : 'No progress reports yet.'}
-            </div>
-          ) : null}
-          {!loading && paged.map((i) => {
-            const meta = STATUS_META[i.status] || STATUS_META.draft
-            const trendTone = i.trend && i.trend.toLowerCase().includes('improv') ? 'emerald' : 'amber'
-            return (
-            <article key={i.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-lg font-bold text-purple-800">{i.name}</div>
-                  <div className="text-xs text-slate-500">{i.period}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {i.trend ? (
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone[trendTone]}`}>
-                      {i.trend}
-                    </span>
-                  ) : null}
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone[meta.tone]}`}>
-                    {meta.label}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-                  View
-                </button>
-                <button className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                  Analytics
-                </button>
-                <button className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                  Export
-                </button>
-              </div>
-            </article>
-            )
-          })}
-        </div>
+        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="text-xs font-semibold tracking-wider text-purple-700">
+                  <th className="py-3 text-left">Student</th>
+                  <th className="py-3 text-left">Period</th>
+                  <th className="py-3 text-left">Trend</th>
+                  <th className="py-3 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-purple-100">
+                {loading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={4} className="py-3">
+                          <Skeleton className="h-8 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : null}
+                {!loading && visible.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-sm text-slate-500">
+                      {q ? 'No reports match your search.' : 'No progress reports yet.'}
+                    </td>
+                  </tr>
+                ) : null}
+                {!loading &&
+                  paged.map((i) => {
+                    const meta = STATUS_META[i.status] || STATUS_META.draft
+                    const trendTone = i.trend && i.trend.toLowerCase().includes('improv') ? 'emerald' : 'amber'
+                    return (
+                      <tr key={i.id}>
+                        <td className="py-3 font-medium text-purple-800">{i.name}</td>
+                        <td className="py-3 text-slate-600">{i.period || '—'}</td>
+                        <td className="py-3">
+                          {i.trend ? (
+                            <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[trendTone]}`}>
+                              {i.trend}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-3">
+                          <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[meta.tone]}`}>
+                            {meta.label}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         {!loading && shown < visible.length ? (
           <div className="mt-5 text-center">
