@@ -28,4 +28,3 @@ create policy survey_responses_access on public.survey_responses
   for all to authenticated
   using (respondent_profile_id = auth.uid() or public.is_admin())
   with check (respondent_profile_id = auth.uid() or public.is_admin());
- 
