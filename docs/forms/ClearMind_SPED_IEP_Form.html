@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPED Individualized Educational Plan — ClearMind Psychological Services</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#4A2E6B;
+    --plum-deep:#38224F;
+    --lavender-bg:#F5F1FA;
+    --mauve:#8B6BAE;
+    --ink:#2B2733;
+    --paper:#FFFFFF;
+    --line:#E4DCEF;
+    --lsn:#5B8C6E;
+    --msn:#B8873A;
+    --hsn:#B4524A;
+    --shadow: 0 1px 2px rgba(56,34,79,0.06), 0 8px 24px rgba(56,34,79,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--lavender-bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    line-height:1.5;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
+
+  /* Header */
+  header.brand{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:22px;
+    flex-wrap:wrap;gap:12px;
+  }
+  .brand-left{display:flex;align-items:center;gap:12px;}
+  .logo{
+    width:44px;height:44px;border-radius:50%;
+    background:linear-gradient(135deg,var(--plum),var(--mauve));
+    display:flex;align-items:center;justify-content:center;
+    color:white;font-family:'Fraunces',serif;font-weight:600;font-size:19px;
+    flex-shrink:0;
+  }
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:20px;color:var(--plum-deep);}
+  .brand-tag{font-size:12px;color:var(--mauve);font-style:italic;margin-top:1px;}
+  .brand-right{text-align:right;font-size:11.5px;color:#6b6478;line-height:1.6;}
+  .form-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mauve);letter-spacing:0.02em;}
+
+  h1.title{
+    font-family:'Fraunces',serif;font-weight:600;font-size:26px;color:var(--plum-deep);
+    margin:4px 0 2px;
+  }
+  .subtitle{color:#6b6478;font-size:13.5px;margin-bottom:22px;}
+
+  /* Learner info */
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:14px;
+    padding:22px 24px;box-shadow:var(--shadow);margin-bottom:20px;
+  }
+  .card h2{
+    font-family:'Fraunces',serif;font-weight:600;font-size:16px;color:var(--plum-deep);
+    margin:0 0 16px;display:flex;align-items:center;gap:8px;
+  }
+  .card h2 .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mauve);
+    background:var(--lavender-bg);padding:3px 8px;border-radius:20px;letter-spacing:0.04em;
+  }
+  .grid{display:grid;gap:14px;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:720px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}}
+
+  label.field-label{
+    display:block;font-size:11.5px;font-weight:600;color:var(--plum-deep);
+    text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px;
+  }
+  input[type=text],input[type=date],textarea,select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:#FCFAFF;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  textarea{resize:vertical;min-height:56px;}
+  input:focus,textarea:focus,select:focus{
+    outline:none;border-color:var(--mauve);box-shadow:0 0 0 3px rgba(139,107,174,0.15);
+  }
+
+  /* Week navigator */
+  .week-nav{
+    display:flex;gap:8px;margin-bottom:20px;background:var(--paper);
+    border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadow);
+    overflow-x:auto;
+  }
+  .week-tab{
+    flex:1;min-width:140px;padding:12px 14px;border-radius:10px;cursor:pointer;
+    text-align:left;border:1px solid transparent;position:relative;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .week-tab:hover{background:var(--lavender-bg);}
+  .week-tab.active{background:var(--plum);color:white;}
+  .week-tab .wk-label{font-family:'Fraunces',serif;font-weight:600;font-size:14px;}
+  .week-tab.active .wk-label{color:white;}
+  .week-tab .wk-sub{font-size:10.5px;color:#8a8296;letter-spacing:.03em;text-transform:uppercase;}
+  .week-tab.active .wk-sub{color:#E4D9F2;}
+  .progress-dots{display:flex;gap:4px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--line);}
+  .week-tab.active .dot{background:rgba(255,255,255,0.35);}
+  .dot.filled{background:var(--mauve);}
+  .week-tab.active .dot.filled{background:white;}
+
+  /* Level of needs */
+  .level-group{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .level-option{
+    flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:12px;
+    padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;
+    transition:border-color .15s, background .15s;
+  }
+  .level-option input{width:16px;height:16px;accent-color:var(--plum);flex-shrink:0;}
+  .level-option .lvl-code{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+    padding:2px 7px;border-radius:6px;color:white;
+  }
+  .level-option.lsn .lvl-code{background:var(--lsn);}
+  .level-option.msn .lvl-code{background:var(--msn);}
+  .level-option.hsn .lvl-code{background:var(--hsn);}
+  .level-option .lvl-name{font-size:12.5px;color:var(--ink);}
+  .level-option:has(input:checked){border-color:var(--mauve);background:var(--lavender-bg);}
+
+  /* Domain rows */
+  .domain-block{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden;}
+  .domain-head{
+    background:var(--lavender-bg);padding:10px 16px;font-family:'Fraunces',serif;
+    font-weight:600;font-size:13.5px;color:var(--plum-deep);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .domain-body{padding:16px;display:grid;grid-template-columns:1.1fr 1.4fr 1.4fr 1.1fr;gap:12px;}
+  @media (max-width:860px){.domain-body{grid-template-columns:1fr;}}
+  .domain-body.kinesthetic-body{grid-template-columns:1fr;}
+  .kin-row{display:grid;grid-template-columns:1.1fr 1.4fr 1.4fr 1.1fr;gap:12px;padding:12px 0;}
+  .kin-row + .kin-row{border-top:1px dashed var(--line);}
+  @media (max-width:860px){.kin-row{grid-template-columns:1fr;}}
+  .kin-tag{font-size:10.5px;font-weight:600;color:var(--mauve);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;grid-column:1/-1;}
+
+  /* Signature section */
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:780px){.sig-grid{grid-template-columns:1fr;}}
+  .sig-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:#FCFAFF;}
+  .sig-role{font-family:'Fraunces',serif;font-weight:600;color:var(--plum-deep);font-size:14px;}
+  .sig-person{font-size:12px;color:#6b6478;margin-bottom:10px;}
+  canvas.pad{
+    width:100%;height:130px;background:white;border:1.5px dashed var(--line);
+    border-radius:9px;cursor:crosshair;touch-action:none;
+  }
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .clear-btn{
+    background:none;border:none;color:var(--mauve);font-size:12px;cursor:pointer;
+    font-weight:600;padding:4px 0;
+  }
+  .clear-btn:hover{text-decoration:underline;}
+  .sig-date{width:150px;}
+
+  /* Footer bar */
+  .action-bar{
+    position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);
+    padding:14px 20px;display:flex;justify-content:flex-end;gap:10px;
+    box-shadow:0 -6px 18px rgba(56,34,79,0.06);margin-top:24px;border-radius:14px 14px 0 0;
+  }
+  .btn{
+    padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;
+    border:1px solid var(--line);background:white;color:var(--plum-deep);
+  }
+  .btn.primary{background:var(--plum);color:white;border-color:var(--plum);}
+  .btn.primary:hover{background:var(--plum-deep);}
+  .btn:hover{background:var(--lavender-bg);}
+
+  .hint{font-size:11.5px;color:#8a8296;margin-top:4px;}
+
+  @media print{
+    body{background:white;}
+    .week-nav, .action-bar, .clear-btn{display:none !important;}
+    .week-panel{display:block !important;page-break-before:always;}
+    .week-panel:first-of-type{page-break-before:auto;}
+    .card{box-shadow:none;border:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="brand-left">
+      <div class="logo">CM</div>
+      <div>
+        <div class="brand-name">ClearMind Psychological Services</div>
+        <div class="brand-tag">Clarity of Mind, Journey to Wellness.</div>
+      </div>
+    </div>
+    <div class="brand-right">
+      Blk 1 Lot 7 Palmsville Subdivision<br>
+      Brgy. Banlic, Cabuyao City, Laguna 4025<br>
+      clearmind.psychservices@gmail.com · (+639)92-916-4078<br>
+      <span class="form-code">CMPS:SE-FO-10 rev.0 03182026</span>
+    </div>
+  </header>
+
+  <h1 class="title">Special Education (SPED) Program</h1>
+  <div class="subtitle">Individualized Educational Plan — 4-week activity and progress record</div>
+
+  <!-- Learner info -->
+  <div class="card">
+    <h2><span class="eyebrow">01</span> Learner Information</h2>
+    <div class="grid cols-3">
+      <div>
+        <label class="field-label">Learner's Name</label>
+        <input type="text" id="learnerName" placeholder="Full name">
+      </div>
+      <div>
+        <label class="field-label">Date of Birth</label>
+        <input type="date" id="learnerDob">
+      </div>
+      <div>
+        <label class="field-label">Plan Start Date</label>
+        <input type="date" id="planStart">
+      </div>
+      <div>
+        <label class="field-label">Behavioral Technician</label>
+        <input type="text" id="techName" placeholder="Prepared by">
+      </div>
+      <div>
+        <label class="field-label">Diagnosis / Profile</label>
+        <input type="text" id="diagnosis" placeholder="e.g. ASD, Level 1">
+      </div>
+      <div>
+        <label class="field-label">Case Reference No.</label>
+        <input type="text" id="caseRef" placeholder="Optional">
+      </div>
+    </div>
+  </div>
+
+  <!-- Week navigator -->
+  <div class="week-nav" id="weekNav"></div>
+
+  <!-- Week panels -->
+  <div id="weekPanels"></div>
+
+  <!-- Sign-off -->
+  <div class="card">
+    <h2><span class="eyebrow">02</span> Sign-off</h2>
+    <div class="sig-grid">
+
+      <div class="sig-card">
+        <div class="sig-role">Prepared by</div>
+        <div class="sig-person">Behavioral Technician</div>
+        <canvas class="pad" data-pad="prepared"></canvas>
+        <div class="sig-actions">
+          <button class="clear-btn" data-clear="prepared">Clear signature</button>
+          <input type="date" class="sig-date" id="date-prepared">
+        </div>
+      </div>
+
+      <div class="sig-card">
+        <div class="sig-role">Checked by</div>
+        <div class="sig-person">Marwin A. Gilbero Jr, RPm, CHRA — SPED Program Coordinator</div>
+        <canvas class="pad" data-pad="checked"></canvas>
+        <div class="sig-actions">
+          <button class="clear-btn" data-clear="checked">Clear signature</button>
+          <input type="date" class="sig-date" id="date-checked">
+        </div>
+      </div>
+
+      <div class="sig-card">
+        <div class="sig-role">Verified by</div>
+        <div class="sig-person">Leera Mae C. Guevarra, RPm, CHRA — Learning Head</div>
+        <canvas class="pad" data-pad="verified"></canvas>
+        <div class="sig-actions">
+          <button class="clear-btn" data-clear="verified">Clear signature</button>
+          <input type="date" class="sig-date" id="date-verified">
+        </div>
+      </div>
+
+      <div class="sig-card">
+        <div class="sig-role">Noted by</div>
+        <div class="sig-person">Dr. Jinky C. Malabanan, RPm, RPsy, CHRA — Chief Psychologist</div>
+        <canvas class="pad" data-pad="noted"></canvas>
+        <div class="sig-actions">
+          <button class="clear-btn" data-clear="noted">Clear signature</button>
+          <input type="date" class="sig-date" id="date-noted">
+        </div>
+      </div>
+
+    </div>
+    <div class="hint">Sign with mouse, trackpad, or touchscreen. Signatures are kept only in this browser tab.</div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn" onclick="resetForm()">Reset form</button>
+    <button class="btn primary" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+</div>
+
+<script>
+const DOMAINS = [
+  {key:'practical', name:'Practical Domain'},
+  {key:'social', name:'Social Domain'},
+  {key:'conceptual', name:'Conceptual Domain'},
+];
+
+function weekPanelHTML(week){
+  let domainBlocks = DOMAINS.map(d => `
+    <div class="domain-block">
+      <div class="domain-head">${d.name}</div>
+      <div class="domain-body">
+        <div><label class="field-label">Name of Activity</label><textarea data-f="${week}-${d.key}-activity"></textarea></div>
+        <div><label class="field-label">Objectives</label><textarea data-f="${week}-${d.key}-objectives"></textarea></div>
+        <div><label class="field-label">Instructional Materials Needed</label><textarea data-f="${week}-${d.key}-materials"></textarea></div>
+        <div><label class="field-label">Notes</label><textarea data-f="${week}-${d.key}-notes"></textarea></div>
+      </div>
+    </div>`).join('');
+
+  let kinesthetic = `
+    <div class="domain-block">
+      <div class="domain-head">Bodily Kinesthetics</div>
+      <div class="domain-body kinesthetic-body">
+        <div class="kin-row">
+          <div class="kin-tag">Fine Motor Skills</div>
+          <div><label class="field-label">Name of Activity</label><textarea data-f="${week}-kin-fine-activity"></textarea></div>
+          <div><label class="field-label">Objectives</label><textarea data-f="${week}-kin-fine-objectives"></textarea></div>
+          <div><label class="field-label">Instructional Materials Needed</label><textarea data-f="${week}-kin-fine-materials"></textarea></div>
+          <div><label class="field-label">Notes</label><textarea data-f="${week}-kin-fine-notes"></textarea></div>
+        </div>
+        <div class="kin-row">
+          <div class="kin-tag">Gross Motor Skills</div>
+          <div><label class="field-label">Name of Activity</label><textarea data-f="${week}-kin-gross-activity"></textarea></div>
+          <div><label class="field-label">Objectives</label><textarea data-f="${week}-kin-gross-objectives"></textarea></div>
+          <div><label class="field-label">Instructional Materials Needed</label><textarea data-f="${week}-kin-gross-materials"></textarea></div>
+          <div><label class="field-label">Notes</label><textarea data-f="${week}-kin-gross-notes"></textarea></div>
+        </div>
+      </div>
+    </div>`;
+
+  return `
+  <div class="week-panel" id="panel-${week}" style="display:${week===1?'block':'none'}">
+    <div class="card">
+      <h2><span class="eyebrow">Week ${week}</span> Level of Needs</h2>
+      <div class="level-group">
+        <label class="level-option lsn">
+          <input type="radio" name="level-${week}" value="LSN" data-f="${week}-level">
+          <span class="lvl-code">LSN</span><span class="lvl-name">Low Support Needs Program</span>
+        </label>
+        <label class="level-option msn">
+          <input type="radio" name="level-${week}" value="MSN" data-f="${week}-level">
+          <span class="lvl-code">MSN</span><span class="lvl-name">Moderate Support Needs Program</span>
+        </label>
+        <label class="level-option hsn">
+          <input type="radio" name="level-${week}" value="HSN" data-f="${week}-level">
+          <span class="lvl-code">HSN</span><span class="lvl-name">High Support Needs Program</span>
+        </label>
+      </div>
+      ${domainBlocks}
+      ${kinesthetic}
+    </div>
+  </div>`;
+}
+
+const panelsEl = document.getElementById('weekPanels');
+for(let w=1; w<=4; w++){ panelsEl.insertAdjacentHTML('beforeend', weekPanelHTML(w)); }
+
+// Week nav
+const navEl = document.getElementById('weekNav');
+function renderNav(){
+  navEl.innerHTML = '';
+  for(let w=1; w<=4; w++){
+    const filled = weekFillCount(w);
+    const tab = document.createElement('div');
+    tab.className = 'week-tab' + (w===currentWeek?' active':'');
+    tab.innerHTML = `
+      <div class="wk-label">Week ${w}</div>
+      <div class="wk-sub">${filled} of 4 domains</div>
+      <div class="progress-dots">
+        ${[0,1,2,3].map(i=>`<div class="dot ${i<filled?'filled':''}"></div>`).join('')}
+      </div>`;
+    tab.onclick = () => switchWeek(w);
+    navEl.appendChild(tab);
+  }
+}
+function weekFillCount(w){
+  const groups = ['practical','social','conceptual','kin'];
+  let count = 0;
+  groups.forEach(g=>{
+    const inputs = document.querySelectorAll(`textarea[data-f^="${w}-${g}"]`);
+    let any = false;
+    inputs.forEach(i=>{ if(i.value.trim()) any = true; });
+    if(any) count++;
+  });
+  return count;
+}
+let currentWeek = 1;
+function switchWeek(w){
+  currentWeek = w;
+  document.querySelectorAll('.week-panel').forEach(p=>p.style.display='none');
+  document.getElementById('panel-'+w).style.display = 'block';
+  renderNav();
+}
+panelsEl.addEventListener('input', renderNav);
+renderNav();
+
+// Signature pads
+document.querySelectorAll('canvas.pad').forEach(canvas=>{
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    ctx.strokeStyle = '#2B2733';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let drawing = false;
+  let last = null;
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    return {x:cx, y:cy};
+  }
+  function start(e){ drawing = true; last = pos(e); e.preventDefault(); }
+  function move(e){
+    if(!drawing) return;
+    const p = pos(e);
+    const ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    last = p;
+    e.preventDefault();
+  }
+  function end(){ drawing = false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+});
+
+document.querySelectorAll('[data-clear]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.getAttribute('data-clear');
+    const canvas = document.querySelector(`canvas[data-pad="${key}"]`);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+});
+
+function resetForm(){
+  if(!confirm('Clear all fields and signatures on this form?')) return;
+  document.querySelectorAll('input[type=text], input[type=date], textarea').forEach(el=>el.value='');
+  document.querySelectorAll('input[type=radio]').forEach(el=>el.checked=false);
+  document.querySelectorAll('canvas.pad').forEach(canvas=>{
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+  currentWeek = 1;
+  switchWeek(1);
+}
+</script>
+</body>
+</html>

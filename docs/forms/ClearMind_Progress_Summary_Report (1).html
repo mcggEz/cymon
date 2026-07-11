@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Monthly Progress Summary Report — ClearMind Psychological Services</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#4A2E6B; --plum-deep:#38224F; --lavender-bg:#F5F1FA; --lavender-panel:#EFE7F8;
+    --mauve:#8B6BAE; --ink:#2B2733; --paper:#FFFFFF; --line:#E4DCEF;
+    --shadow: 0 1px 2px rgba(56,34,79,0.06), 0 8px 24px rgba(56,34,79,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--lavender-bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;line-height:1.5;}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 90px;}
+
+  header.brand{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:20px;}
+  @media (max-width:700px){header.brand{grid-template-columns:1fr;text-align:center;}}
+  .office{font-size:10.5px;color:#6b6478;line-height:1.5;}
+  .office.right{text-align:right;}
+  @media (max-width:700px){.office.right{text-align:center;}}
+  .office .office-name{font-weight:700;color:var(--plum-deep);font-size:11.5px;}
+  .brand-center{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--plum),var(--mauve));display:flex;align-items:center;justify-content:center;color:white;font-family:'Fraunces',serif;font-weight:600;font-size:15px;}
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--plum-deep);}
+  .form-code{position:absolute;top:14px;right:20px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mauve);}
+
+  h1.title{font-family:'Fraunces',serif;font-weight:600;font-size:22px;color:var(--plum-deep);margin:4px 0 2px;text-align:center;}
+  .subtitle-row{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:22px;}
+  .subtitle-row input{max-width:220px;text-align:center;font-weight:600;color:var(--mauve);border:1px dashed var(--line);}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;position:relative;}
+  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:15.5px;color:var(--plum-deep);margin:0 0 16px;display:flex;align-items:center;gap:8px;}
+  .card h2 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mauve);background:var(--lavender-bg);padding:3px 8px;border-radius:20px;letter-spacing:.04em;}
+
+  .grid{display:grid;gap:14px;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:640px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}}
+
+  label.field-label{display:block;font-size:11.5px;font-weight:600;color:var(--plum-deep);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+  input[type=text],input[type=date],textarea,select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:#FCFAFF;
+  }
+  input[readonly]{background:var(--lavender-panel);color:#6b6478;}
+  textarea{resize:vertical;min-height:90px;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mauve);box-shadow:0 0 0 3px rgba(139,107,174,0.15);}
+  .hint{font-size:11.5px;color:#8a8296;margin-top:5px;}
+
+  /* Domain checklist */
+  .domain-chip{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:20px;padding:8px 14px;cursor:pointer;margin:0 8px 8px 0;font-weight:600;font-size:13px;}
+  .domain-chip input{width:16px;height:16px;accent-color:var(--plum);}
+  .domain-chip:has(input:checked){border-color:var(--mauve);background:var(--lavender-panel);color:var(--plum-deep);}
+
+  /* Assessment domain block */
+  .assess-block{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:#FCFAFF;}
+  .assess-block .ab-title{font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--plum-deep);margin-bottom:8px;}
+  .assess-block.hidden-domain{display:none;}
+
+  /* Plan cards — full-width fields, stacked, so typed text is never cramped */
+  .plan-card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:#FCFAFF;}
+  .plan-card .pc-title{font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--plum-deep);margin-bottom:12px;}
+  .plan-field{margin-bottom:12px;}
+  .plan-field:last-child{margin-bottom:0;}
+  .plan-field textarea{min-height:70px;}
+
+  /* Signatories */
+  .signatory-card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:#FCFAFF;}
+  .signatory-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .remove-sig{font-size:11.5px;color:#B4443C;background:none;border:none;cursor:pointer;font-weight:600;}
+  .remove-sig:hover{text-decoration:underline;}
+  .add-sig-btn{width:100%;padding:11px;border:1.5px dashed var(--mauve);border-radius:10px;background:transparent;color:var(--mauve);font-weight:600;font-size:12.5px;cursor:pointer;}
+  .add-sig-btn:hover{background:var(--lavender-bg);}
+
+  canvas.pad{width:100%;height:110px;background:white;border:1.5px dashed var(--line);border-radius:9px;cursor:crosshair;touch-action:none;margin-top:10px;}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .clear-btn{background:none;border:none;color:var(--mauve);font-size:12px;cursor:pointer;font-weight:600;padding:4px 0;}
+  .clear-btn:hover{text-decoration:underline;}
+
+  .action-bar{position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 -6px 18px rgba(56,34,79,0.06);margin-top:24px;border-radius:14px 14px 0 0;flex-wrap:wrap;}
+  .action-bar .right-group{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:white;color:var(--plum-deep);}
+  .btn.primary{background:var(--plum);color:white;border-color:var(--plum);}
+  .btn.primary:hover{background:var(--plum-deep);}
+  .btn:hover{background:var(--lavender-bg);}
+
+  /* Status banner */
+  .status-banner{display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--lavender-panel);border:1px solid var(--mauve);border-radius:12px;padding:12px 16px;margin-bottom:18px;flex-wrap:wrap;}
+  .status-banner strong{color:var(--plum-deep);}
+
+  /* Reports list */
+  .reports-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .reports-toolbar h1{font-family:'Fraunces',serif;font-weight:600;font-size:20px;color:var(--plum-deep);margin:0;}
+  .report-item{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border:1px solid var(--line);border-radius:11px;margin-bottom:10px;cursor:pointer;background:#FCFAFF;}
+  .report-item:hover{background:var(--lavender-bg);}
+  .ri-name{font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--plum-deep);}
+  .ri-meta{font-size:11.5px;color:#8a8296;margin-top:2px;}
+  .ri-status{font-size:10.5px;font-weight:700;text-transform:uppercase;padding:4px 10px;border-radius:20px;letter-spacing:.03em;}
+  .ri-status.draft{background:var(--lavender-panel);color:var(--mauve);}
+  .ri-status.submitted{background:#DCEFE1;color:#2E7D4F;}
+
+  @media print{
+    .status-banner{display:none !important;}
+  }
+
+  @media print{
+    body{background:white;}
+    .action-bar, .clear-btn, .add-sig-btn, .remove-sig, .hint{display:none !important;}
+    .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid;}
+    .wrap{max-width:100%;padding:0;}
+    header.brand{page-break-after:avoid;}
+    .plan-card, .assess-block, .signatory-card{page-break-inside:avoid;}
+    input, select, textarea{border:1px solid #ccc !important;background:white !important;box-shadow:none !important;}
+    textarea{overflow:visible !important;resize:none !important;}
+    canvas.pad{border:1px solid #999 !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- REPORTS LIST VIEW -->
+  <div id="reportsListView">
+    <div class="card">
+      <div class="reports-toolbar">
+        <h1>Progress Summary Reports</h1>
+        <button class="btn primary" onclick="newReport()">+ New Report</button>
+      </div>
+      <p class="hint" style="margin-bottom:14px;">Saved here in this browser only — a working demo of Save Draft → Submit → View, not a real multi-user backend yet.</p>
+      <div id="reportsListItems"></div>
+    </div>
+  </div>
+
+  <!-- FORM EDITOR VIEW -->
+  <div id="formEditor" style="display:none;">
+
+  <div class="status-banner" id="statusBanner">
+    <span>🔒 <strong>Submitted</strong> — this report is locked for viewing. Use "Unlock & Edit" below to make changes.</span>
+  </div>
+
+  <header class="brand" style="position:relative;">
+    <span class="form-code">CMPS:SE-FO-09 rev.0 03172026</span>
+    <div class="office">
+      <div class="office-name">CABUYAO</div>
+      Blk 1 Lot 7 Palmsville Subdivision<br>
+      Brgy. Banlic, Cabuyao City, Laguna 4025<br>
+      cabuyaoadmin@clearmindpsychservices.com<br>
+      (+639)92-916-4078
+    </div>
+    <div class="brand-center">
+      <div class="logo">CM</div>
+      <div class="brand-name">ClearMind</div>
+      <div style="font-size:9px;color:var(--mauve);letter-spacing:.04em;">PSYCHOLOGICAL SERVICES</div>
+    </div>
+    <div class="office right">
+      <div class="office-name">ALABANG</div>
+      Unit 4-M, Westgate Tower, Madrigal Business Park<br>
+      1709 Investment Dr, Barangay Ayala Alabang, Muntinlupa City, Philippines, 1780<br>
+      alabangadmin@clearmindpsychservices.com<br>
+      (+639)70-885-8948
+    </div>
+  </header>
+
+  <h1 class="title">Monthly Progress Summary Report (PSR)</h1>
+  <div class="subtitle-row">
+    <span style="color:#8a8296;font-size:13px;">Reporting Period:</span>
+    <input type="text" id="reportPeriod" placeholder="e.g. March – May 2026">
+  </div>
+
+  <!-- Client info -->
+  <div class="card">
+    <h2><span class="eyebrow">01</span> Client Information</h2>
+    <div class="grid cols-3">
+      <div><label class="field-label">Full Name</label><input type="text" id="fullName" placeholder="e.g. Dela Cruz, Juan M."></div>
+      <div><label class="field-label">Age / Sex</label><input type="text" id="ageSex" placeholder="e.g. 6 / Male"></div>
+      <div><label class="field-label">Diagnosis</label><input type="text" id="diagnosis" placeholder="e.g. ASD, Level 1"></div>
+    </div>
+  </div>
+
+  <!-- Data -->
+  <div class="card">
+    <h2><span class="eyebrow">02</span> Data</h2>
+    <p class="hint" style="margin-bottom:10px;">Select which domains this reporting period's activities measured. This also determines which sections appear below in Assessment.</p>
+    <div id="domainChips">
+      <label class="domain-chip"><input type="checkbox" data-domain="Conceptual" checked>Conceptual Domain</label>
+      <label class="domain-chip"><input type="checkbox" data-domain="Social" checked>Social Domain</label>
+      <label class="domain-chip"><input type="checkbox" data-domain="Bodily Kinesthetics" checked>Bodily Kinesthetics Domain</label>
+      <label class="domain-chip"><input type="checkbox" data-domain="Practical" checked>Practical Domain</label>
+    </div>
+  </div>
+
+  <!-- Assessment -->
+  <div class="card">
+    <h2><span class="eyebrow">03</span> Assessment</h2>
+    <div style="margin-bottom:16px;">
+      <label class="field-label">General Overview</label>
+      <textarea id="assessGeneral" placeholder="Describe the client's overall demeanor, engagement, and general observations across the reporting period."></textarea>
+    </div>
+    <div id="assessmentDomains"></div>
+  </div>
+
+  <!-- Plan -->
+  <div class="card">
+    <h2><span class="eyebrow">04</span> Plan</h2>
+    <p class="hint" style="margin-bottom:14px;">Activity plan to be implemented next. Cards follow the domains selected in Data above — fill in each field as your own observation/plan; nothing is pre-answered.</p>
+    <div id="planRows"></div>
+  </div>
+
+  <!-- Signatories -->
+  <div class="card">
+    <h2><span class="eyebrow">05</span> Signatories</h2>
+    <p class="hint" style="margin-bottom:14px;">Choose who signs this report. Pick a name from the roster, or add someone new.</p>
+    <div id="signatoryList"></div>
+    <button class="add-sig-btn" onclick="addSignatory()">+ Add signatory</button>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn" onclick="backToList()">← Back to Reports</button>
+    <div class="right-group">
+      <button class="btn" id="saveDraftBtn" onclick="saveCurrentReport('draft')">Save Draft</button>
+      <button class="btn primary" id="submitBtn" onclick="submitReport()">Submit for Review</button>
+      <button class="btn" id="unlockBtn" style="display:none;" onclick="unlockReport()">Unlock &amp; Edit</button>
+      <button class="btn primary" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+
+  </div><!-- /formEditor -->
+
+</div>
+
+<script>
+/* ---------- Domain-driven Assessment sections ---------- */
+const DOMAIN_PLACEHOLDERS = {
+  'Conceptual': 'e.g. During the cup-stacking activity, describe independence level, hand-over-hand assistance needed, and progress across attempts.',
+  'Social': 'e.g. During group activities (Zumba, action imitation), describe engagement, ability to follow steps, and peer interaction.',
+  'Bodily Kinesthetics': 'e.g. During ball throwing/catching or gross motor activities, describe coordination, force/control, and response to guidance.',
+  'Practical': 'e.g. During ADL board or self-care tasks, describe independence, verbal/physical assistance required, and specific difficulties observed.',
+};
+
+function renderAssessmentDomains(){
+  const container = document.getElementById('assessmentDomains');
+  const checked = Array.from(document.querySelectorAll('#domainChips input:checked')).map(c=>c.dataset.domain);
+  container.innerHTML = checked.map(d => `
+    <div class="assess-block">
+      <div class="ab-title">${d} Domain</div>
+      <textarea data-assess="${d}" placeholder="${DOMAIN_PLACEHOLDERS[d] || 'Describe observations for this domain.'}"></textarea>
+    </div>`).join('');
+}
+document.getElementById('domainChips').addEventListener('change', renderAssessmentDomains);
+renderAssessmentDomains();
+
+/* ---------- Plan rows — follows the Data domain checklist, fully blank ---------- */
+// Some domains have more than one plan row (Conceptual appears twice in the standard plan).
+const PLAN_ROW_TEMPLATE = {
+  'Practical': ['Practical Domain'],
+  'Conceptual': ['Conceptual Domain', 'Conceptual Domain (Receptive/Expressive Labeling)'],
+  'Bodily Kinesthetics': ['Bodily Kinesthetic Domain'],
+  'Social': ['Social Domain'],
+};
+const DOMAIN_ORDER = ['Practical','Conceptual','Bodily Kinesthetics','Social'];
+
+function renderPlanRows(){
+  const container = document.getElementById('planRows');
+  const checked = Array.from(document.querySelectorAll('#domainChips input:checked')).map(c=>c.dataset.domain);
+  let rowIndex = 0;
+  let html = '';
+  DOMAIN_ORDER.filter(d => checked.includes(d)).forEach(domain => {
+    (PLAN_ROW_TEMPLATE[domain] || [domain]).forEach(label => {
+      const i = rowIndex++;
+      html += `
+        <div class="plan-card">
+          <div class="pc-title">${label}</div>
+          <div class="plan-field">
+            <label class="field-label">Objective</label>
+            <textarea data-plan="objective-${i}" placeholder="Type the objective for this domain"></textarea>
+          </div>
+          <div class="plan-field">
+            <label class="field-label">Activities</label>
+            <textarea data-plan="activities-${i}" placeholder="Type the activities / observations for this domain"></textarea>
+          </div>
+          <div class="grid cols-2">
+            <div class="plan-field">
+              <label class="field-label">Time Frame</label>
+              <input type="text" data-plan="timeframe-${i}" placeholder="e.g. Once a week">
+            </div>
+            <div class="plan-field">
+              <label class="field-label">Responsible Person</label>
+              <input type="text" data-plan="responsible-${i}" placeholder="e.g. Activity Therapist">
+            </div>
+          </div>
+          <div class="plan-field">
+            <label class="field-label">Expected Outcome</label>
+            <textarea data-plan="outcome-${i}" placeholder="Type the expected outcome"></textarea>
+          </div>
+        </div>`;
+    });
+  });
+  container.innerHTML = html || `<div style="text-align:center;color:#8a8296;padding:20px;">Select at least one domain in Data above to add plan cards.</div>`;
+}
+document.getElementById('domainChips').addEventListener('change', renderPlanRows);
+renderPlanRows();
+
+/* ---------- Dynamic signatories ---------- */
+const STAFF_ROSTER = [
+  { name:'Marwin A. Gilbero Jr.', title:'Clinic Intern – Pamantasan ng Cabuyao, Master of Arts in Psychology', license:'' },
+  { name:'Cristine Lae C. Erasga', title:'Supervising Psychologist, RPsy, RPm, CHRA', license:'0001942' },
+  { name:'Jinky C. Malabanan', title:'Executive Director, RPm, RPsy, LPT, CHRA', license:'0002278' },
+  { name:'Leera Mae C. Guevarra', title:'Learning Head, RPm, CHRA', license:'' },
+];
+
+let sigCounter = 0;
+function rosterOptionsHTML(selectedName){
+  let opts = `<option value="">Select signer…</option>`;
+  STAFF_ROSTER.forEach(s => { opts += `<option value="${s.name}" ${s.name===selectedName?'selected':''}>${s.name}</option>`; });
+  opts += `<option value="__other__" ${selectedName==='__other__'?'selected':''}>+ Add new signer…</option>`;
+  return opts;
+}
+
+function signatoryHTML(id, roleDefault){
+  return `
+  <div class="signatory-card" id="sig-${id}">
+    <div class="signatory-head">
+      <div style="flex:1;margin-right:10px;">
+        <label class="field-label">Role</label>
+        <input type="text" value="${roleDefault}" data-role="role">
+      </div>
+      <button class="remove-sig" onclick="removeSignatory(${id})">Remove</button>
+    </div>
+    <label class="field-label">Signer</label>
+    <select data-role="rosterSelect" onchange="handleRosterChange(${id})">${rosterOptionsHTML('')}</select>
+    <div data-role="manualFields" style="display:none;margin-top:10px;">
+      <div class="grid cols-2">
+        <div><label class="field-label">Full Name</label><input type="text" data-role="manualName"></div>
+        <div><label class="field-label">Title / Position</label><input type="text" data-role="manualTitle"></div>
+      </div>
+      <div style="margin-top:10px;"><label class="field-label">License Number (optional)</label><input type="text" data-role="manualLicense"></div>
+    </div>
+    <div data-role="rosterInfo" style="margin-top:6px;font-size:12px;color:#8a8296;"></div>
+
+    <canvas class="pad" data-pad="sig-${id}"></canvas>
+    <div class="sig-actions">
+      <button class="clear-btn" data-clear="sig-${id}">Clear signature</button>
+      <input type="date" style="width:140px;">
+    </div>
+  </div>`;
+}
+
+function handleRosterChange(id){
+  const card = document.getElementById('sig-'+id);
+  const select = card.querySelector('[data-role="rosterSelect"]');
+  const manualFields = card.querySelector('[data-role="manualFields"]');
+  const rosterInfo = card.querySelector('[data-role="rosterInfo"]');
+  if(select.value === '__other__'){
+    manualFields.style.display = 'block';
+    rosterInfo.textContent = '';
+  } else if(select.value){
+    manualFields.style.display = 'none';
+    const staff = STAFF_ROSTER.find(s => s.name === select.value);
+    rosterInfo.textContent = staff ? `${staff.title}${staff.license ? ' · License No. ' + staff.license : ''}` : '';
+  } else {
+    manualFields.style.display = 'none';
+    rosterInfo.textContent = '';
+  }
+}
+
+function addSignatory(roleDefault){
+  sigCounter++;
+  const id = sigCounter;
+  document.getElementById('signatoryList').insertAdjacentHTML('beforeend', signatoryHTML(id, roleDefault || ''));
+  initPad(document.querySelector(`canvas[data-pad="sig-${id}"]`));
+  document.querySelector(`[data-clear="sig-${id}"]`).addEventListener('click', ()=>{
+    const canvas = document.querySelector(`canvas[data-pad="sig-${id}"]`);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+}
+function removeSignatory(id){
+  const card = document.getElementById('sig-'+id);
+  if(card) card.remove();
+}
+// default three roles
+['Prepared by','Reviewed by','Noted by'].forEach(role => addSignatory(role));
+
+/* ---------- Signature pad engine ---------- */
+function initPad(canvas){
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    ctx.strokeStyle = '#2B2733'; ctx.lineWidth = 2; ctx.lineCap='round'; ctx.lineJoin='round';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  let drawing=false, last=null;
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    return {x:cx,y:cy};
+  }
+  function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
+  function move(e){
+    if(!drawing) return;
+    const p=pos(e); const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p; e.preventDefault();
+  }
+  function end(){ drawing=false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+}
+
+/* ---------- Print: expand every textarea to its full content so nothing is clipped in the PDF ---------- */
+let _savedTextareaHeights = [];
+window.addEventListener('beforeprint', () => {
+  _savedTextareaHeights = [];
+  document.querySelectorAll('textarea').forEach(ta => {
+    _savedTextareaHeights.push({ el: ta, height: ta.style.height });
+    ta.style.height = 'auto';
+    ta.style.height = (ta.scrollHeight + 4) + 'px';
+  });
+});
+window.addEventListener('afterprint', () => {
+  _savedTextareaHeights.forEach(({el, height}) => { el.style.height = height; });
+});
+
+/* ==================================================================
+   Submit → View demo, backed by this artifact's persistent storage.
+   NOTE: shared:false = saved to this browser/user only. This proves
+   out the workflow but is NOT a substitute for a real backend with
+   staff logins and access control — see the caveat in chat.
+   ================================================================== */
+let currentReportId = null;
+let currentStatus = 'draft';
+
+function val(id){ const el = document.getElementById(id); return el ? el.value : ''; }
+function setVal(id, v){ const el = document.getElementById(id); if(el) el.value = v || ''; }
+
+function serializeForm(){
+  const data = {};
+  data.reportPeriod = val('reportPeriod');
+  data.fullName = val('fullName');
+  data.ageSex = val('ageSex');
+  data.diagnosis = val('diagnosis');
+  data.domains = Array.from(document.querySelectorAll('#domainChips input:checked')).map(c=>c.dataset.domain);
+  data.assessGeneral = val('assessGeneral');
+  data.assessments = {};
+  document.querySelectorAll('[data-assess]').forEach(ta => data.assessments[ta.dataset.assess] = ta.value);
+  data.plan = {};
+  document.querySelectorAll('[data-plan]').forEach(el => data.plan[el.dataset.plan] = el.value);
+  data.signatories = [];
+  document.querySelectorAll('.signatory-card').forEach(card => {
+    const canvas = card.querySelector('canvas.pad');
+    data.signatories.push({
+      role: card.querySelector('[data-role="role"]').value,
+      rosterSelect: card.querySelector('[data-role="rosterSelect"]').value,
+      manualName: card.querySelector('[data-role="manualName"]').value,
+      manualTitle: card.querySelector('[data-role="manualTitle"]').value,
+      manualLicense: card.querySelector('[data-role="manualLicense"]').value,
+      date: card.querySelector('input[type=date]').value,
+      sigImage: canvas.toDataURL('image/png'),
+    });
+  });
+  return data;
+}
+
+function populateForm(data){
+  setVal('reportPeriod', data.reportPeriod);
+  setVal('fullName', data.fullName);
+  setVal('ageSex', data.ageSex);
+  setVal('diagnosis', data.diagnosis);
+  document.querySelectorAll('#domainChips input').forEach(c => c.checked = (data.domains||[]).includes(c.dataset.domain));
+  renderAssessmentDomains();
+  renderPlanRows();
+  setVal('assessGeneral', data.assessGeneral);
+  document.querySelectorAll('[data-assess]').forEach(ta => { if(data.assessments && data.assessments[ta.dataset.assess]!==undefined) ta.value = data.assessments[ta.dataset.assess]; });
+  document.querySelectorAll('[data-plan]').forEach(el => { if(data.plan && data.plan[el.dataset.plan]!==undefined) el.value = data.plan[el.dataset.plan]; });
+
+  document.getElementById('signatoryList').innerHTML = '';
+  sigCounter = 0;
+  (data.signatories||[]).forEach(s => {
+    addSignatory(s.role);
+    const id = sigCounter;
+    const card = document.getElementById('sig-'+id);
+    card.querySelector('[data-role="rosterSelect"]').value = s.rosterSelect || '';
+    handleRosterChange(id);
+    if(s.manualName) card.querySelector('[data-role="manualName"]').value = s.manualName;
+    if(s.manualTitle) card.querySelector('[data-role="manualTitle"]').value = s.manualTitle;
+    if(s.manualLicense) card.querySelector('[data-role="manualLicense"]').value = s.manualLicense;
+    if(s.date) card.querySelector('input[type=date]').value = s.date;
+    if(s.sigImage){
+      const canvas = card.querySelector('canvas.pad');
+      const img = new Image();
+      img.onload = () => { canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); };
+      img.src = s.sigImage;
+    }
+  });
+}
+
+function resetFormFields(){
+  document.querySelectorAll('#formEditor input[type=text], #formEditor input[type=date], #formEditor textarea').forEach(el=>el.value='');
+  document.querySelectorAll('#domainChips input').forEach(el=>el.checked=true);
+  renderAssessmentDomains();
+  renderPlanRows();
+  document.getElementById('signatoryList').innerHTML = '';
+  sigCounter = 0;
+  ['Prepared by','Reviewed by','Noted by'].forEach(role => addSignatory(role));
+}
+
+function setFormLocked(locked){
+  document.querySelectorAll('#formEditor input, #formEditor textarea, #formEditor select').forEach(el => el.disabled = locked);
+  document.querySelectorAll('.add-sig-btn, .remove-sig, .clear-btn').forEach(b => b.style.display = locked ? 'none' : '');
+  const domainChips = document.getElementById('domainChips');
+  domainChips.style.pointerEvents = locked ? 'none' : '';
+  domainChips.style.opacity = locked ? '0.6' : '1';
+  document.querySelectorAll('canvas.pad').forEach(c => c.style.pointerEvents = locked ? 'none' : '');
+  document.getElementById('saveDraftBtn').style.display = locked ? 'none' : '';
+  document.getElementById('submitBtn').style.display = locked ? 'none' : '';
+  document.getElementById('unlockBtn').style.display = locked ? '' : 'none';
+  document.getElementById('statusBanner').style.display = locked ? 'flex' : 'none';
+}
+
+async function saveCurrentReport(status){
+  const data = serializeForm();
+  data.status = status;
+  data.updatedAt = new Date().toISOString();
+  if(!currentReportId){
+    currentReportId = 'psr-' + Date.now();
+    data.createdAt = data.updatedAt;
+  } else {
+    try{
+      const existing = await window.storage.get('psr-report:'+currentReportId, false);
+      data.createdAt = existing ? (JSON.parse(existing.value).createdAt || data.updatedAt) : data.updatedAt;
+    }catch(e){ data.createdAt = data.updatedAt; }
+  }
+  currentStatus = status;
+  try{
+    await window.storage.set('psr-report:'+currentReportId, JSON.stringify(data), false);
+  }catch(e){
+    alert('Could not save this report. Please try again.');
+    return;
+  }
+  setFormLocked(status === 'submitted');
+  alert(status === 'submitted' ? 'Report submitted and locked for viewing.' : 'Draft saved.');
+}
+
+function submitReport(){
+  if(!val('fullName').trim()){
+    alert("Please enter the client's Full Name before submitting.");
+    return;
+  }
+  if(!confirm('Submit this report? It will be locked from further editing until unlocked again.')) return;
+  saveCurrentReport('submitted');
+}
+
+function unlockReport(){
+  if(!confirm('Unlock this report for editing? It will return to draft status until re-submitted.')) return;
+  setFormLocked(false);
+  currentStatus = 'draft';
+}
+
+function showEditor(){
+  document.getElementById('reportsListView').style.display = 'none';
+  document.getElementById('formEditor').style.display = 'block';
+  window.scrollTo(0,0);
+}
+function backToList(){ openReportsList(); }
+
+function newReport(){
+  currentReportId = null;
+  currentStatus = 'draft';
+  resetFormFields();
+  setFormLocked(false);
+  showEditor();
+}
+
+async function openReport(idSuffix){
+  currentReportId = idSuffix;
+  try{
+    const r = await window.storage.get('psr-report:'+idSuffix, false);
+    if(!r){ alert('Report not found.'); return; }
+    const data = JSON.parse(r.value);
+    populateForm(data);
+    currentStatus = data.status || 'draft';
+    setFormLocked(currentStatus === 'submitted');
+    showEditor();
+  }catch(e){
+    alert('Could not open this report.');
+  }
+}
+
+async function openReportsList(){
+  document.getElementById('reportsListView').style.display = 'block';
+  document.getElementById('formEditor').style.display = 'none';
+  const listEl = document.getElementById('reportsListItems');
+  listEl.innerHTML = '<div style="padding:20px;color:#8a8296;text-align:center;">Loading…</div>';
+  try{
+    const result = await window.storage.list('psr-report:', false);
+    const keys = result ? result.keys : [];
+    if(!keys || !keys.length){
+      listEl.innerHTML = '<div style="padding:20px;color:#8a8296;text-align:center;">No reports saved yet. Click "+ New Report" to start one.</div>';
+      return;
+    }
+    const items = [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, false);
+        if(r) items.push({ id: k.replace('psr-report:',''), data: JSON.parse(r.value) });
+      }catch(e){ /* skip unreadable entries */ }
+    }
+    items.sort((a,b) => (b.data.updatedAt||'').localeCompare(a.data.updatedAt||''));
+    listEl.innerHTML = items.map(it => `
+      <div class="report-item" onclick="openReport('${it.id}')">
+        <div>
+          <div class="ri-name">${it.data.fullName || '(no name entered)'}</div>
+          <div class="ri-meta">${it.data.reportPeriod || 'No period set'} · Updated ${new Date(it.data.updatedAt).toLocaleString()}</div>
+        </div>
+        <span class="ri-status ${it.data.status}">${it.data.status}</span>
+      </div>`).join('');
+  }catch(e){
+    listEl.innerHTML = '<div style="padding:20px;color:#B4443C;text-align:center;">Could not load saved reports.</div>';
+  }
+}
+
+/* Boot into the reports list on load */
+openReportsList();
+
+</script>
+</body>
+</html>

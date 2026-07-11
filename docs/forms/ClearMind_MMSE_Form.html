@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini-Mental Status Examination — ClearMind Psychological Services</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#4A2E6B; --plum-deep:#38224F; --lavender-bg:#F5F1FA; --lavender-panel:#EFE7F8;
+    --mauve:#8B6BAE; --ink:#2B2733; --paper:#FFFFFF; --line:#E4DCEF;
+    --yes-bg:#DCEFE1; --yes-txt:#2E7D4F;
+    --no-bg:#FBEBEA; --no-txt:#B4443C;
+    --na-bg:#EEECF1; --na-txt:#6b6478;
+    --shadow: 0 1px 2px rgba(56,34,79,0.06), 0 8px 24px rgba(56,34,79,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--lavender-bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;line-height:1.5;}
+  .wrap{max-width:1020px;margin:0 auto;padding:28px 20px 90px;}
+
+  header.brand{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .brand-left{display:flex;align-items:center;gap:12px;}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--plum),var(--mauve));display:flex;align-items:center;justify-content:center;color:white;font-family:'Fraunces',serif;font-weight:600;font-size:17px;flex-shrink:0;}
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;color:var(--plum-deep);}
+  .brand-tag{font-size:11.5px;color:var(--mauve);font-style:italic;margin-top:1px;}
+  .brand-right{text-align:right;font-size:11.5px;color:#6b6478;line-height:1.6;}
+  .form-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mauve);letter-spacing:0.02em;}
+
+  h1.title{font-family:'Fraunces',serif;font-weight:600;font-size:25px;color:var(--plum-deep);margin:4px 0 20px;text-align:center;}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;}
+  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:15.5px;color:var(--plum-deep);margin:0 0 16px;display:flex;align-items:center;gap:8px;}
+  .card h2 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mauve);background:var(--lavender-bg);padding:3px 8px;border-radius:20px;letter-spacing:.04em;}
+
+  .grid{display:grid;gap:14px;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:680px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}}
+
+  label.field-label{display:block;font-size:11.5px;font-weight:600;color:var(--plum-deep);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+  input[type=text],input[type=date],textarea{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:#FCFAFF;
+  }
+  textarea{resize:vertical;min-height:44px;}
+  input:focus,textarea:focus{outline:none;border-color:var(--mauve);box-shadow:0 0 0 3px rgba(139,107,174,0.15);}
+
+  /* Yes/No diagnosis toggle */
+  .yn-toggle{display:flex;gap:10px;}
+  .yn-toggle label{
+    flex:1;border:1.5px solid var(--line);border-radius:9px;padding:9px 12px;text-align:center;
+    cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink);
+  }
+  .yn-toggle input{display:none;}
+  .yn-toggle label:has(input:checked){border-color:var(--mauve);background:var(--lavender-panel);color:var(--plum-deep);}
+
+  /* Progress summary */
+  .progress-bar-outer{background:var(--lavender-panel);border-radius:20px;height:8px;overflow:hidden;margin:10px 0 4px;}
+  .progress-bar-inner{background:var(--plum);height:100%;width:0%;transition:width .2s;}
+  .progress-label{font-size:12px;color:#6b6478;display:flex;justify-content:space-between;}
+
+  /* Domain / subsection structure */
+  .domain-title{font-family:'Fraunces',serif;font-weight:600;font-size:16px;color:var(--plum-deep);margin:26px 0 10px;padding-top:14px;border-top:2px solid var(--lavender-panel);}
+  .domain-title:first-of-type{border-top:none;margin-top:0;padding-top:0;}
+  .subsection-title{font-size:12.5px;font-weight:700;color:var(--mauve);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;}
+
+  .item-row{
+    display:grid;grid-template-columns:28px 1fr 190px;gap:12px;align-items:center;
+    padding:9px 4px;border-bottom:1px dashed var(--line);
+  }
+  .item-row:last-child{border-bottom:none;}
+  .item-num{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#a89dbd;}
+  .item-text{font-size:13.5px;color:var(--ink);}
+  .answer-group{display:flex;gap:4px;flex-wrap:nowrap;}
+  .answer-group label{
+    flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 0;border-radius:7px;
+    border:1.5px solid var(--line);cursor:pointer;color:#8a8296;user-select:none;
+  }
+  .answer-group input{display:none;}
+  .answer-group label.yes:has(input:checked){background:var(--yes-bg);color:var(--yes-txt);border-color:var(--yes-bg);}
+  .answer-group label.no:has(input:checked){background:var(--no-bg);color:var(--no-txt);border-color:var(--no-bg);}
+  .answer-group label.na:has(input:checked){background:var(--na-bg);color:var(--na-txt);border-color:var(--na-bg);}
+
+  .remarks-row{grid-column:1/-1;padding:0 4px 10px 40px;margin-top:-6px;}
+  .remarks-row input{font-size:12.5px;padding:6px 9px;}
+
+  @media (max-width:640px){
+    .item-row{grid-template-columns:24px 1fr;}
+    .answer-group{grid-column:1/-1;margin-left:24px;max-width:260px;}
+  }
+
+  /* Signature */
+  .sig-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:#FCFAFF;}
+  canvas.pad{width:100%;height:130px;background:white;border:1.5px dashed var(--line);border-radius:9px;cursor:crosshair;touch-action:none;}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .clear-btn{background:none;border:none;color:var(--mauve);font-size:12px;cursor:pointer;font-weight:600;padding:4px 0;}
+  .clear-btn:hover{text-decoration:underline;}
+
+  .action-bar{position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:14px 20px;display:flex;justify-content:flex-end;gap:10px;box-shadow:0 -6px 18px rgba(56,34,79,0.06);margin-top:24px;border-radius:14px 14px 0 0;}
+  .btn{padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:white;color:var(--plum-deep);}
+  .btn.primary{background:var(--plum);color:white;border-color:var(--plum);}
+  .btn.primary:hover{background:var(--plum-deep);}
+  .btn:hover{background:var(--lavender-bg);}
+
+  @media print{
+    body{background:white;}
+    .action-bar, .clear-btn{display:none !important;}
+    .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="brand-left">
+      <div class="logo">CM</div>
+      <div>
+        <div class="brand-name">ClearMind Psychological Services</div>
+        <div class="brand-tag">Clarity of Mind, Journey to Wellness.</div>
+      </div>
+    </div>
+    <div class="brand-right">
+      Blk 1 Lot 7 Palmsville Subdivision<br>
+      Brgy. Banlic, Cabuyao City, Laguna 4025<br>
+      clearmind.psychservices@gmail.com · (+639)92-916-4078<br>
+      <span class="form-code">CMPS:SE-FO-04 rev.0 02192026</span>
+    </div>
+  </header>
+
+  <h1 class="title">Mini-Mental Status Examination</h1>
+
+  <!-- Student info -->
+  <div class="card">
+    <h2><span class="eyebrow">01</span> Personal Information of Student</h2>
+    <div class="grid cols-3">
+      <div>
+        <label class="field-label">Date</label>
+        <input type="date" id="examDate">
+      </div>
+      <div>
+        <label class="field-label">Full Name (LN, FN MI)</label>
+        <input type="text" id="fullName" placeholder="e.g. Dela Cruz, Juan M.">
+      </div>
+      <div>
+        <label class="field-label">Age / Sex</label>
+        <input type="text" id="ageSex" placeholder="e.g. 7 / Male">
+      </div>
+      <div>
+        <label class="field-label">Birthdate</label>
+        <input type="date" id="birthdate">
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagnosis -->
+  <div class="card">
+    <h2><span class="eyebrow">02</span> Diagnosis</h2>
+    <label class="field-label">Was the student previously diagnosed / assessed?</label>
+    <div class="yn-toggle" style="max-width:260px;margin-bottom:16px;">
+      <label><input type="radio" name="prevDiag" value="Yes"> Yes</label>
+      <label><input type="radio" name="prevDiag" value="No"> No</label>
+    </div>
+    <div class="grid cols-3">
+      <div><label class="field-label">Diagnosis</label><input type="text" id="diagnosis"></div>
+      <div><label class="field-label">Medical History</label><input type="text" id="medHistory"></div>
+      <div><label class="field-label">Family History</label><input type="text" id="famHistory"></div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card">
+    <h2><span class="eyebrow">Progress</span> Checklist completion</h2>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-label"><span id="progressText">0 of 0 items answered</span><span id="progressPct">0%</span></div>
+  </div>
+
+  <!-- Checklist -->
+  <div class="card" id="checklistCard"></div>
+
+  <!-- Signature -->
+  <div class="card">
+    <h2><span class="eyebrow">Sign-off</span> Signature over Printed Name of Evaluator / Date</h2>
+    <div class="grid cols-2" style="margin-bottom:14px;">
+      <div><label class="field-label">Printed Name of Evaluator</label><input type="text" id="evaluatorName"></div>
+      <div><label class="field-label">Date</label><input type="date" id="evaluatorDate"></div>
+    </div>
+    <div class="sig-card">
+      <canvas class="pad" data-pad="evaluator"></canvas>
+      <div class="sig-actions">
+        <button class="clear-btn" data-clear="evaluator">Clear signature</button>
+        <span style="font-size:11.5px;color:#8a8296;">Sign with mouse, trackpad, or touchscreen</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn" onclick="resetForm()">Reset form</button>
+    <button class="btn primary" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Data model ---------- */
+const DOMAINS = [
+  { title: 'I. Practical Domain', subs: [
+      { label: 'A. Appearance', type:'yna', items: ['Dresses appropriately for the occasion'] },
+      { label: 'B. Activities of Daily Living', type:'yna', items: [
+          'Opens a simple container or zipper',
+          'Can demonstrate handwashing when asked',
+          'Removes or puts on a cloth/item (shoe, earring)',
+          'Can independently drink from a cup or bottle'
+      ]},
+  ]},
+  { title: 'II. Conceptual Domain', subs: [
+      { label: 'A. Object Recognition', type:'yna', items: [
+          'Names at least two (2) familiar objects (pen, bottle)',
+          'Can identify familiar faces (mother, father)'
+      ]},
+      { label: 'B. Identifying Details', type:'yna', items: [
+          "Can state his/her own name",
+          "Can tell his/her birthday and/or age"
+      ]},
+      { label: 'C. Place Recognition', type:'yna', items: [
+          'Can identify the current location',
+          "Can tell his/her home address (landmark)"
+      ]},
+      { label: 'D. Time Perception', type:'yna', items: [
+          'Can identify current time (approximate acceptable)',
+          'Can identify the current year'
+      ]},
+      { label: 'E. Memory', type:'yna', items: [
+          'Can recall simple past details (food eaten yesterday)',
+          'Can repeat two named objects'
+      ]},
+  ]},
+  { title: 'III. Social Domain', subs: [
+      { label: 'A. Affect & Interaction', type:'yna', items: [
+          'Makes eye contact when name is called',
+          'Responds to greetings (verbal or gesture)',
+          'Can show emotions (happy, sad)',
+          'Does not show aggressive behaviors',
+          'Can identify basic emotions'
+      ]},
+  ]},
+  { title: 'IV. Bodily Kinesthetics Domain', subs: [
+      { label: 'A. Fine Motor Skills', type:'yna', items: [
+          'Can hold objects appropriately (pencil)',
+          'Writes letters or name legibly',
+          'Can color within the lines',
+          'Can demonstrate hand-eye coordination (tracing)',
+          'Can copy basic shapes (circle, triangle, square)'
+      ]},
+      { label: 'B. Gross Motor Skills', type:'yna', items: [
+          'Can stand on one foot briefly',
+          'Walks steadily across the room',
+          'Can jump forward with both feet together',
+          'Climb stairs using alternating feet'
+      ]},
+  ]},
+  { title: 'Perceptual Disturbances', subs: [
+      { label: null, type:'yna', items: ['Hallucination', 'Delusions'] }
+  ]},
+  { title: 'Stimming', subs: [
+      { label: null, type:'yn', items: [
+          'Verbal (echolalia, humming)',
+          'Auditory (sound sensitivity)',
+          'Visual (fixation to objects, constant eye movement)',
+          'Proprioceptive (jumping, crashing into objects)',
+          'Vestibular (rocking, spinning)',
+          'Oral (chewing, biting, sucking)',
+          'Tactile (excoriation, skin rubbing, fidgeting)'
+      ]}
+  ]},
+];
+
+let rowCounter = 0;
+function answerGroupHTML(rowId, type){
+  const opts = type === 'yn'
+    ? [['yes','Yes'],['no','No']]
+    : [['yes','Yes'],['no','No'],['na','N/A']];
+  return `<div class="answer-group" data-row="${rowId}">
+    ${opts.map(([v,l]) => `<label class="${v}"><input type="radio" name="row-${rowId}" value="${v}">${l}</label>`).join('')}
+  </div>`;
+}
+
+const checklistCard = document.getElementById('checklistCard');
+let html = `<h2><span class="eyebrow">03</span> Behavioral Checklist</h2>`;
+DOMAINS.forEach(domain => {
+  html += `<div class="domain-title">${domain.title}</div>`;
+  domain.subs.forEach(sub => {
+    if(sub.label) html += `<div class="subsection-title">${sub.label}</div>`;
+    sub.items.forEach(itemText => {
+      rowCounter++;
+      const rowId = rowCounter;
+      html += `
+        <div class="item-row">
+          <div class="item-num">${rowId}</div>
+          <div class="item-text">${itemText}</div>
+          ${answerGroupHTML(rowId, sub.type)}
+        </div>
+        <div class="remarks-row">
+          <input type="text" placeholder="Remarks (optional)" data-remarks="${rowId}">
+        </div>`;
+    });
+  });
+});
+checklistCard.innerHTML = html;
+
+const TOTAL_ITEMS = rowCounter;
+
+/* ---------- Progress tracking ---------- */
+function updateProgress(){
+  let answered = 0;
+  for(let i=1; i<=TOTAL_ITEMS; i++){
+    if(document.querySelector(`input[name="row-${i}"]:checked`)) answered++;
+  }
+  const pct = TOTAL_ITEMS ? Math.round((answered/TOTAL_ITEMS)*100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${answered} of ${TOTAL_ITEMS} items answered`;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+checklistCard.addEventListener('change', updateProgress);
+updateProgress();
+
+/* ---------- Signature pad ---------- */
+function initPad(canvas){
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    ctx.strokeStyle = '#2B2733'; ctx.lineWidth = 2; ctx.lineCap='round'; ctx.lineJoin='round';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  let drawing=false, last=null;
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    return {x:cx,y:cy};
+  }
+  function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
+  function move(e){
+    if(!drawing) return;
+    const p=pos(e); const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p; e.preventDefault();
+  }
+  function end(){ drawing=false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+}
+document.querySelectorAll('canvas.pad').forEach(initPad);
+document.querySelectorAll('[data-clear]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.getAttribute('data-clear');
+    const canvas = document.querySelector(`canvas[data-pad="${key}"]`);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+});
+
+/* ---------- Reset ---------- */
+function resetForm(){
+  if(!confirm('Clear all fields, checklist answers, and the signature on this form?')) return;
+  document.querySelectorAll('input[type=text], input[type=date]').forEach(el=>el.value='');
+  document.querySelectorAll('input[type=radio]').forEach(el=>el.checked=false);
+  document.querySelectorAll('canvas.pad').forEach(canvas=>{
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+  updateProgress();
+}
+</script>
+</body>
+</html>

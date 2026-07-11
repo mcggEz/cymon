@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Behavioral Assessment Report — ClearMind Psychological Services</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#4A2E6B;
+    --plum-deep:#38224F;
+    --lavender-bg:#F5F1FA;
+    --lavender-panel:#EFE7F8;
+    --mauve:#8B6BAE;
+    --ink:#2B2733;
+    --paper:#FFFFFF;
+    --line:#E4DCEF;
+    --flag:#B4443C;
+    --ok-bg:#DCEFE1; --ok-txt:#2E7D4F;
+    --scored-bg:#E1EAFB; --scored-txt:#3457A6;
+    --approved-bg:#FBEBD8; --approved-txt:#A6672F;
+    --pending-bg:#F1EAF9; --pending-txt:#7A5C9E;
+    --shadow: 0 1px 2px rgba(56,34,79,0.06), 0 8px 24px rgba(56,34,79,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--lavender-bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;line-height:1.5;}
+  .wrap{max-width:1300px;margin:0 auto;padding:28px 20px 80px;}
+
+  header.brand{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .brand-left{display:flex;align-items:center;gap:12px;}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--plum),var(--mauve));display:flex;align-items:center;justify-content:center;color:white;font-family:'Fraunces',serif;font-weight:600;font-size:17px;flex-shrink:0;}
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;color:var(--plum-deep);}
+  .brand-tag{font-size:11.5px;color:var(--mauve);font-style:italic;margin-top:1px;}
+  .brand-right{text-align:right;font-size:11.5px;color:#6b6478;line-height:1.6;}
+  .form-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mauve);letter-spacing:0.02em;}
+
+  h1.title{font-family:'Fraunces',serif;font-weight:600;font-size:25px;color:var(--plum-deep);margin:4px 0 2px;text-align:center;}
+  .subtitle{color:#6b6478;font-size:13px;margin-bottom:6px;text-align:center;}
+  .confidential{display:flex;justify-content:center;margin-bottom:22px;}
+  .confidential span{background:#FBEDEE;color:var(--flag);font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;letter-spacing:.03em;}
+
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;}
+  @media (max-width:980px){.layout{grid-template-columns:1fr;}}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;}
+  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:15.5px;color:var(--plum-deep);margin:0 0 16px;display:flex;align-items:center;gap:8px;}
+  .card h2 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mauve);background:var(--lavender-bg);padding:3px 8px;border-radius:20px;letter-spacing:.04em;}
+  .card h3{font-size:13px;font-weight:700;color:var(--plum-deep);margin:18px 0 10px;}
+  .card h3:first-of-type{margin-top:0;}
+
+  .grid{display:grid;gap:14px;}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:640px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr;}}
+
+  label.field-label{display:block;font-size:11.5px;font-weight:600;color:var(--plum-deep);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+  input[type=text],input[type=date],input[type=number],textarea,select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:#FCFAFF;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input[readonly]{background:var(--lavender-panel);color:#6b6478;}
+  textarea{resize:vertical;min-height:70px;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mauve);box-shadow:0 0 0 3px rgba(139,107,174,0.15);}
+  .hint{font-size:11.5px;color:#8a8296;margin-top:5px;}
+  .hint.flag{color:var(--flag);font-style:italic;}
+
+  /* Assessment methods checklist */
+  .method-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);}
+  .method-row:last-child{border-bottom:none;}
+  .method-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--plum);flex-shrink:0;}
+  .method-row label{font-size:13.5px;}
+
+  /* Score tables */
+  table.score-table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+  table.score-table th{
+    background:var(--lavender-panel);color:var(--plum-deep);font-size:11.5px;text-transform:uppercase;
+    letter-spacing:.03em;padding:9px 10px;text-align:left;border:1px solid var(--line);
+  }
+  table.score-table td{border:1px solid var(--line);padding:6px;vertical-align:middle;}
+  table.score-table td.domain-cell{font-size:13px;font-weight:600;color:var(--ink);background:#FCFAFF;white-space:nowrap;}
+  table.score-table input, table.score-table select{border:none;background:transparent;padding:6px 4px;}
+  table.score-table input:focus, table.score-table select:focus{box-shadow:none;background:var(--lavender-bg);border-radius:6px;}
+
+  /* Sidebar */
+  .sidebar{position:sticky;top:20px;}
+  .sidebar-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:18px;}
+  .sidebar-title{font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--plum-deep);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .sidebar-sub{font-size:11.5px;color:#8a8296;margin-bottom:14px;}
+
+  .source-card{border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-bottom:12px;background:#FCFAFF;}
+  .source-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;}
+  .source-name-input{font-family:'Fraunces',serif;font-weight:600;font-size:13.5px;color:var(--plum-deep);border:none;background:transparent;padding:0;width:100%;}
+  .source-name-input:focus{outline:none;box-shadow:none;}
+  .badge-select{
+    font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;border:none;
+    letter-spacing:.02em;cursor:pointer;flex-shrink:0;
+  }
+  .badge-select.pending{background:var(--pending-bg);color:var(--pending-txt);}
+  .badge-select.processed{background:var(--ok-bg);color:var(--ok-txt);}
+  .badge-select.scored{background:var(--scored-bg);color:var(--scored-txt);}
+  .badge-select.approved{background:var(--approved-bg);color:var(--approved-txt);}
+
+  .source-field{font-size:12px;color:#5b5566;margin-bottom:6px;}
+  .source-field input{border:none;background:transparent;padding:2px 0;font-size:12px;color:#5b5566;width:100%;}
+  .source-field input:focus{outline:none;box-shadow:none;}
+  .source-note{
+    border:1px solid #F0DADA;background:#FDF3F2;border-radius:8px;padding:8px 10px;margin-top:6px;
+  }
+  .source-note textarea{
+    border:none;background:transparent;color:var(--flag);font-size:12px;font-style:italic;
+    padding:0;min-height:44px;width:100%;
+  }
+  .source-note textarea:focus{outline:none;box-shadow:none;}
+  .source-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+  .source-actions button{
+    font-size:11.5px;font-weight:600;border:none;background:none;color:var(--mauve);cursor:pointer;padding:0;
+  }
+  .source-actions button:hover{text-decoration:underline;}
+  .add-source-btn{
+    width:100%;padding:10px;border:1.5px dashed var(--mauve);border-radius:10px;background:transparent;
+    color:var(--mauve);font-weight:600;font-size:12.5px;cursor:pointer;
+  }
+  .add-source-btn:hover{background:var(--lavender-bg);}
+
+  /* Signature */
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:780px){.sig-grid{grid-template-columns:1fr;}}
+  .sig-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:#FCFAFF;}
+  .sig-role{font-family:'Fraunces',serif;font-weight:600;color:var(--plum-deep);font-size:14px;}
+  .sig-person{font-size:12px;color:#6b6478;margin-bottom:6px;}
+  .sig-license{margin-bottom:10px;}
+  canvas.pad{width:100%;height:120px;background:white;border:1.5px dashed var(--line);border-radius:9px;cursor:crosshair;touch-action:none;}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .clear-btn{background:none;border:none;color:var(--mauve);font-size:12px;cursor:pointer;font-weight:600;padding:4px 0;}
+  .clear-btn:hover{text-decoration:underline;}
+  .sig-date{width:150px;}
+
+  .action-bar{position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:14px 20px;display:flex;justify-content:flex-end;gap:10px;box-shadow:0 -6px 18px rgba(56,34,79,0.06);margin-top:24px;border-radius:14px 14px 0 0;}
+  .btn{padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:white;color:var(--plum-deep);}
+  .btn.primary{background:var(--plum);color:white;border-color:var(--plum);}
+  .btn.primary:hover{background:var(--plum-deep);}
+  .btn:hover{background:var(--lavender-bg);}
+
+  @media print{
+    body{background:white;}
+    .action-bar, .clear-btn, .add-source-btn, .source-actions{display:none !important;}
+    .layout{grid-template-columns:1fr;}
+    .sidebar{position:static;}
+    .card, .sidebar-card{box-shadow:none;border:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="brand-left">
+      <div class="logo">CM</div>
+      <div>
+        <div class="brand-name">ClearMind Psychological Services</div>
+        <div class="brand-tag">Clarity of Mind, Journey to Wellness.</div>
+      </div>
+    </div>
+    <div class="brand-right">
+      Blk 1 Lot 7 Palmsville Subdivision<br>
+      Brgy. Banlic, Cabuyao City, Laguna 4025<br>
+      clearmind.psychservices@gmail.com · (+639)92-916-4078<br>
+      <span class="form-code">CMPS:SE-FO-06 rev.0 03032026</span>
+    </div>
+  </header>
+
+  <h1 class="title">Behavioral Assessment Report</h1>
+  <div class="subtitle">Special Education Program</div>
+  <div class="confidential"><span>Highly Confidential</span></div>
+
+  <div class="layout">
+    <!-- MAIN FORM -->
+    <div>
+
+      <div class="card">
+        <h2><span class="eyebrow">I</span> Personal Information</h2>
+        <div class="grid cols-2">
+          <div>
+            <label class="field-label">Full Name (LN, FN MI)</label>
+            <input type="text" id="fullName" placeholder="e.g. Dela Cruz, Juan M.">
+          </div>
+          <div>
+            <label class="field-label">Sex</label>
+            <select id="sex">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Birthdate</label>
+            <input type="date" id="birthdate">
+          </div>
+          <div>
+            <label class="field-label">Age (auto-calculated)</label>
+            <input type="text" id="age" readonly placeholder="—">
+          </div>
+          <div>
+            <label class="field-label">Date of Evaluation</label>
+            <input type="date" id="evalDate">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">II</span> Reason for Referral</h2>
+        <textarea id="reasonReferral">The client is referred to the clinic for evaluation of his/her adaptive functioning, as part of his/her Special Needs Education (SNED) program enrollment.</textarea>
+        <div class="hint">Standard referral text — edit to reflect this client's specific circumstances if needed.</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">III</span> Background Information</h2>
+        <textarea id="backgroundInfo" style="min-height:110px" placeholder="Relevant developmental, medical, academic, and behavioral history as reported by the parent/guardian and/or teacher. Include previous diagnoses (if any), interventions received, and pertinent family or school information."></textarea>
+        <div class="hint">Tip: use "Insert into report" on a data source card at right to pull in a flagged note here.</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">IV</span> Assessment Methods</h2>
+        <div class="method-row">
+          <input type="checkbox" id="m1" checked><label for="m1">Caregiver Behavioral Observation Checklist</label>
+        </div>
+        <div class="method-row">
+          <input type="checkbox" id="m2" checked><label for="m2">Mini-Mental Status Examination</label>
+        </div>
+        <div class="method-row">
+          <input type="checkbox" id="m3" checked><label for="m3">Child Adaptive Functioning Assessment Tool</label>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="field-label">Other method used (optional)</label>
+          <input type="text" id="otherMethod" placeholder="e.g. Vineland Adaptive Behavior Scales">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">V</span> Behavioral Observations</h2>
+
+        <h3>A. Caregiver Behavioral Observation Checklist</h3>
+        <table class="score-table" id="table-caregiver"></table>
+
+        <h3>B. Mini-Mental Status Examination</h3>
+        <table class="score-table" id="table-mmse"></table>
+
+        <h3>C. Child Adaptive Functioning Assessment Tool</h3>
+        <table class="score-table" id="table-adaptive"></table>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">VI</span> Summary of Findings</h2>
+        <textarea id="summaryFindings" style="min-height:100px" placeholder="Summarize the overall pattern across the assessments above."></textarea>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">VII</span> Areas of Concern</h2>
+        <textarea id="areasConcern" style="min-height:90px" placeholder="Note domains or behaviors that need continued attention or intervention."></textarea>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">VIII</span> Recommendations</h2>
+        <textarea id="recommendations" style="min-height:90px" placeholder="List recommended interventions, referrals, or program placements."></textarea>
+      </div>
+
+      <div class="card">
+        <h2><span class="eyebrow">Sign-off</span></h2>
+        <div class="sig-grid">
+          <div class="sig-card">
+            <div class="sig-role">Prepared by</div>
+            <div class="sig-person">Mr. Marwin A. Gilbero Jr, RPm, CHRA — Registered Psychometrician</div>
+            <div class="sig-license">
+              <label class="field-label">License Number</label>
+              <input type="text" id="lic-prepared" value="0039850">
+            </div>
+            <canvas class="pad" data-pad="prepared"></canvas>
+            <div class="sig-actions">
+              <button class="clear-btn" data-clear="prepared">Clear signature</button>
+              <input type="date" class="sig-date" id="date-prepared">
+            </div>
+          </div>
+          <div class="sig-card">
+            <div class="sig-role">Noted by</div>
+            <div class="sig-person">Ms. Cristine Lae C. Erasga, RPm, RPsy, CHRA — Clinic Psychologist</div>
+            <div class="sig-license">
+              <label class="field-label">License Number</label>
+              <input type="text" id="lic-noted" placeholder="—">
+            </div>
+            <canvas class="pad" data-pad="noted"></canvas>
+            <div class="sig-actions">
+              <button class="clear-btn" data-clear="noted">Clear signature</button>
+              <input type="date" class="sig-date" id="date-noted">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">🗂️ Clinical Data Sources</div>
+        <div class="sidebar-sub">Reference the source documents behind this assessment. Update status as each comes in, and insert flagged notes straight into the report.</div>
+        <div id="sourceList"></div>
+        <button class="add-source-btn" onclick="addSource()">+ Add data source</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="action-bar">
+    <button class="btn" onclick="resetForm()">Reset form</button>
+    <button class="btn primary" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Score tables ---------- */
+const INTERP_OPTIONS = ["", "Significantly Below Average", "Below Average", "Low Average", "Average", "High Average", "Above Average"];
+
+function buildScoreTable(elId, domains){
+  const el = document.getElementById(elId);
+  let rows = domains.map(d => `
+    <tr>
+      <td class="domain-cell">${d}</td>
+      <td style="width:110px"><input type="number" placeholder="Raw score" data-f="${elId}-${d}-score"></td>
+      <td>
+        <select data-f="${elId}-${d}-interp">
+          ${INTERP_OPTIONS.map(o=>`<option value="${o}">${o||'Select interpretation'}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`).join('');
+  el.innerHTML = `
+    <thead><tr><th>Domain</th><th>Raw Score</th><th>Verbal Interpretation</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+buildScoreTable('table-caregiver', ['Practical Domain','Social Domain','Conceptual Domain','Fine Motor Skills','Gross Motor Skills']);
+buildScoreTable('table-mmse', ['Practical Domain','Social Domain','Conceptual Domain','Fine Motor Skills','Gross Motor Skills']);
+buildScoreTable('table-adaptive', ['Mathematics','Literacy','Writing']);
+
+/* ---------- Age auto-calc ---------- */
+document.getElementById('birthdate').addEventListener('change', function(){
+  const evalDateEl = document.getElementById('evalDate');
+  const ref = evalDateEl.value ? new Date(evalDateEl.value) : new Date();
+  const dob = new Date(this.value);
+  if(isNaN(dob.getTime())){ document.getElementById('age').value=''; return; }
+  let age = ref.getFullYear() - dob.getFullYear();
+  const m = ref.getMonth() - dob.getMonth();
+  if(m < 0 || (m===0 && ref.getDate() < dob.getDate())) age--;
+  document.getElementById('age').value = age + ' years old';
+});
+
+/* ---------- Signature pads ---------- */
+function initPad(canvas){
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    ctx.strokeStyle = '#2B2733'; ctx.lineWidth = 2; ctx.lineCap='round'; ctx.lineJoin='round';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  let drawing=false, last=null;
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    return {x:cx,y:cy};
+  }
+  function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
+  function move(e){
+    if(!drawing) return;
+    const p=pos(e); const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p; e.preventDefault();
+  }
+  function end(){ drawing=false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+}
+document.querySelectorAll('canvas.pad').forEach(initPad);
+document.querySelectorAll('[data-clear]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.getAttribute('data-clear');
+    const canvas = document.querySelector(`canvas[data-pad="${key}"]`);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+});
+
+/* ---------- Clinical data sources sidebar ---------- */
+const sourceList = document.getElementById('sourceList');
+let sourceCounter = 0;
+
+const DEFAULT_SOURCES = [
+  {name:'Caregiver Checklist · FO-03', status:'processed', from:'Caregiver name', note:''},
+  {name:'MMSE · FO-04', status:'scored', from:'Examiner name', note:''},
+  {name:'Adaptive Functioning Tool · FO-05', status:'pending', from:'Teacher / examiner name', note:''},
+];
+
+function sourceCardHTML(id, data){
+  return `
+  <div class="source-card" id="source-${id}">
+    <div class="source-head">
+      <input class="source-name-input" value="${data.name}" data-role="name">
+      <select class="badge-select ${data.status}" data-role="status">
+        <option value="pending" ${data.status==='pending'?'selected':''}>Pending</option>
+        <option value="processed" ${data.status==='processed'?'selected':''}>Processed</option>
+        <option value="scored" ${data.status==='scored'?'selected':''}>Scored</option>
+        <option value="approved" ${data.status==='approved'?'selected':''}>Approved</option>
+      </select>
+    </div>
+    <div class="source-field">Source: <input type="text" value="${data.from}" data-role="from" placeholder="Who provided this"></div>
+    <div class="source-note">
+      <textarea data-role="note" placeholder='Flagged note or key observation, e.g. "Experiences intense meltdowns lasting >10 mins."'>${data.note}</textarea>
+    </div>
+    <div class="source-actions">
+      <button data-action="insert">Insert into report →</button>
+      <button data-action="remove" style="color:var(--flag);">Remove</button>
+    </div>
+  </div>`;
+}
+
+function addSource(data){
+  sourceCounter++;
+  const id = sourceCounter;
+  data = data || {name:'New source', status:'pending', from:'', note:''};
+  sourceList.insertAdjacentHTML('beforeend', sourceCardHTML(id, data));
+  const card = document.getElementById('source-'+id);
+
+  const statusSelect = card.querySelector('[data-role="status"]');
+  statusSelect.addEventListener('change', function(){
+    statusSelect.className = 'badge-select ' + this.value;
+  });
+
+  card.querySelector('[data-action="insert"]').addEventListener('click', ()=>{
+    const name = card.querySelector('[data-role="name"]').value;
+    const note = card.querySelector('[data-role="note"]').value.trim();
+    if(!note){ alert('Add a flagged note on this source before inserting.'); return; }
+    const bg = document.getElementById('backgroundInfo');
+    bg.value = (bg.value ? bg.value.trim() + '\n\n' : '') + `[${name}] ${note}`;
+  });
+
+  card.querySelector('[data-action="remove"]').addEventListener('click', ()=>{
+    if(confirm('Remove this data source card?')) card.remove();
+  });
+}
+DEFAULT_SOURCES.forEach(s => addSource(s));
+
+/* ---------- Reset ---------- */
+function resetForm(){
+  if(!confirm('Clear all fields and signatures on this form?')) return;
+  document.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea').forEach(el=>{
+    if(el.id === 'lic-prepared') { el.value = '0039850'; return; }
+    if(el.id === 'reasonReferral'){ el.value = "The client is referred to the clinic for evaluation of his/her adaptive functioning, as part of his/her Special Needs Education (SNED) program enrollment."; return; }
+    el.value='';
+  });
+  document.querySelectorAll('input[type=checkbox]').forEach(el=>el.checked=true);
+  document.querySelectorAll('select').forEach(el=>{ if(!el.closest('.source-card')) el.selectedIndex = 0; });
+  document.querySelectorAll('canvas.pad').forEach(canvas=>{
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+  document.getElementById('age').value='';
+  sourceList.innerHTML='';
+  DEFAULT_SOURCES.forEach(s => addSource(s));
+}
+</script>
+</body>
+</html>

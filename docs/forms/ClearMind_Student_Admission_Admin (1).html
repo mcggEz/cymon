@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Roster — ClearMind Psychological Services</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#4A2E6B; --plum-deep:#38224F; --lavender-bg:#F5F1FA; --lavender-panel:#EFE7F8;
+    --mauve:#8B6BAE; --ink:#2B2733; --paper:#FFFFFF; --line:#E4DCEF;
+    --ok-bg:#DCEFE1; --ok-txt:#2E7D4F;
+    --hsn:#B4524A; --msn:#B8873A; --lsn:#5B8C6E; --ind:#3457A6;
+    --shadow: 0 1px 2px rgba(56,34,79,0.06), 0 8px 24px rgba(56,34,79,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--lavender-bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;line-height:1.5;}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 90px;}
+
+  header.brand{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+  .brand-left{display:flex;align-items:center;gap:12px;}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--plum),var(--mauve));display:flex;align-items:center;justify-content:center;color:white;font-family:'Fraunces',serif;font-weight:600;font-size:17px;flex-shrink:0;}
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;color:var(--plum-deep);}
+  .brand-tag{font-size:11.5px;color:var(--mauve);font-style:italic;margin-top:1px;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+  .toolbar h1{font-family:'Fraunces',serif;font-weight:600;font-size:22px;color:var(--plum-deep);margin:0;}
+  .toolbar .sub{font-size:12.5px;color:#6b6478;margin-top:2px;}
+  .btn{padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:white;color:var(--plum-deep);}
+  .btn.primary{background:var(--plum);color:white;border-color:var(--plum);}
+  .btn.primary:hover{background:var(--plum-deep);}
+  .btn:hover{background:var(--lavender-bg);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn.small{padding:6px 12px;font-size:12px;}
+
+  /* Roster */
+  .roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+  .empty-state{background:var(--paper);border:1.5px dashed var(--line);border-radius:14px;padding:40px 20px;text-align:center;color:#8a8296;}
+  .student-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);}
+  .student-card .photo{width:100%;aspect-ratio:1/1;border-radius:10px;background:var(--lavender-panel);object-fit:cover;margin-bottom:10px;}
+  .student-card .photo-placeholder{width:100%;aspect-ratio:1/1;border-radius:10px;background:var(--lavender-panel);display:flex;align-items:center;justify-content:center;color:var(--mauve);font-size:26px;font-family:'Fraunces',serif;margin-bottom:10px;}
+  .student-card .name{font-family:'Fraunces',serif;font-weight:600;font-size:14.5px;color:var(--plum-deep);}
+  .student-card .meta{font-size:11.5px;color:#8a8296;margin-top:2px;}
+  .tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;color:white;margin-top:8px;}
+
+  /* Modal */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(43,39,51,0.45);z-index:50;
+    align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--lavender-bg);border-radius:16px;max-width:900px;width:100%;
+    box-shadow:0 20px 60px rgba(43,39,51,0.3);
+  }
+  .modal-head{
+    display:flex;justify-content:space-between;align-items:center;padding:20px 26px;
+    background:var(--paper);border-radius:16px 16px 0 0;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:2;
+  }
+  .modal-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--plum-deep);margin:0;}
+  .modal-head .form-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mauve);}
+  .modal-close{border:none;background:var(--lavender-panel);color:var(--plum-deep);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;}
+  .modal-body{padding:22px 26px;}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card h3{font-family:'Fraunces',serif;font-weight:600;font-size:14.5px;color:var(--plum-deep);margin:0 0 14px;display:flex;align-items:center;gap:8px;}
+  .card h3 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mauve);background:var(--lavender-bg);padding:3px 8px;border-radius:20px;letter-spacing:.04em;}
+
+  .grid{display:grid;gap:14px;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:640px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}}
+  label.field-label{display:block;font-size:11.5px;font-weight:600;color:var(--plum-deep);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+  input[type=text],input[type=date],input[type=tel],input[type=email],input[type=number],input[type=password],textarea,select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:#FCFAFF;
+  }
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mauve);box-shadow:0 0 0 3px rgba(139,107,174,0.15);}
+  input[readonly]{background:var(--lavender-panel);color:#6b6478;}
+  .hint{font-size:11.5px;color:#8a8296;margin-top:5px;}
+
+  .split-photo{display:grid;grid-template-columns:1fr 190px;gap:20px;align-items:start;}
+  @media (max-width:640px){.split-photo{grid-template-columns:1fr;}}
+
+  .photo-box{border:2px dashed var(--line);border-radius:12px;background:#FCFAFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px;height:190px;position:relative;overflow:hidden;}
+  .photo-box img, .photo-box video{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+  .photo-box .placeholder-text{font-size:11px;color:#8a8296;text-align:center;}
+  .photo-actions{display:flex;flex-direction:column;gap:6px;margin-top:8px;width:100%;}
+  .photo-actions button{width:100%;}
+
+  .yn-toggle{display:flex;gap:10px;max-width:280px;}
+  .yn-toggle label{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;text-align:center;cursor:pointer;font-weight:600;font-size:13px;}
+  .yn-toggle input{display:none;}
+  .yn-toggle label:has(input:checked){border-color:var(--mauve);background:var(--lavender-panel);color:var(--plum-deep);}
+
+  .enroll-option{border:1.5px solid var(--line);border-radius:11px;padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:8px;}
+  .enroll-option input{width:16px;height:16px;accent-color:var(--plum);flex-shrink:0;}
+  .enroll-option .code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:white;padding:2px 7px;border-radius:6px;flex-shrink:0;}
+  .enroll-option:has(input:checked){border-color:var(--mauve);background:var(--lavender-panel);}
+
+  .account-box{background:var(--lavender-panel);border-radius:12px;padding:16px 18px;}
+  .account-box .hint{color:var(--plum-deep);font-weight:600;font-size:11.5px;margin-bottom:14px;}
+  .field-with-btn{display:flex;gap:8px;}
+  .field-with-btn input{flex:1;}
+  .field-with-btn button{flex-shrink:0;white-space:nowrap;}
+
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:700px){.sig-grid{grid-template-columns:1fr;}}
+  .sig-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:#FCFAFF;}
+  canvas.pad{width:100%;height:110px;background:white;border:1.5px dashed var(--line);border-radius:9px;cursor:crosshair;touch-action:none;}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .clear-btn{background:none;border:none;color:var(--mauve);font-size:12px;cursor:pointer;font-weight:600;padding:4px 0;}
+  .clear-btn:hover{text-decoration:underline;}
+
+  .modal-footer{
+    display:flex;justify-content:flex-end;gap:10px;padding:16px 26px;background:var(--paper);
+    border-top:1px solid var(--line);border-radius:0 0 16px 16px;position:sticky;bottom:0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="brand-left">
+      <div class="logo">CM</div>
+      <div>
+        <div class="brand-name">ClearMind Psychological Services</div>
+        <div class="brand-tag">Clarity of Mind, Journey to Wellness.</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div>
+      <h1>Student Roster</h1>
+      <div class="sub">Admin dashboard · Special Education Program</div>
+    </div>
+    <button class="btn primary" onclick="openModal()">+ Add Student</button>
+  </div>
+
+  <div id="rosterArea">
+    <div class="empty-state" id="emptyState">
+      No students admitted yet. Click <strong>+ Add Student</strong> to fill out an admission form and create their account.
+    </div>
+    <div class="roster-grid" id="rosterGrid" style="display:none;"></div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>Student Admission Form</h2>
+        <span class="form-code">CMPS:SE-FO-01 rev.0 02192026</span>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="card">
+        <h3><span class="eyebrow">01</span> Personal Information</h3>
+        <div class="split-photo">
+          <div class="grid cols-3">
+            <div><label class="field-label">Last Name</label><input type="text" id="lastName"></div>
+            <div><label class="field-label">First Name</label><input type="text" id="firstName"></div>
+            <div><label class="field-label">Middle Name</label><input type="text" id="middleName"></div>
+            <div><label class="field-label">Birthdate</label><input type="date" id="birthdate"></div>
+            <div><label class="field-label">Place of Birth</label><input type="text" id="placeOfBirth"></div>
+            <div><label class="field-label">Sex</label>
+              <select id="sex"><option value="">Select</option><option>Male</option><option>Female</option></select>
+            </div>
+            <div><label class="field-label">Age (auto)</label><input type="text" id="age" readonly></div>
+            <div><label class="field-label">Nickname</label><input type="text" id="nickname"></div>
+            <div><label class="field-label">Citizenship</label><input type="text" id="citizenship"></div>
+          </div>
+
+          <div>
+            <label class="field-label">2×2 ID Photo</label>
+            <div class="photo-box" id="photoBox">
+              <div class="placeholder-text" id="photoPlaceholder">No photo yet</div>
+            </div>
+            <div class="photo-actions">
+              <button class="btn small" onclick="triggerUpload()">Upload photo</button>
+              <button class="btn small" onclick="openCamera()">Use camera</button>
+              <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top:14px;">
+          <div><label class="field-label">Present Address</label><input type="text" id="presentAddress"></div>
+          <div><label class="field-label">Religion</label><input type="text" id="religion"></div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <label class="field-label">Is your Present Address also your Permanent Address?</label>
+          <div class="yn-toggle">
+            <label><input type="radio" name="sameAddress" value="Yes" onclick="toggleSameAddress(true)"> Yes</label>
+            <label><input type="radio" name="sameAddress" value="No" onclick="toggleSameAddress(false)"> No</label>
+          </div>
+        </div>
+        <div style="margin-top:10px;" id="permanentAddressWrap">
+          <label class="field-label">Permanent Address (if not same as present address)</label>
+          <input type="text" id="permanentAddress" placeholder='Enter address, or type "Same"'>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="eyebrow">02</span> Parent Information</h3>
+        <div class="grid cols-2">
+          <div>
+            <div style="font-weight:700;font-size:13px;color:var(--ink);margin-bottom:8px;">Mother / Guardian</div>
+            <div class="grid" style="margin-bottom:0;">
+              <div><label class="field-label">Name</label><input type="text" id="motherName"></div>
+              <div><label class="field-label">Occupation</label><input type="text" id="motherOcc"></div>
+              <div><label class="field-label">Mobile Number</label><input type="tel" id="motherMobile"></div>
+              <div><label class="field-label">Email Address</label><input type="email" id="motherEmail"></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:13px;color:var(--ink);margin-bottom:8px;">Father / Guardian</div>
+            <div class="grid" style="margin-bottom:0;">
+              <div><label class="field-label">Name</label><input type="text" id="fatherName"></div>
+              <div><label class="field-label">Occupation</label><input type="text" id="fatherOcc"></div>
+              <div><label class="field-label">Mobile Number</label><input type="tel" id="fatherMobile"></div>
+              <div><label class="field-label">Email Address</label><input type="email" id="fatherEmail"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="eyebrow">03</span> Emergency Contact Information</h3>
+        <div class="grid cols-3">
+          <div><label class="field-label">Name of Emergency Contact Person</label><input type="text" id="ecName"></div>
+          <div><label class="field-label">Contact Number</label><input type="tel" id="ecContact"></div>
+          <div><label class="field-label">Relation to the Client</label><input type="text" id="ecRelation"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="eyebrow">04</span> Diagnosis &amp; Disability</h3>
+        <label class="field-label">Was the student previously diagnosed / assessed?</label>
+        <div class="yn-toggle" style="margin-bottom:10px;">
+          <label><input type="radio" name="prevDiag" value="Yes"> Yes</label>
+          <label><input type="radio" name="prevDiag" value="No"> No</label>
+        </div>
+        <div style="margin-bottom:16px;"><label class="field-label">Diagnosis</label><input type="text" id="diagnosis"></div>
+
+        <label class="field-label">Does the student have other disability/impairment that will hinder the program?</label>
+        <div class="yn-toggle" style="margin-bottom:10px;">
+          <label><input type="radio" name="disability" value="Yes"> Yes</label>
+          <label><input type="radio" name="disability" value="No"> No</label>
+        </div>
+        <div style="margin-bottom:16px;"><label class="field-label">Diagnosis</label><input type="text" id="disabilityDiagnosis"></div>
+
+        <label class="field-label">Allergies</label>
+        <textarea id="allergies" style="min-height:50px;"></textarea>
+      </div>
+
+      <div class="card">
+        <h3><span class="eyebrow">05</span> Enrollment Type</h3>
+        <label class="enroll-option"><input type="radio" name="enrollType" value="HSN"><span class="code" style="background:var(--hsn);">HSN</span> Higher Support Needs Program — 48 hours per month</label>
+        <label class="enroll-option"><input type="radio" name="enrollType" value="MSN"><span class="code" style="background:var(--msn);">MSN</span> Moderate Support Needs Program — 36 hours per month</label>
+        <label class="enroll-option"><input type="radio" name="enrollType" value="LSN"><span class="code" style="background:var(--lsn);">LSN</span> Low Support Needs Program — 24 hours per month</label>
+        <label class="enroll-option"><input type="radio" name="enrollType" value="IND"><span class="code" style="background:var(--ind);">IND</span> Individual Session</label>
+      </div>
+
+      <div class="card">
+        <h3><span class="eyebrow">06</span> Account Registration</h3>
+        <div class="account-box">
+          <div class="hint">This creates the portal login the parent/guardian will use to view their child's IEP, assessments, and session records.</div>
+          <div class="grid cols-2">
+            <div>
+              <label class="field-label">Student Number</label>
+              <div class="field-with-btn">
+                <input type="text" id="acctStudentNumber" readonly placeholder="auto-generated on save">
+                <button class="btn small" onclick="generateStudentNumber()">Generate</button>
+              </div>
+              <div class="hint" style="margin:4px 0 0;">Primary login ID — works even if the family has no email address.</div>
+            </div>
+            <div>
+              <label class="field-label">Portal Username</label>
+              <div class="field-with-btn">
+                <input type="text" id="acctUsername" placeholder="auto-generated from name">
+                <button class="btn small" onclick="generateUsername()">Generate</button>
+              </div>
+              <div class="hint" style="margin:4px 0 0;">Friendly alias. Parent can log in with either this or the Student Number.</div>
+            </div>
+            <div>
+              <label class="field-label">Temporary Password</label>
+              <div class="field-with-btn">
+                <input type="text" id="acctPassword" placeholder="auto-generated">
+                <button class="btn small" onclick="generatePassword()">Generate</button>
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Account Status</label>
+              <select id="acctStatus">
+                <option>Pending verification</option>
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Login Email (optional)</label>
+              <input type="email" id="acctEmail" placeholder="leave blank if parent has no email">
+            </div>
+            <div>
+              <label class="field-label">Deliver login details via</label>
+              <select id="acctDelivery" onchange="toggleDeliveryHint()">
+                <option value="email">Email</option>
+                <option value="sms">SMS to parent's mobile number</option>
+                <option value="print">Print / hand to parent in person</option>
+              </select>
+              <div class="hint" id="deliveryHint" style="margin:4px 0 0;"></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="notifyParent" checked style="width:16px;height:16px;accent-color:var(--plum);">
+            <label for="notifyParent" style="font-size:12.5px;">Send login details to the parent/guardian once created, using the method above</label>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="forcePasswordChange" checked style="width:16px;height:16px;accent-color:var(--plum);">
+            <label for="forcePasswordChange" style="font-size:12.5px;">Require the parent to set a new password on first login</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="eyebrow">Sign-off</span></h3>
+        <div class="sig-grid">
+          <div>
+            <label class="field-label">Signature over Printed Name of Parent / Date</label>
+            <div class="sig-card">
+              <canvas class="pad" data-pad="parent"></canvas>
+              <div class="sig-actions">
+                <button class="clear-btn" data-clear="parent">Clear signature</button>
+                <input type="date" id="date-parent" style="width:140px;">
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Signature over Printed Name of CMPS Representative / Date</label>
+            <div class="sig-card">
+              <canvas class="pad" data-pad="rep"></canvas>
+              <div class="sig-actions">
+                <button class="clear-btn" data-clear="rep">Clear signature</button>
+                <input type="date" id="date-rep" style="width:140px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveStudent()">Save &amp; Create Account</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Modal open/close ---------- */
+function openModal(){ document.getElementById('modalOverlay').classList.add('open'); setTimeout(()=>document.querySelectorAll('canvas.pad').forEach(fixPadSize),50); }
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); stopCameraStream(); }
+
+/* ---------- Age auto-calc ---------- */
+document.getElementById('birthdate').addEventListener('change', function(){
+  const dob = new Date(this.value);
+  if(isNaN(dob.getTime())){ document.getElementById('age').value=''; return; }
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if(m < 0 || (m===0 && today.getDate() < dob.getDate())) age--;
+  document.getElementById('age').value = age + ' years old';
+});
+
+/* ---------- Same address toggle ---------- */
+function toggleSameAddress(isSame){
+  const wrap = document.getElementById('permanentAddressWrap');
+  const field = document.getElementById('permanentAddress');
+  if(isSame){
+    field.value = 'Same';
+    field.setAttribute('readonly', 'true');
+  } else {
+    field.removeAttribute('readonly');
+    if(field.value === 'Same') field.value = '';
+  }
+}
+
+/* ---------- Photo: upload ---------- */
+let photoDataUrl = null;
+function triggerUpload(){ document.getElementById('fileInput').click(); }
+function handleFileUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    photoDataUrl = ev.target.result;
+    renderPhoto();
+  };
+  reader.readAsDataURL(file);
+}
+function renderPhoto(){
+  const box = document.getElementById('photoBox');
+  box.innerHTML = `<img src="${photoDataUrl}" alt="Student photo">`;
+}
+
+/* ---------- Photo: camera ---------- */
+let cameraStream = null;
+function openCamera(){
+  const box = document.getElementById('photoBox');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+    .then(stream=>{
+      cameraStream = stream;
+      box.innerHTML = `<video id="cameraVideo" autoplay playsinline></video>`;
+      const video = document.getElementById('cameraVideo');
+      video.srcObject = stream;
+      const actions = document.querySelector('.photo-actions');
+      actions.innerHTML = `
+        <button class="btn small" onclick="capturePhoto()">Capture</button>
+        <button class="btn small" onclick="cancelCamera()">Cancel</button>`;
+    })
+    .catch(()=>{
+      alert("Couldn't access the camera. Check your browser's camera permissions, or use Upload photo instead.");
+    });
+}
+function capturePhoto(){
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  photoDataUrl = canvas.toDataURL('image/png');
+  stopCameraStream();
+  renderPhoto();
+  restorePhotoActions();
+}
+function cancelCamera(){
+  stopCameraStream();
+  const box = document.getElementById('photoBox');
+  if(photoDataUrl){ renderPhoto(); } else { box.innerHTML = `<div class="placeholder-text">No photo yet</div>`; }
+  restorePhotoActions();
+}
+function stopCameraStream(){
+  if(cameraStream){ cameraStream.getTracks().forEach(t=>t.stop()); cameraStream = null; }
+}
+function restorePhotoActions(){
+  const actions = document.querySelector('.photo-actions');
+  actions.innerHTML = `
+    <button class="btn small" onclick="triggerUpload()">Upload photo</button>
+    <button class="btn small" onclick="openCamera()">Use camera</button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">`;
+}
+
+/* ---------- Account registration helpers ---------- */
+function generateUsername(){
+  const first = (document.getElementById('firstName').value || 'student').trim().toLowerCase().replace(/[^a-z]/g,'');
+  const last = (document.getElementById('lastName').value || '').trim().toLowerCase().replace(/[^a-z]/g,'');
+  const num = Math.floor(100 + Math.random()*900);
+  document.getElementById('acctUsername').value = `${first}.${last}${num}`.replace(/^\.|\.$/g,'');
+}
+function generatePassword(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let pw = '';
+  for(let i=0;i<10;i++) pw += chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('acctPassword').value = pw;
+}
+function generateStudentNumber(){
+  const year = new Date().getFullYear();
+  const seq = String(students.length + 1).padStart(4,'0');
+  document.getElementById('acctStudentNumber').value = `CMPS-SE-${year}-${seq}`;
+}
+function toggleDeliveryHint(){
+  const val = document.getElementById('acctDelivery').value;
+  const hint = document.getElementById('deliveryHint');
+  const email = document.getElementById('acctEmail').value.trim();
+  const mobile = (document.getElementById('motherMobile').value || document.getElementById('fatherMobile').value || '').trim();
+  if(val === 'email' && !email){
+    hint.textContent = 'No email on file yet — enter one above, or switch delivery method to SMS or Print.';
+  } else if(val === 'sms' && !mobile){
+    hint.textContent = 'No mobile number on file yet — add one under Parent Information.';
+  } else if(val === 'print'){
+    hint.textContent = 'Admin prints the credentials and hands them to the parent/guardian in person.';
+  } else {
+    hint.textContent = '';
+  }
+}
+
+/* ---------- Signature pads ---------- */
+function fixPadSize(canvas){
+  const rect = canvas.getBoundingClientRect();
+  if(rect.width === 0) return;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+  ctx.strokeStyle = '#2B2733'; ctx.lineWidth = 2; ctx.lineCap='round'; ctx.lineJoin='round';
+}
+function initPad(canvas){
+  fixPadSize(canvas);
+  window.addEventListener('resize', ()=>fixPadSize(canvas));
+  let drawing=false, last=null;
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    return {x:cx,y:cy};
+  }
+  function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
+  function move(e){
+    if(!drawing) return;
+    const p=pos(e); const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p; e.preventDefault();
+  }
+  function end(){ drawing=false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+}
+document.querySelectorAll('canvas.pad').forEach(initPad);
+document.querySelectorAll('[data-clear]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.getAttribute('data-clear');
+    const canvas = document.querySelector(`canvas[data-pad="${key}"]`);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+});
+
+/* ---------- Save student to roster (in-memory demo) ---------- */
+let students = [];
+function saveStudent(){
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+  if(!firstName || !lastName){
+    alert('Please enter at least the student\'s first and last name before saving.');
+    return;
+  }
+  const enrollType = document.querySelector('input[name="enrollType"]:checked');
+  if(!document.getElementById('acctStudentNumber').value) generateStudentNumber();
+  if(!document.getElementById('acctUsername').value) generateUsername();
+  if(!document.getElementById('acctPassword').value) generatePassword();
+
+  const email = document.getElementById('acctEmail').value.trim();
+  const delivery = document.getElementById('acctDelivery').value;
+  if(delivery === 'email' && !email){
+    alert("Delivery method is set to Email, but no Login Email was entered. Please add an email, or switch delivery to SMS or Print.");
+    return;
+  }
+
+  const student = {
+    name: `${lastName}, ${firstName} ${document.getElementById('middleName').value||''}`.trim(),
+    photo: photoDataUrl,
+    enrollType: enrollType ? enrollType.value : null,
+    studentNumber: document.getElementById('acctStudentNumber').value,
+    username: document.getElementById('acctUsername').value || '(not set)',
+    password: document.getElementById('acctPassword').value,
+    email: email || null,
+    delivery: delivery,
+    status: document.getElementById('acctStatus').value,
+    forcePasswordChange: document.getElementById('forcePasswordChange').checked,
+  };
+  students.push(student);
+  renderRoster();
+  closeModal();
+  resetModalForm();
+}
+
+function renderRoster(){
+  const empty = document.getElementById('emptyState');
+  const grid = document.getElementById('rosterGrid');
+  if(students.length === 0){ empty.style.display='block'; grid.style.display='none'; return; }
+  empty.style.display='none';
+  grid.style.display='grid';
+  const enrollColors = {HSN:'var(--hsn)', MSN:'var(--msn)', LSN:'var(--lsn)', IND:'var(--ind)'};
+  const enrollLabels = {HSN:'Higher Support Needs', MSN:'Moderate Support Needs', LSN:'Low Support Needs', IND:'Individual Session'};
+  grid.innerHTML = students.map((s,i) => `
+    <div class="student-card">
+      ${s.photo ? `<img class="photo" src="${s.photo}">` : `<div class="photo-placeholder">${s.name.charAt(0)}</div>`}
+      <div class="name">${s.name}</div>
+      <div class="meta">${s.studentNumber || ''}${s.studentNumber ? ' · ' : ''}@${s.username}</div>
+      <div class="meta">${s.status}${s.forcePasswordChange ? ' · must change password' : ''}</div>
+      ${s.enrollType ? `<span class="tag" style="background:${enrollColors[s.enrollType]}">${enrollLabels[s.enrollType]}</span>` : ''}
+      <div style="margin-top:10px;"><button class="btn small" onclick="resetPassword(${i})">Reset password</button></div>
+    </div>`).join('');
+}
+
+function resetPassword(index){
+  const s = students[index];
+  if(!s) return;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let pw = '';
+  for(let i=0;i<10;i++) pw += chars[Math.floor(Math.random()*chars.length)];
+  s.password = pw;
+  s.status = 'Pending verification';
+  s.forcePasswordChange = true;
+  renderRoster();
+  const via = s.email ? `email (${s.email})` : 'SMS/print, since no email is on file';
+  alert(`New temporary password for ${s.name}:\n\n${pw}\n\nStudent Number / Username: ${s.studentNumber || s.username}\n\nDeliver this to the parent/guardian via ${via}. They'll be required to set a new password on next login.`);
+}
+
+function resetModalForm(){
+  document.querySelectorAll('.modal-body input[type=text], .modal-body input[type=date], .modal-body input[type=tel], .modal-body input[type=email]').forEach(el=>el.value='');
+  document.querySelectorAll('.modal-body select').forEach(el=>el.selectedIndex=0);
+  document.querySelectorAll('.modal-body input[type=radio]').forEach(el=>el.checked=false);
+  document.getElementById('acctStudentNumber').value = '';
+  document.getElementById('acctDelivery').selectedIndex = 0;
+  document.getElementById('deliveryHint').textContent = '';
+  document.getElementById('notifyParent').checked = true;
+  document.getElementById('forcePasswordChange').checked = true;
+  document.getElementById('permanentAddressWrap').style.display='block';
+  document.getElementById('permanentAddress').removeAttribute('readonly');
+  photoDataUrl = null;
+  document.getElementById('photoBox').innerHTML = `<div class="placeholder-text">No photo yet</div>`;
+  restorePhotoActions();
+  document.querySelectorAll('canvas.pad').forEach(canvas=>{
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+}
+</script>
+</body>
+</html>

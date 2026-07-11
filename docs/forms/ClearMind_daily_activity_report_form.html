@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Activity Report — ClearMind Psychological Services</title>
+<style>
+  :root{
+    --deep-plum:#4B2E6F;
+    --clear-purple:#6C3FA0;
+    --orchid:#8B5FBF;
+    --lavender-mist:#F3EEFA;
+    --lavender-line:#DCCBEF;
+    --ink:#2C2233;
+    --ink-soft:#6B6076;
+    --paper:#FFFFFF;
+    --amber:#C77D2E;
+    --ok-green:#2F8F5B;
+    --radius:10px;
+    --shadow:0 2px 10px rgba(75,46,111,0.08);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+    background:linear-gradient(180deg,#F7F3FC 0%, #EFE6F9 100%);
+    color:var(--ink);
+    padding:32px 16px 80px;
+  }
+
+  .sheet{
+    max-width:940px;
+    margin:0 auto;
+    background:var(--paper);
+    border-radius:16px;
+    box-shadow:0 8px 30px rgba(75,46,111,0.15);
+    overflow:hidden;
+    border:1px solid var(--lavender-line);
+  }
+
+  /* ---------- Letterhead ---------- */
+  .letterhead{
+    background:linear-gradient(120deg,var(--deep-plum) 0%, var(--clear-purple) 55%, var(--orchid) 100%);
+    color:#fff;
+    padding:26px 34px 22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .letterhead::after{
+    content:"";
+    position:absolute;
+    right:-60px; bottom:-90px;
+    width:260px; height:260px;
+    background:radial-gradient(circle, rgba(255,255,255,0.14) 0%, transparent 70%);
+  }
+  .letterhead-top{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap;
+  }
+  .brand{
+    display:flex; align-items:center; gap:12px;
+  }
+  .brand-mark{
+    width:46px; height:46px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.16);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px;
+    flex-shrink:0;
+    border:1px solid rgba(255,255,255,0.35);
+  }
+  .brand h1{
+    margin:0; font-size:22px; letter-spacing:0.3px; font-weight:700;
+  }
+  .brand span{
+    display:block; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; opacity:0.85; margin-top:2px;
+  }
+  .contact-block{
+    text-align:right;
+    font-size:12px;
+    line-height:1.6;
+    opacity:0.92;
+  }
+  .doc-title{
+    margin-top:22px;
+    text-align:center;
+  }
+  .doc-title h2{
+    margin:0; font-size:19px; letter-spacing:1px; text-transform:uppercase;
+  }
+  .doc-title .sub{
+    font-size:13px; opacity:0.9; margin-top:2px;
+  }
+  .doc-title .conf{
+    display:inline-block;
+    margin-top:8px;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    background:rgba(255,255,255,0.18);
+    border:1px solid rgba(255,255,255,0.4);
+    padding:3px 12px;
+    border-radius:20px;
+  }
+  .form-code{
+    font-size:11px; opacity:0.75; margin-top:14px;
+  }
+
+  /* ---------- Body ---------- */
+  form{ padding:30px 34px 10px; }
+
+  .section-label{
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    color:var(--clear-purple);
+    margin:30px 0 14px;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--lavender-line);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-label:first-of-type{ margin-top:4px; }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px 20px;
+  }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field.full{ grid-column:1 / -1; }
+
+  label{
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  label .req{ color:var(--amber); margin-left:2px; }
+  label .hint{
+    font-weight:400; color:var(--ink-soft); font-size:11.5px; display:block; margin-top:1px;
+  }
+
+  input[type="text"], input[type="date"], textarea, select{
+    font-family:inherit;
+    font-size:14px;
+    padding:10px 12px;
+    border:1.5px solid #E1D6EF;
+    border-radius:8px;
+    background:#FBF9FE;
+    color:var(--ink);
+    transition:border-color .15s, box-shadow .15s, background .15s;
+    width:100%;
+  }
+  input:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color:var(--clear-purple);
+    background:#fff;
+    box-shadow:0 0 0 3px rgba(108,63,160,0.14);
+  }
+  textarea{ resize:vertical; min-height:80px; line-height:1.5; }
+  input:invalid:not(:placeholder-shown){ border-color:#D96C6C; }
+
+  .counter{
+    font-size:11px; color:var(--ink-soft); text-align:right; margin-top:2px;
+  }
+
+  /* chip-based domain tags */
+  .domain-tags{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:2px;
+  }
+  .tag{
+    font-size:12.5px;
+    padding:7px 13px;
+    border-radius:20px;
+    border:1.5px solid var(--lavender-line);
+    background:#FBF9FE;
+    cursor:pointer;
+    user-select:none;
+    color:var(--ink-soft);
+    transition:all .15s;
+  }
+  .tag:hover{ border-color:var(--orchid); }
+  .tag.active{
+    background:var(--clear-purple);
+    border-color:var(--clear-purple);
+    color:#fff;
+    font-weight:600;
+  }
+  .tag-custom-wrap{
+    display:flex; gap:8px; margin-top:10px;
+  }
+  .tag-custom-wrap input{ flex:1; }
+  .btn-mini{
+    border:1.5px dashed var(--orchid);
+    background:#fff;
+    color:var(--clear-purple);
+    border-radius:8px;
+    padding:0 16px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-mini:hover{ background:var(--lavender-mist); }
+
+  /* ---------- Observation table ---------- */
+  .table-wrap{
+    border:1.5px solid var(--lavender-line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    background:var(--lavender-mist);
+    color:var(--deep-plum);
+    text-align:left;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    padding:10px 12px;
+    border-bottom:1.5px solid var(--lavender-line);
+  }
+  thead th.col-no{ width:50px; text-align:center; }
+  thead th.col-action{ width:56px; }
+  tbody td{
+    padding:8px;
+    border-bottom:1px solid #EFE7F8;
+    vertical-align:top;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody td.col-no{
+    text-align:center;
+    font-weight:700;
+    color:var(--orchid);
+    padding-top:16px;
+    font-size:13px;
+  }
+  tbody input, tbody textarea{
+    border:1.5px solid transparent;
+    background:transparent;
+    padding:8px 8px;
+  }
+  tbody input:hover, tbody textarea:hover{ background:#FBF9FE; }
+  tbody input:focus, tbody textarea:focus{ background:#fff; border-color:var(--clear-purple); }
+  tbody textarea{ min-height:50px; }
+  .row-del{
+    width:32px; height:32px;
+    border-radius:50%;
+    border:1.5px solid #F0D6D6;
+    background:#fff;
+    color:#C25454;
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    margin-top:8px;
+  }
+  .row-del:hover{ background:#FCEDED; }
+
+  .table-actions{
+    display:flex; justify-content:space-between; align-items:center; margin-top:12px; flex-wrap:wrap; gap:10px;
+  }
+  .add-row-btn{
+    border:1.5px dashed var(--orchid);
+    background:var(--lavender-mist);
+    color:var(--deep-plum);
+    padding:9px 18px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .add-row-btn:hover{ background:#EADFF7; }
+  .row-count{ font-size:12px; color:var(--ink-soft); }
+
+  /* ---------- Signatories ---------- */
+  .sign-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  .sign-card{
+    background:var(--lavender-mist);
+    border:1px solid var(--lavender-line);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .sign-card.full{ grid-column:1/-1; }
+  .sign-card h4{
+    margin:0 0 12px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--clear-purple);
+  }
+  .sign-card .name-row{ margin-bottom:10px; }
+  .sign-card .name-row:last-child{ margin-bottom:0; }
+  .prefilled-note{
+    font-size:11px; color:var(--ink-soft); margin-top:4px; font-style:italic;
+  }
+
+  /* ---------- Signature pad ---------- */
+  .sig-block{ margin-top:12px; }
+  .sig-block > label{ display:block; margin-bottom:6px; }
+  .sig-pad-wrap{
+    position:relative;
+    background:#fff;
+    border:1.5px dashed var(--lavender-line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .sig-pad-wrap.has-sig{ border-style:solid; border-color:var(--orchid); }
+  canvas.sig-pad{
+    display:block;
+    width:100%;
+    height:110px;
+    touch-action:none;
+    cursor:crosshair;
+    background:#fff;
+  }
+  .sig-placeholder{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; color:var(--ink-soft);
+    pointer-events:none;
+  }
+  .sig-pad-wrap.has-sig .sig-placeholder{ display:none; }
+  .sig-baseline{
+    position:absolute; left:12px; right:12px; bottom:26px;
+    border-bottom:1px dashed #D9C9EA;
+    pointer-events:none;
+  }
+  .sig-controls{
+    display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap;
+  }
+  .sig-btn{
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:7px;
+    border:1.5px solid var(--lavender-line);
+    background:#fff;
+    color:var(--deep-plum);
+    cursor:pointer;
+  }
+  .sig-btn:hover{ background:var(--lavender-mist); border-color:var(--orchid); }
+  .sig-btn.danger{ color:#C25454; border-color:#F0D6D6; }
+  .sig-btn.danger:hover{ background:#FCEDED; }
+  .sig-upload-input{ display:none; }
+  .sig-status{
+    font-size:11px; color:var(--ink-soft); margin-left:auto;
+    display:flex; align-items:center; gap:5px;
+  }
+  .sig-status .sig-dot{ width:6px; height:6px; border-radius:50%; background:#D9C9EA; }
+  .sig-status.signed .sig-dot{ background:var(--ok-green); }
+
+  /* ---------- Footer toolbar ---------- */
+  .toolbar{
+    position:sticky;
+    bottom:0;
+    background:#fff;
+    border-top:1.5px solid var(--lavender-line);
+    padding:16px 34px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .status{
+    font-size:12.5px; color:var(--ink-soft); display:flex; align-items:center; gap:6px;
+  }
+  .status .dot{
+    width:8px; height:8px; border-radius:50%; background:#D9C9EA;
+  }
+  .status.saved .dot{ background:var(--ok-green); }
+  .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  button.primary, button.secondary{
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:700;
+    padding:11px 20px;
+    border-radius:8px;
+    cursor:pointer;
+    border:none;
+  }
+  button.primary{
+    background:linear-gradient(120deg,var(--clear-purple), var(--deep-plum));
+    color:#fff;
+    box-shadow:0 3px 10px rgba(108,63,160,0.35);
+  }
+  button.primary:hover{ filter:brightness(1.06); }
+  button.secondary{
+    background:#fff;
+    color:var(--clear-purple);
+    border:1.5px solid var(--clear-purple);
+  }
+  button.secondary:hover{ background:var(--lavender-mist); }
+
+  .footer-tag{
+    text-align:center;
+    padding:14px;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    font-style:italic;
+    background:var(--lavender-mist);
+  }
+
+  /* Toast */
+  #toast{
+    position:fixed; left:50%; bottom:28px; transform:translate(-50%, 20px);
+    background:var(--deep-plum); color:#fff; padding:11px 22px; border-radius:30px;
+    font-size:13px; font-weight:600; box-shadow:0 6px 20px rgba(0,0,0,0.25);
+    opacity:0; pointer-events:none; transition:all .25s; z-index:999;
+  }
+  #toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  @media (max-width:700px){
+    .grid, .sign-grid{ grid-template-columns:1fr; }
+    .letterhead{ padding:22px 20px; }
+    form{ padding:22px 18px; }
+    .toolbar{ padding:14px 18px; flex-direction:column; align-items:stretch; }
+    .actions{ justify-content:stretch; }
+    .actions button{ flex:1; }
+    .contact-block{ text-align:left; }
+  }
+
+  /* Print styles */
+  @media print{
+    body{ background:#fff; padding:0; }
+    .sheet{ box-shadow:none; border:none; border-radius:0; max-width:100%; }
+    .toolbar, .footer-tag, .row-del, .add-row-btn, .table-actions .add-row-btn{ display:none !important; }
+    .sig-controls, .sig-status{ display:none !important; }
+    .sig-pad-wrap{ border:none !important; }
+    .sig-placeholder{ display:none !important; }
+    input, textarea, select{ border:none !important; background:transparent !important; box-shadow:none !important; padding:2px 4px !important; }
+    .tag{ border:1px solid #ccc !important; }
+    textarea{ min-height:auto; }
+    .letterhead{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    thead th{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <!-- Letterhead -->
+  <div class="letterhead">
+    <div class="letterhead-top">
+      <div class="brand">
+        <div class="brand-mark">🦋</div>
+        <div>
+          <h1>ClearMind</h1>
+          <span>Psychological Services</span>
+        </div>
+      </div>
+      <div class="contact-block">
+        Blk 1 Lot 7 Palmsville Subdivision<br>
+        Brgy. Banlic, Cabuyao City, Laguna 4025<br>
+        clearmind.psychservices@gmail.com<br>
+        (+639) 92-916-4078
+      </div>
+    </div>
+    <div class="doc-title">
+      <h2>Daily Activity Report</h2>
+      <div class="conf">Highly Confidential</div>
+    </div>
+    <div class="form-code">CMPS:SE-FO-07 rev.0 03032026</div>
+  </div>
+
+  <form id="reportForm" autocomplete="off">
+
+    <!-- Activity details -->
+    <div class="section-label">📋 Activity Details</div>
+    <div class="grid">
+      <div class="field">
+        <label for="sessionNumber">Session Number <span class="req">*</span></label>
+        <input type="text" id="sessionNumber" placeholder="e.g. SE-2026-014" required>
+      </div>
+      <div class="field">
+        <label for="activityDate">Date of the Activity <span class="req">*</span></label>
+        <input type="date" id="activityDate" required>
+      </div>
+      <div class="field full">
+        <label for="studentNames">Name of the Student/s <span class="req">*</span>
+          <span class="hint">Separate multiple names with a comma</span>
+        </label>
+        <input type="text" id="studentNames" placeholder="e.g. Juan Dela Cruz, Maria Santos" required>
+      </div>
+      <div class="field full">
+        <label for="activityTitle">Title of the Activity/ies <span class="req">*</span></label>
+        <input type="text" id="activityTitle" placeholder="e.g. Emotion Regulation Card Sort" required>
+      </div>
+      <div class="field full">
+        <label>Targeted Domain/s <span class="hint">Click to select, or add your own</span></label>
+        <div class="domain-tags" id="domainTags"></div>
+        <div class="tag-custom-wrap">
+          <input type="text" id="customDomain" placeholder="Add another domain…">
+          <button type="button" class="btn-mini" id="addDomainBtn">+ Add</button>
+        </div>
+        <input type="hidden" id="targetedDomains">
+      </div>
+    </div>
+
+    <!-- Objectives & Procedure -->
+    <div class="section-label">🎯 Objectives & Procedure</div>
+    <div class="grid">
+      <div class="field full">
+        <label for="objectives">Objectives <span class="req">*</span></label>
+        <textarea id="objectives" maxlength="800" placeholder="What this activity aims to achieve for the student/s…" required></textarea>
+        <div class="counter"><span id="objCount">0</span>/800</div>
+      </div>
+      <div class="field full">
+        <label for="procedure">Activity Procedure <span class="req">*</span></label>
+        <textarea id="procedure" maxlength="1200" placeholder="Step-by-step description of how the activity was conducted…" required></textarea>
+        <div class="counter"><span id="procCount">0</span>/1200</div>
+      </div>
+    </div>
+
+    <!-- Observations -->
+    <div class="section-label">👁 Responses / Observed Behavior</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-no">No.</th>
+            <th>Name of Student</th>
+            <th>Responses / Observed Behavior</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody id="obsBody"></tbody>
+      </table>
+    </div>
+    <div class="table-actions">
+      <button type="button" class="add-row-btn" id="addRowBtn">+ Add Student Row</button>
+      <span class="row-count" id="rowCount">1 row</span>
+    </div>
+
+    <!-- Signatories -->
+    <div class="section-label">🖋 Signatories</div>
+    <div class="sign-grid">
+      <div class="sign-card">
+        <h4>Prepared by</h4>
+        <div class="field name-row">
+          <label for="preparedName">Full Name</label>
+          <input type="text" id="preparedName" value="Marwin A. Gilbero Jr., RPm, CHRA">
+        </div>
+        <div class="field">
+          <label for="preparedRole">Position</label>
+          <input type="text" id="preparedRole" value="Clinic Intern">
+        </div>
+        <div class="sig-block" data-sig-id="prepared"></div>
+      </div>
+
+      <div class="sign-card">
+        <h4>Reviewed by</h4>
+        <div class="field name-row">
+          <label for="reviewedName">Full Name</label>
+          <input type="text" id="reviewedName" value="Marwin A. Gilbero Jr., RPm, CHRA">
+        </div>
+        <div class="field name-row">
+          <label for="reviewedRole">Position</label>
+          <input type="text" id="reviewedRole" value="Special Education Program Coordinator">
+        </div>
+        <div class="field">
+          <label for="reviewedLicense">License Number</label>
+          <input type="text" id="reviewedLicense" value="0039850">
+        </div>
+        <div class="sig-block" data-sig-id="reviewed"></div>
+      </div>
+
+      <div class="sign-card">
+        <h4>Noted by — Learning Head</h4>
+        <div class="field name-row">
+          <label for="learningHeadName">Full Name</label>
+          <input type="text" id="learningHeadName" value="Leera Mae C. Guevarra, RPm, CHRA">
+        </div>
+        <div class="field">
+          <label for="learningHeadLicense">License Number</label>
+          <input type="text" id="learningHeadLicense" value="0039855">
+        </div>
+        <div class="sig-block" data-sig-id="learningHead"></div>
+      </div>
+
+      <div class="sign-card">
+        <h4>Noted by — Chief Psychologist</h4>
+        <div class="field name-row">
+          <label for="chiefName">Full Name</label>
+          <input type="text" id="chiefName" value="Dr. Jinky C. Malabanan, RPm, RPsy, CHRA">
+        </div>
+        <div class="field">
+          <label for="chiefLicense">License Number</label>
+          <input type="text" id="chiefLicense" value="001475/ 002278">
+        </div>
+        <div class="sig-block" data-sig-id="chief"></div>
+      </div>
+    </div>
+
+  </form>
+
+  <div class="toolbar">
+    <div class="status" id="statusIndicator"><span class="dot"></span> Draft not saved</div>
+    <div class="actions">
+      <button type="button" class="secondary" id="clearBtn">Clear Form</button>
+      <button type="button" class="secondary" id="printBtn">🖨 Print / Save PDF</button>
+      <button type="button" class="primary" id="submitBtn">✓ Finalize Report</button>
+    </div>
+  </div>
+
+  <div class="footer-tag">Clarity of Mind, Journey to Wellness.</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  const DOMAIN_OPTIONS = ["Cognitive","Emotional Regulation","Social Skills","Communication","Attention & Focus","Self-Help / Adaptive","Sensory","Behavioral","Academic Readiness"];
+  const activeDomains = new Set();
+  const domainTagsEl = document.getElementById('domainTags');
+  const targetedDomainsInput = document.getElementById('targetedDomains');
+
+  function renderTags(){
+    domainTagsEl.innerHTML = '';
+    DOMAIN_OPTIONS.forEach(d=>{
+      const el = document.createElement('div');
+      el.className = 'tag' + (activeDomains.has(d) ? ' active' : '');
+      el.textContent = d;
+      el.addEventListener('click', ()=>{
+        activeDomains.has(d) ? activeDomains.delete(d) : activeDomains.add(d);
+        renderTags();
+        syncDomains();
+      });
+      domainTagsEl.appendChild(el);
+    });
+  }
+  function syncDomains(){
+    targetedDomainsInput.value = Array.from(activeDomains).join(', ');
+    markUnsaved();
+  }
+  document.getElementById('addDomainBtn').addEventListener('click', ()=>{
+    const input = document.getElementById('customDomain');
+    const val = input.value.trim();
+    if(!val) return;
+    if(!DOMAIN_OPTIONS.includes(val)) DOMAIN_OPTIONS.push(val);
+    activeDomains.add(val);
+    input.value = '';
+    renderTags();
+    syncDomains();
+  });
+  renderTags();
+
+  // ---------- Dynamic observation rows ----------
+  const obsBody = document.getElementById('obsBody');
+  const rowCountEl = document.getElementById('rowCount');
+  let rowCounter = 0;
+
+  function renumberRows(){
+    const rows = obsBody.querySelectorAll('tr');
+    rows.forEach((row, idx)=>{
+      row.querySelector('.col-no').textContent = idx + 1;
+    });
+    rowCountEl.textContent = rows.length + (rows.length === 1 ? ' row' : ' rows');
+    // disable delete button if only one row remains
+    rows.forEach(row=>{
+      const delBtn = row.querySelector('.row-del');
+      delBtn.style.visibility = rows.length > 1 ? 'visible' : 'hidden';
+    });
+  }
+
+  function addRow(name, response){
+    rowCounter++;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="col-no">${rowCounter}</td>
+      <td><input type="text" class="obs-name" placeholder="Student name" value="${name||''}"></td>
+      <td><textarea class="obs-response" placeholder="Describe the response or observed behavior…">${response||''}</textarea></td>
+      <td><button type="button" class="row-del" title="Remove row">✕</button></td>
+    `;
+    tr.querySelector('.row-del').addEventListener('click', ()=>{
+      tr.remove();
+      renumberRows();
+      markUnsaved();
+    });
+    tr.querySelectorAll('input, textarea').forEach(el=>el.addEventListener('input', markUnsaved));
+    obsBody.appendChild(tr);
+    renumberRows();
+  }
+  document.getElementById('addRowBtn').addEventListener('click', ()=>{ addRow(); markUnsaved(); });
+  addRow(); // start with one row
+
+  // ---------- Character counters ----------
+  function bindCounter(fieldId, counterId){
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(counterId);
+    field.addEventListener('input', ()=>{ counter.textContent = field.value.length; markUnsaved(); });
+  }
+  bindCounter('objectives','objCount');
+  bindCounter('procedure','procCount');
+
+  // ---------- Status / unsaved indicator ----------
+  const statusEl = document.getElementById('statusIndicator');
+  function markUnsaved(){
+    statusEl.classList.remove('saved');
+    statusEl.innerHTML = '<span class="dot"></span> Unsaved changes';
+  }
+  document.querySelectorAll('#reportForm input, #reportForm textarea').forEach(el=>{
+    el.addEventListener('input', markUnsaved);
+  });
+
+  // ---------- Toast ----------
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2400);
+  }
+
+  // ---------- Set today's date by default ----------
+  const dateInput = document.getElementById('activityDate');
+  const today = new Date();
+  dateInput.value = today.toISOString().slice(0,10);
+
+  // ---------- Validate & Finalize ----------
+  document.getElementById('submitBtn').addEventListener('click', ()=>{
+    const form = document.getElementById('reportForm');
+    if(!form.checkValidity()){
+      form.reportValidity();
+      showToast('Please complete all required fields.');
+      return;
+    }
+    const unsigned = signaturePads.filter(p => !p.isSigned()).length;
+    statusEl.classList.add('saved');
+    statusEl.innerHTML = '<span class="dot"></span> Report finalized';
+    if(unsigned > 0){
+      showToast(`Finalized — ${unsigned} signature${unsigned>1?'s':''} still missing.`);
+    } else {
+      showToast('Report finalized with all signatures. Ready to print or save as PDF.');
+    }
+  });
+
+  // ---------- Print ----------
+  document.getElementById('printBtn').addEventListener('click', ()=>{
+    window.print();
+  });
+
+  // ---------- Clear form ----------
+  document.getElementById('clearBtn').addEventListener('click', ()=>{
+    if(!confirm('Clear all entered data? This cannot be undone.')) return;
+    document.getElementById('reportForm').reset();
+    obsBody.innerHTML = '';
+    rowCounter = 0;
+    addRow();
+    activeDomains.clear();
+    renderTags();
+    syncDomains();
+    document.getElementById('objCount').textContent = 0;
+    document.getElementById('procCount').textContent = 0;
+    dateInput.value = today.toISOString().slice(0,10);
+    statusEl.classList.remove('saved');
+    statusEl.innerHTML = '<span class="dot"></span> Draft not saved';
+    signaturePads.forEach(pad => pad.clear());
+    showToast('Form cleared.');
+  });
+
+  // ---------- Signature pads (draw or upload) ----------
+  const signaturePads = [];
+
+  function buildSignaturePad(container){
+    const label = container.dataset.sigId;
+    container.innerHTML = `
+      <label>Signature</label>
+      <div class="sig-pad-wrap">
+        <div class="sig-baseline"></div>
+        <span class="sig-placeholder">Draw here or upload a signature image</span>
+        <canvas class="sig-pad"></canvas>
+      </div>
+      <div class="sig-controls">
+        <button type="button" class="sig-btn upload-trigger">⬆ Upload image</button>
+        <input type="file" accept="image/*" class="sig-upload-input">
+        <button type="button" class="sig-btn danger clear-sig">✕ Clear</button>
+        <span class="sig-status"><span class="sig-dot"></span><span class="sig-status-text">Not signed</span></span>
+      </div>
+    `;
+
+    const wrap = container.querySelector('.sig-pad-wrap');
+    const canvas = container.querySelector('.sig-pad');
+    const ctx = canvas.getContext('2d');
+    const uploadBtn = container.querySelector('.upload-trigger');
+    const uploadInput = container.querySelector('.sig-upload-input');
+    const clearBtn = container.querySelector('.clear-sig');
+    const statusEl = container.querySelector('.sig-status');
+    const statusText = container.querySelector('.sig-status-text');
+
+    let drawing = false;
+    let hasContent = false;
+    let last = null;
+
+    function resizeCanvas(){
+      // preserve existing drawing across resize (e.g. orientation change)
+      const prevData = hasContent ? canvas.toDataURL() : null;
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = rect.width * ratio;
+      canvas.height = rect.height * ratio;
+      ctx.setTransform(ratio,0,0,ratio,0,0);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#2C2233';
+      if(prevData){
+        const img = new Image();
+        img.onload = ()=> ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        img.src = prevData;
+      }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    // slight delay so layout settles before first sizing
+    setTimeout(resizeCanvas, 0);
+
+    function markSigned(signed){
+      hasContent = signed;
+      wrap.classList.toggle('has-sig', signed);
+      statusEl.classList.toggle('signed', signed);
+      statusText.textContent = signed ? 'Signed' : 'Not signed';
+      markUnsaved();
+    }
+
+    function pointerPos(e){
+      const rect = canvas.getBoundingClientRect();
+      const point = e.touches ? e.touches[0] : e;
+      return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+    }
+    function start(e){
+      e.preventDefault();
+      drawing = true;
+      last = pointerPos(e);
+    }
+    function move(e){
+      if(!drawing) return;
+      e.preventDefault();
+      const p = pointerPos(e);
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      last = p;
+      if(!hasContent) markSigned(true);
+    }
+    function end(){ drawing = false; }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, {passive:false});
+    canvas.addEventListener('touchmove', move, {passive:false});
+    canvas.addEventListener('touchend', end);
+
+    uploadBtn.addEventListener('click', ()=> uploadInput.click());
+    uploadInput.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      if(!file.type.startsWith('image/')){
+        showToast('Please choose an image file.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        const img = new Image();
+        img.onload = ()=>{
+          const rect = canvas.getBoundingClientRect();
+          ctx.clearRect(0,0,rect.width,rect.height);
+          // fit uploaded signature within pad, centered, preserving aspect ratio
+          const scale = Math.min(rect.width / img.width, (rect.height - 10) / img.height, 1) * 0.9;
+          const w = img.width * scale, h = img.height * scale;
+          ctx.drawImage(img, (rect.width - w)/2, (rect.height - h)/2, w, h);
+          markSigned(true);
+          showToast('Signature image uploaded.');
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0,0,rect.width,rect.height);
+      markSigned(false);
+      uploadInput.value = '';
+    });
+
+    signaturePads.push({
+      label,
+      clear: ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); markSigned(false); uploadInput.value=''; },
+      isSigned: ()=> hasContent,
+      dataUrl: ()=> hasContent ? canvas.toDataURL('image/png') : null
+    });
+  }
+
+  document.querySelectorAll('.sig-block').forEach(buildSignaturePad);
+
+})();
+</script>
+
+</body>
+</html>

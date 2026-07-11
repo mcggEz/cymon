@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Parent/Caregiver Consent and Waiver Form — ClearMind Psychological Services</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#4A2E6B; --plum-deep:#38224F; --lavender-bg:#F5F1FA; --lavender-panel:#EFE7F8;
+    --mauve:#8B6BAE; --ink:#2B2733; --paper:#FFFFFF; --line:#E4DCEF;
+    --ok-bg:#DCEFE1; --ok-txt:#2E7D4F;
+    --shadow: 0 1px 2px rgba(56,34,79,0.06), 0 8px 24px rgba(56,34,79,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--lavender-bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14.5px;line-height:1.6;}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 20px 90px;}
+
+  header.brand{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .brand-left{display:flex;align-items:center;gap:12px;}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--plum),var(--mauve));display:flex;align-items:center;justify-content:center;color:white;font-family:'Fraunces',serif;font-weight:600;font-size:17px;flex-shrink:0;}
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:19px;color:var(--plum-deep);}
+  .brand-tag{font-size:11.5px;color:var(--mauve);font-style:italic;margin-top:1px;}
+  .brand-right{text-align:right;font-size:11.5px;color:#6b6478;line-height:1.6;}
+  .form-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mauve);letter-spacing:0.02em;}
+
+  h1.title{font-family:'Fraunces',serif;font-weight:600;font-size:23px;color:var(--plum-deep);margin:4px 0 2px;text-align:center;}
+  .subtitle{color:#6b6478;font-size:13px;margin-bottom:22px;text-align:center;}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:15.5px;color:var(--plum-deep);margin:0 0 14px;display:flex;align-items:center;gap:8px;}
+  .card h2 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mauve);background:var(--lavender-bg);padding:3px 8px;border-radius:20px;letter-spacing:.04em;}
+
+  /* Progress */
+  .progress-bar-outer{background:var(--lavender-panel);border-radius:20px;height:8px;overflow:hidden;margin:10px 0 4px;}
+  .progress-bar-inner{background:var(--plum);height:100%;width:0%;transition:width .2s;}
+  .progress-label{font-size:12px;color:#6b6478;display:flex;justify-content:space-between;}
+  .all-done-banner{
+    display:none;margin-top:12px;background:var(--ok-bg);color:var(--ok-txt);font-weight:600;
+    font-size:12.5px;padding:9px 14px;border-radius:9px;text-align:center;
+  }
+  .all-done-banner.show{display:block;}
+
+  /* Clause section */
+  .clause{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:18px;}
+  .clause:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .clause-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;}
+  .clause-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mauve);background:var(--lavender-bg);padding:2px 8px;border-radius:20px;flex-shrink:0;}
+  .clause-title{font-family:'Fraunces',serif;font-weight:600;font-size:14.5px;color:var(--plum-deep);}
+  .clause-body{font-size:13.5px;color:#4a4553;margin-bottom:12px;}
+  .clause-body ul{margin:6px 0 0 18px;padding:0;}
+  .clause-body li{margin-bottom:4px;}
+
+  .ack-check{
+    display:flex;align-items:flex-start;gap:10px;background:var(--lavender-bg);border-radius:9px;
+    padding:10px 12px;cursor:pointer;
+  }
+  .ack-check input{width:17px;height:17px;accent-color:var(--plum);margin-top:2px;flex-shrink:0;}
+  .ack-check span{font-size:12.5px;font-weight:600;color:var(--plum-deep);}
+
+  .subgroup-title{font-size:13px;font-weight:700;color:var(--ink);margin:4px 0 4px;}
+
+  /* Acknowledgement form fields */
+  .fill-line{display:inline-block;border-bottom:1.5px solid var(--mauve);min-width:220px;padding:0 4px;}
+  input.inline-fill{
+    border:none;border-bottom:1.5px solid var(--mauve);background:transparent;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);padding:2px 4px;
+    width:240px;
+  }
+  input.inline-fill:focus{outline:none;background:var(--lavender-bg);}
+
+  .grid{display:grid;gap:14px;}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:640px){.grid.cols-2{grid-template-columns:1fr;}}
+  label.field-label{display:block;font-size:11.5px;font-weight:600;color:var(--plum-deep);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+  input[type=text],input[type=date],input[type=tel]{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:#FCFAFF;
+  }
+  input:focus{outline:none;border-color:var(--mauve);box-shadow:0 0 0 3px rgba(139,107,174,0.15);}
+
+  .sig-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:#FCFAFF;margin-top:10px;}
+  .sig-role{font-family:'Fraunces',serif;font-weight:600;color:var(--plum-deep);font-size:14px;margin-bottom:10px;}
+  canvas.pad{width:100%;height:120px;background:white;border:1.5px dashed var(--line);border-radius:9px;cursor:crosshair;touch-action:none;}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .clear-btn{background:none;border:none;color:var(--mauve);font-size:12px;cursor:pointer;font-weight:600;padding:4px 0;}
+  .clear-btn:hover{text-decoration:underline;}
+
+  .action-bar{position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:14px 20px;display:flex;justify-content:flex-end;gap:10px;box-shadow:0 -6px 18px rgba(56,34,79,0.06);margin-top:24px;border-radius:14px 14px 0 0;}
+  .btn{padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:white;color:var(--plum-deep);}
+  .btn.primary{background:var(--plum);color:white;border-color:var(--plum);}
+  .btn.primary:hover{background:var(--plum-deep);}
+  .btn:hover{background:var(--lavender-bg);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  @media print{
+    body{background:white;}
+    .action-bar, .clear-btn{display:none !important;}
+    .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="brand-left">
+      <div class="logo">CM</div>
+      <div>
+        <div class="brand-name">ClearMind Psychological Services</div>
+        <div class="brand-tag">Clarity of Mind, Journey to Wellness.</div>
+      </div>
+    </div>
+    <div class="brand-right">
+      Blk 1 Lot 7 Palmsville Subdivision<br>
+      Brgy. Banlic, Cabuyao City, Laguna 4025<br>
+      clearmind.psychservices@gmail.com · (+639)92-916-4078<br>
+      <span class="form-code">CMPS:SE-FO-02 rev.0 02192026</span>
+    </div>
+  </header>
+
+  <h1 class="title">Special Education (SPED) Program</h1>
+  <div class="subtitle">Parent/Caregiver Consent and Waiver Form</div>
+
+  <!-- Progress -->
+  <div class="card">
+    <h2><span class="eyebrow">Progress</span> Acknowledgment status</h2>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-label"><span id="progressText">0 of 0 items acknowledged</span><span id="progressPct">0%</span></div>
+    <div class="all-done-banner" id="allDoneBanner">✓ All sections have been read and acknowledged</div>
+  </div>
+
+  <!-- Clauses -->
+  <div class="card" id="clauseCard"></div>
+
+  <!-- Acknowledgement form -->
+  <div class="card">
+    <h2><span class="eyebrow">Final step</span> Parent/Caregiver Acknowledgement Form</h2>
+    <p class="clause-body">
+      I, <input type="text" class="inline-fill" id="parentName" placeholder="Parent/Legal Guardian full name">, the parent/legal guardian of
+      <input type="text" class="inline-fill" id="childName" placeholder="Child's full name">, hereby voluntarily enroll my child in the Special Education (SPED) Program of <strong>CLEARMIND PSYCHOLOGICAL SERVICES</strong>.
+    </p>
+    <p class="clause-body">By signing below, I affirm that I have read and understood the contents of this consent and waiver form and voluntarily agree to its terms.</p>
+
+    <div class="grid cols-2" style="margin-top:18px;">
+      <div>
+        <div class="sig-role">Parent/Guardian</div>
+        <div class="grid" style="margin-bottom:10px;">
+          <div><label class="field-label">Contact Number</label><input type="tel" id="parentContact" placeholder="09XX XXX XXXX"></div>
+        </div>
+        <label class="field-label">Signature / Date</label>
+        <div class="sig-card">
+          <canvas class="pad" data-pad="parent"></canvas>
+          <div class="sig-actions">
+            <button class="clear-btn" data-clear="parent">Clear signature</button>
+            <input type="date" id="date-parent" style="width:150px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sig-role">CMPS Representative</div>
+        <div class="grid" style="margin-bottom:10px;">
+          <div><label class="field-label">Representative Name</label><input type="text" id="repName"></div>
+          <div><label class="field-label">Contact Number</label><input type="tel" id="repContact" placeholder="09XX XXX XXXX"></div>
+        </div>
+        <label class="field-label">Signature / Date</label>
+        <div class="sig-card">
+          <canvas class="pad" data-pad="rep"></canvas>
+          <div class="sig-actions">
+            <button class="clear-btn" data-clear="rep">Clear signature</button>
+            <input type="date" id="date-rep" style="width:150px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn" onclick="resetForm()">Reset form</button>
+    <button class="btn primary" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+</div>
+
+<script>
+const CLAUSES = [
+  { title: 'Nature and Purpose of the Program', body: `I understand that the Special Education (SPED) Program of ClearMind Psychological Services (CMPS) provides specialized educational, behavioral, and play-based interventions designed to address the individual needs of my child. Services may include assessment, individualized instruction, behavioral support, structured play activities, and related developmental interventions administered by the clinic.` },
+  { title: 'A. Student Attendance and Schedule of Sessions', body: `I understand that the number of sessions will be conducted based on the enrolled program of my child. In the event of absence, the missed session will be counted and deducted from the total number of sessions, regardless of the reason, unless officially excused by the administration. Unused sessions are non-transferable, non-convertible to cash, and non-refundable.<br><br>Furthermore, I understand that CMPS shall determine and assign my child's schedule based on program considerations and student needs. I acknowledge that the schedule may be modified by the clinic depending on my child's performance, progress, or behavioral adjustment during the course of the program.` },
+  { title: 'B. Parental Disclosure of Information', body: `I affirm that I have fully disclosed all relevant medical, psychological, developmental, and behavioral information about my child. I agree to update CMPS regarding any significant changes in my child's condition that may affect participation in the program.` },
+  { title: 'C. Confidentiality and Data Privacy', body: `I consent to the collection, use, storage, and processing of my child's personal, behavioral, and medical information for purposes related to assessment, intervention planning, monitoring, and documentation. I understand that all information will be treated with confidentiality and will be disclosed only to authorized personnel or as required by law.` },
+  { title: 'D. Student Safety Monitoring', body: `For safety and security purposes, I acknowledge that CCTV cameras are installed in designated areas, including the play area. I understand that CCTV recordings are strictly and solely for monitoring safety, security, and incident review purposes and will be accessed only by authorized personnel in accordance with school policies and applicable laws.` },
+  { title: 'E. Health, Safety, and Emergency Medical Consent', body: `I understand that reasonable precautions will be taken to ensure my child's safety during sessions and school activities. In case of emergency and I cannot be reached immediately, I authorize the clinic and its representatives to secure appropriate medical treatment for my child. I agree to assume responsibility for any medical expenses incurred.` },
+  { title: 'F. Participation and Behavioral Interventions', body: `I understand that my child will be expected to follow clinic rules and routines. Appropriate behavioral management strategies and interventions may be implemented when necessary to ensure a safe and structured learning environment.` },
+  { title: 'G. Liability Waiver', body: `I acknowledge that participation in educational and play-based activities involves inherent risks despite reasonable care and supervision. I hereby release and hold free from liability the clinic, its administrators, staff, and representatives from claims arising from accidents, injuries, or incidents that may occur in the ordinary course of program participation, except in cases of gross negligence or willful misconduct.` },
+  { title: 'H. Parental Cooperation', body: `I agree to cooperate with the CMPS by attending scheduled meetings, participating in case conferences when required, and supporting recommended strategies at home to promote my child's development and progress based on his/her Individualized Educational Plan (IEP). I further acknowledge my responsibility to ensure that my child is brought to the clinic on time for scheduled sessions and is fetched promptly after each session by myself or an authorized representative. I understand that CMPS is not responsible for the student outside of official session hours and designated supervision periods.` },
+  { group: "Cymon's House Rules", title: 'Attendance and Punctuality', body: `Students are expected to attend classes regularly and arrive on time. Absences should be communicated by the parent/guardian in advance or a day before the scheduled class.` },
+  { title: 'Health and Safety', body: `Students who are ill should remain at home. Parents must inform the clinic of any medical conditions, allergies, or medication requirements.` },
+  { title: 'Respect and Inclusion', body: `Respect toward staff, peers, and clinic property is required at all times. Bullying, aggression, or discrimination will not be tolerated.` },
+  { title: 'Supervision and Dismissal', body: `Students must be picked up on time by authorized individuals only. Proper identification may be required.` },
+  { title: 'Personal Belongings', body: `CMPS is not responsible for lost or damaged personal items unless negligence is proven.` },
+  { title: 'School Property Responsibility', body: `Any damage, destruction, or loss of clinic property caused by the student, whether intentional or due to negligence, shall be financially charged to the parent/guardian for repair or replacement.` },
+  { title: 'Policy Amendments', body: `CMPS reserves the right to modify policies when necessary for the safety and well-being of students.` },
+];
+
+const clauseCard = document.getElementById('clauseCard');
+let html = `<h2><span class="eyebrow">Terms</span> Read each section and confirm</h2>`;
+CLAUSES.forEach((c, i) => {
+  const itemNum = i + 1;
+  if(c.group){
+    html += `<div class="subgroup-title" style="font-family:'Fraunces',serif;font-size:16px;color:var(--plum-deep);margin:22px 0 12px;padding-top:14px;border-top:2px solid var(--lavender-panel);">${c.group}</div>`;
+  }
+  html += `
+    <div class="clause">
+      <div class="clause-head">
+        <span class="clause-num">Item ${itemNum}</span>
+        <span class="clause-title">${c.title}</span>
+      </div>
+      <div class="clause-body">${c.body}</div>
+      <label class="ack-check">
+        <input type="checkbox" data-ack="${itemNum}">
+        <span>I have read, understood, and agree to the terms as cited in item ${itemNum}.</span>
+      </label>
+    </div>`;
+});
+clauseCard.innerHTML = html;
+
+const TOTAL = CLAUSES.length;
+function updateProgress(){
+  let checked = 0;
+  document.querySelectorAll('[data-ack]').forEach(el => { if(el.checked) checked++; });
+  const pct = Math.round((checked/TOTAL)*100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${checked} of ${TOTAL} items acknowledged`;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('allDoneBanner').classList.toggle('show', checked === TOTAL);
+}
+clauseCard.addEventListener('change', updateProgress);
+updateProgress();
+
+/* Signature pads */
+function initPad(canvas){
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    ctx.strokeStyle = '#2B2733'; ctx.lineWidth = 2; ctx.lineCap='round'; ctx.lineJoin='round';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  let drawing=false, last=null;
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    return {x:cx,y:cy};
+  }
+  function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
+  function move(e){
+    if(!drawing) return;
+    const p=pos(e); const ctx=canvas.getContext('2d');
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p; e.preventDefault();
+  }
+  function end(){ drawing=false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+}
+document.querySelectorAll('canvas.pad').forEach(initPad);
+document.querySelectorAll('[data-clear]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.getAttribute('data-clear');
+    const canvas = document.querySelector(`canvas[data-pad="${key}"]`);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+});
+
+function resetForm(){
+  if(!confirm('Clear all acknowledgments, fields, and signatures on this form?')) return;
+  document.querySelectorAll('input[type=text], input[type=date], input[type=tel]').forEach(el=>el.value='');
+  document.querySelectorAll('input[type=checkbox]').forEach(el=>el.checked=false);
+  document.querySelectorAll('canvas.pad').forEach(canvas=>{
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+  updateProgress();
+}
+</script>
+</body>
+</html>
