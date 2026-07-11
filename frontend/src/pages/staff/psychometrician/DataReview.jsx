@@ -36,7 +36,7 @@ function ChecklistModal({ row, onClose, onProcess, processing }) {
             </button>
             {done ? (
               <span className="rounded-md bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-700">
-                Processed ✓
+                Processed
               </span>
             ) : (
               <button
@@ -44,7 +44,7 @@ function ChecklistModal({ row, onClose, onProcess, processing }) {
                 disabled={processing}
                 className="rounded-md bg-purple-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
               >
-                {processing ? 'Processing…' : 'Mark as Processed ✓'}
+                {processing ? 'Processing…' : 'Mark as Processed'}
               </button>
             )}
           </div>
@@ -76,8 +76,8 @@ function ChecklistModal({ row, onClose, onProcess, processing }) {
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               System Flag
             </div>
-            <div className="flex items-center gap-1 text-sm font-semibold text-rose-600">
-              <span>⚑</span> 1 Critical Observation
+            <div className="text-sm font-semibold text-rose-600">
+              1 Critical Observation
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ function ChecklistModal({ row, onClose, onProcess, processing }) {
           <div className="mt-2 divide-y divide-purple-100">
             <div className="flex items-center justify-between rounded-md bg-rose-50 px-2 py-2 text-sm">
               <span className="text-rose-700">
-                1. Experiences intense meltdowns lasting more than 10 minutes. <span>⚑</span>
+                1. Experiences intense meltdowns lasting more than 10 minutes.
               </span>
               <span className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-medium text-white">Yes</span>
             </div>
@@ -109,12 +109,9 @@ function ChecklistModal({ row, onClose, onProcess, processing }) {
   )
 }
 
-function StatCard({ value, label, icon, loading }) {
+function StatCard({ value, label, loading }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-purple-100/70 p-5">
-      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-white text-purple-700">
-        {icon}
-      </div>
+    <div className="rounded-2xl bg-purple-100/70 p-5">
       <div>
         {loading ? (
           <Skeleton className="h-8 w-12" />
@@ -170,10 +167,7 @@ function DataReview() {
 
   return (
     <>
-      <StaffHeader
-        title="Caregiver Data Review"
-        subtitle="Behavioral Observation Checklists"
-      />
+      <StaffHeader title="Caregiver Data Review" />
       <div className="flex-1 overflow-y-auto p-6">
         <h1 className="text-2xl font-bold text-purple-800">Submitted Checklists</h1>
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
@@ -181,9 +175,9 @@ function DataReview() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard value={summary?.newSubmissions ?? '—'} label="New Submissions" icon="✉" loading={loading} />
-          <StatCard value={summary?.flagged ?? '—'} label="Flagged Priority" icon="⚑" loading={loading} />
-          <StatCard value={summary?.approved ?? '—'} label="Approved by RPsy" icon="✓" loading={loading} />
+          <StatCard value={summary?.newSubmissions ?? '—'} label="New Submissions" loading={loading} />
+          <StatCard value={summary?.flagged ?? '—'} label="Flagged Priority" loading={loading} />
+          <StatCard value={summary?.approved ?? '—'} label="Approved by RPsy" loading={loading} />
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -247,9 +241,8 @@ function DataReview() {
                   return (
                   <tr key={r.id}>
                     <td className="py-3">
-                      <div className="flex items-center gap-2 font-medium text-purple-800">
+                      <div className="font-medium text-purple-800">
                         {r.name}
-                        {r.flag ? <span className="text-rose-500">⚑</span> : null}
                       </div>
                       <div className="text-xs text-slate-500">ID: {r.sid}</div>
                     </td>

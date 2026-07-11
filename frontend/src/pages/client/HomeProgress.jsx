@@ -122,7 +122,7 @@ function HomeProgress() {
 
   return (
     <>
-      <PageHeader title={patient ? `Good Day, ${patient.first_name}!` : 'Welcome'} subtitle="Welcome to CyMon" />
+      <PageHeader title={patient ? `Good Day, ${patient.first_name}!` : 'Welcome'} />
       <div className="flex-1 overflow-y-auto p-6">
         <SurveyPrompt />
         {stats?.assignedAssessments ? (
@@ -130,7 +130,7 @@ function HomeProgress() {
             {stats.assignedAssessments} new assessment{stats.assignedAssessments > 1 ? 's' : ''}
             {clinical?.clinician_name ? ` assigned by ${clinical.clinician_name}` : ''} waiting.{' '}
             <a href="/client/assessments" className="font-semibold underline">
-              Complete them now →
+              Complete them now
             </a>
           </div>
         ) : null}

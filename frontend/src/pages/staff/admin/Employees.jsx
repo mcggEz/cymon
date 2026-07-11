@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Input from '../../../components/ui/Input'
-import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
 import Modal from '../../../components/ui/Modal'
@@ -51,8 +50,7 @@ const empty = {
   password: '',
   confirm: '',
   display_name: '',
-  role: '',
-  extra_roles: [],
+  roles: [],
   phone: '',
   employee_id: '',
   position: '',
@@ -148,7 +146,7 @@ function EmployeeModal({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
             <div className="text-[10px] uppercase tracking-wider text-slate-500">Role(s)</div>
             {!editingRoles ? (
               <button onClick={startEdit} className="text-xs font-semibold text-purple-700 hover:text-purple-900">
-                ✎ Edit Roles
+                Edit Roles
               </button>
             ) : null}
           </div>
@@ -247,12 +245,10 @@ function Employees() {
   const [roleFilter, setRoleFilter] = useState('all')
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
-  const toggleExtra = (r) =>
+  const toggleRole = (r) =>
     setForm((f) => ({
       ...f,
-      extra_roles: f.extra_roles.includes(r)
-        ? f.extra_roles.filter((x) => x !== r)
-        : [...f.extra_roles, r],
+      roles: f.roles.includes(r) ? f.roles.filter((x) => x !== r) : [...f.roles, r],
     }))
 
   const deactivate = async (id) => {
@@ -301,8 +297,12 @@ function Employees() {
     e.preventDefault()
     setError(null)
     setNotice(null)
-    if (!form.email || !form.password || !form.display_name || !form.role) {
-      setError('Email, password, full name, and role are required.')
+    if (!form.email || !form.password || !form.display_name) {
+      setError('Email, password, and full name are required.')
+      return
+    }
+    if (form.roles.length === 0) {
+      setError('Select at least one role.')
       return
     }
     if (form.password.length < 6) {
@@ -313,18 +313,19 @@ function Employees() {
       setError('Passwords do not match.')
       return
     }
-    if (form.role === 'admin' && !form.employee_id) {
+    if (form.roles.includes('admin') && !form.employee_id) {
       setError('Employee ID is required for administrators.')
       return
     }
+    const [primaryRole, ...extraRoles] = form.roles
     setSubmitting(true)
     try {
       await api.admin.createEmployee({
         email: form.email,
         password: form.password,
         display_name: form.display_name,
-        role: form.role,
-        extra_roles: form.extra_roles.filter((r) => r !== form.role),
+        role: primaryRole,
+        extra_roles: extraRoles,
         phone: form.phone,
         employee_id: form.employee_id,
         position: form.position,
@@ -332,7 +333,7 @@ function Employees() {
         title: form.title,
         avatar,
       })
-      const roleLabel = ROLES.find((r) => r.value === form.role)?.label || form.role
+      const roleLabel = ROLES.find((r) => r.value === primaryRole)?.label || primaryRole
       setNotice(`Registered ${form.display_name} as ${roleLabel}.`)
       setForm(empty)
       setAvatar(null)
@@ -355,7 +356,7 @@ function Employees() {
 
   return (
     <>
-      <StaffHeader title="Employees" showSearch={false} />
+      <StaffHeader title="Employees" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -443,31 +444,23 @@ function Employees() {
 
             <Section title="Profile" hint="Identity and role within the clinic">
               <Input label="Full Name" tone="purple" value={form.display_name} onChange={(e) => set('display_name', e.target.value)} />
-              <Select label="Primary Role" value={form.role} onChange={(e) => set('role', e.target.value)}>
-                <option value="">Select a role…</option>
-                {ROLES.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </Select>
               <div className="sm:col-span-2">
                 <div className="text-xs font-semibold tracking-wider text-purple-700">
-                  ADDITIONAL ROLES <span className="text-slate-400">(optional)</span>
+                  ROLES <span className="text-slate-400">(select at least one)</span>
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  For staff who hold more than one role (e.g. Psychologist + Speech Therapist).
+                  Check every role this employee holds (e.g. Psychologist + Speech Therapist).
                 </div>
                 <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {ROLES.filter((r) => r.value !== form.role).map((r) => (
+                  {ROLES.map((r) => (
                     <label
                       key={r.value}
                       className="flex items-center gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
                     >
                       <input
                         type="checkbox"
-                        checked={form.extra_roles.includes(r.value)}
-                        onChange={() => toggleExtra(r.value)}
+                        checked={form.roles.includes(r.value)}
+                        onChange={() => toggleRole(r.value)}
                       />
                       <span>{r.label}</span>
                     </label>
@@ -476,14 +469,14 @@ function Employees() {
               </div>
             </Section>
 
-            {form.role === 'admin' ? (
+            {form.roles.includes('admin') ? (
               <Section title="Administrator Details" hint="Stored on the admin profile">
                 <Input label="Employee ID" tone="purple" value={form.employee_id} onChange={(e) => set('employee_id', e.target.value)} />
                 <Input label="Position" tone="purple" value={form.position} onChange={(e) => set('position', e.target.value)} />
               </Section>
             ) : null}
 
-            {isStaff(form.role) ? (
+            {form.roles.some(isStaff) ? (
               <Section title="Professional Credentials" hint="Stored on the staff record">
                 <Input label="PRC License No." tone="purple" value={form.license_no} onChange={(e) => set('license_no', e.target.value)} />
                 <Input label="Title (e.g. Clinical Psychologist)" tone="purple" value={form.title} onChange={(e) => set('title', e.target.value)} />

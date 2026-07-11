@@ -4,6 +4,10 @@ import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
+import MmseForm from './MmseForm'
+import AdaptiveFunctioningForm from './AdaptiveFunctioningForm'
+import CaregiverChecklistForm from './CaregiverChecklistForm'
+import AnswerAssessment from './AnswerAssessment'
 
 const LOGS = [
   {
@@ -13,7 +17,6 @@ const LOGS = [
     desc:
       "Log daily session procedures, required prompts, and behavioral responses for the student's active session.",
     duration: 'Post-Session',
-    icon: '📋',
   },
 ]
 
@@ -53,7 +56,7 @@ function LaunchModal({ test, patients, onClose, onAssign, assigning }) {
             disabled={!patient || assigning}
             className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
           >
-            {assigning ? 'Assigning…' : 'Assign →'}
+            {assigning ? 'Assigning…' : 'Assign'}
           </button>
         </div>
       </div>
@@ -92,7 +95,7 @@ function RequestModal({ test, onClose, onSubmit, submitting }) {
             disabled={submitting}
             className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
           >
-            {submitting ? 'Sending…' : 'Send Request →'}
+            {submitting ? 'Sending…' : 'Send Request'}
           </button>
         </div>
       </div>
@@ -104,10 +107,7 @@ function ToolCard({ t, onLaunch, onRequest, requested, half = false }) {
   const available = t.active !== false
   return (
     <article className={`rounded-2xl border border-purple-200 bg-white p-5 shadow-sm ${half ? '' : 'sm:max-w-md'}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-700">
-          {t.icon}
-        </div>
+      <div className="flex items-start justify-end">
         <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-purple-700">
           {t.code}
         </span>
@@ -115,7 +115,7 @@ function ToolCard({ t, onLaunch, onRequest, requested, half = false }) {
       <div className="mt-3 text-base font-semibold text-purple-800">{t.title}</div>
       <p className="mt-1 text-sm text-slate-600">{t.desc}</p>
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs text-slate-500">⏱ {t.duration}</span>
+        <span className="text-xs text-slate-500">{t.duration}</span>
         {available ? (
           <button
             onClick={onLaunch}
@@ -151,6 +151,8 @@ function Assessments() {
   const [requesting, setRequesting] = useState(false)
   const [notice, setNotice] = useState(null)
   const [query, setQuery] = useState('')
+  const [openForm, setOpenForm] = useState(null)
+  const [answerOpen, setAnswerOpen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -208,9 +210,33 @@ function Assessments() {
 
   return (
     <>
-      <StaffHeader title="Assessment Services" subtitle="Clinical Tools Library & Observation Forms" />
+      <StaffHeader title="Assessment Services" />
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+          <button
+            onClick={() => setOpenForm('mmse')}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Open MMSE Form
+          </button>
+          <button
+            onClick={() => setOpenForm('adaptive')}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Open Adaptive Functioning Form
+          </button>
+          <button
+            onClick={() => setOpenForm('caregiver')}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Open Caregiver Checklist
+          </button>
+          <button
+            onClick={() => setAnswerOpen(true)}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Administer Assessment
+          </button>
           <SearchBar
             value={query}
             onChange={setQuery}
@@ -297,6 +323,17 @@ function Assessments() {
             onSubmit={submitRequest}
             submitting={requesting}
           />
+        ) : null}
+
+        {openForm === 'mmse' ? <MmseForm onClose={() => setOpenForm(null)} /> : null}
+        {openForm === 'adaptive' ? (
+          <AdaptiveFunctioningForm onClose={() => setOpenForm(null)} />
+        ) : null}
+        {openForm === 'caregiver' ? (
+          <CaregiverChecklistForm onClose={() => setOpenForm(null)} />
+        ) : null}
+        {answerOpen ? (
+          <AnswerAssessment tests={tests} patients={patients} onClose={() => setAnswerOpen(false)} />
         ) : null}
       </div>
     </>

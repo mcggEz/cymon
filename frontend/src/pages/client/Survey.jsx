@@ -152,8 +152,7 @@ function Survey() {
             </div>
           ) : submitted ? (
             <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
-              <div className="text-4xl">🦋</div>
-              <h2 className="mt-3 text-lg font-bold text-purple-800">Thank you!</h2>
+              <h2 className="text-lg font-bold text-purple-800">Thank you!</h2>
               <p className="mt-1 text-sm text-slate-600">
                 Your response has been recorded. It helps ClearMind improve care for every family.
               </p>

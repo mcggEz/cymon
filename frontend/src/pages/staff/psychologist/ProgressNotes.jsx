@@ -122,7 +122,7 @@ function ProgressNotes() {
   const [notes, setNotes] = useState([])
   return (
     <>
-      <StaffHeader title="Progress Notes" showSearch={false} />
+      <StaffHeader title="Progress Notes" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Record the initial impression, then log a note for each consultation to track progress.

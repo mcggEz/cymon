@@ -42,7 +42,7 @@ function Approvals() {
       <StaffHeader title="Approvals" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="rounded-xl bg-rose-100/80 px-4 py-3 text-sm text-rose-800">
-          <span className="font-bold">⚠ {reports.length} Report{reports.length === 1 ? '' : 's'} Pending Your Review!</span>
+          <span className="font-bold">{reports.length} Report{reports.length === 1 ? '' : 's'} Pending Your Review!</span>
           <div className="mt-0.5 text-xs text-rose-700/80">
             These reports are ready for your final review and digital signature.
           </div>
@@ -84,14 +84,14 @@ function Approvals() {
                   disabled={busyId === r.id}
                   className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
                 >
-                  {busyId === r.id ? 'Working…' : '✓ Approve & Sign'}
+                  {busyId === r.id ? 'Working…' : 'Approve & Sign'}
                 </button>
                 <button
                   onClick={() => act(r.id, 'revise_requested')}
                   disabled={busyId === r.id}
                   className="rounded-md border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60"
                 >
-                  ↩ Request Revision
+                  Request Revision
                 </button>
               </div>
             </article>
@@ -100,7 +100,7 @@ function Approvals() {
 
         <div className="mt-5 text-center">
           <button className="rounded-full bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            Click to View More ▾
+            Click to View More
           </button>
         </div>
       </div>

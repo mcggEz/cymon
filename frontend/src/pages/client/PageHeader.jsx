@@ -23,7 +23,7 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString()
 }
 
-function PageHeader({ title, subtitle }) {
+function PageHeader({ title }) {
   const navigate = useNavigate()
   const { signOut } = useAuth()
   const { openSidebar, collapsed, toggleCollapsed } = useSidebar()
@@ -49,7 +49,7 @@ function PageHeader({ title, subtitle }) {
 
   // header is non-critical; a failed fetch just leaves the bell empty
   const loadNotifications = () =>
-    api.client
+    api
       .notifications()
       .then((data) => {
         setNotifications(data.notifications)
@@ -70,7 +70,7 @@ function PageHeader({ title, subtitle }) {
       setUnread(0)
       setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at || new Date().toISOString() })))
       try {
-        await api.client.markNotificationsRead()
+        await api.markNotificationsRead()
       } catch {
         loadNotifications()
       }
@@ -109,7 +109,6 @@ function PageHeader({ title, subtitle }) {
         </button>
         <div>
           <div className="text-lg font-semibold text-purple-800 leading-tight">{title}</div>
-          {subtitle ? <div className="text-xs text-slate-500">{subtitle}</div> : null}
         </div>
       </div>
       <div className="relative z-50 flex items-center gap-3 text-purple-700">

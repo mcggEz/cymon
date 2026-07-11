@@ -61,7 +61,7 @@ function AuditTrail() {
 
   return (
     <>
-      <StaffHeader title="System Audit Trail" subtitle="System Logs & Compliance" showSearch={false} />
+      <StaffHeader title="System Audit Trail" />
 
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
         <div className="mb-6">

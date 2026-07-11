@@ -9,6 +9,7 @@ import Button from '../../../components/ui/Button'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
 import PhotoCapture from '../../../components/ui/PhotoCapture'
+import StudentAdmissionForm from './StudentAdmissionForm'
 
 const tone = {
   emerald: 'bg-emerald-100 text-emerald-700',
@@ -305,7 +306,7 @@ function ProfileModal({ row, onClose, onEdit }) {
       }
     >
         <div className="text-xs font-semibold tracking-wider text-purple-700">
-          ◧ PERSONAL INFORMATION
+          PERSONAL INFORMATION
         </div>
         <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
           <div>
@@ -329,7 +330,7 @@ function ProfileModal({ row, onClose, onEdit }) {
         </div>
 
         <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
-          ◔ CLINICAL HISTORY
+          CLINICAL HISTORY
         </div>
         <p className="mt-2 text-sm text-slate-700">
           No active medical alerts. Patient is currently enrolled in the Standard SPED Program. See
@@ -348,6 +349,7 @@ function Patients() {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [showRegister, setShowRegister] = useState(false)
+  const [openAdmissionForm, setOpenAdmissionForm] = useState(false)
   const [notice, setNotice] = useState(null)
 
   const load = () =>
@@ -369,7 +371,7 @@ function Patients() {
 
   return (
     <>
-      <StaffHeader title="Patient Management" subtitle="Clinic Operations" />
+      <StaffHeader title="Patient Management" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -378,15 +380,23 @@ function Patients() {
               Manage student records, statuses, and admission forms.
             </div>
           </div>
-          <Button
-            onClick={() => {
-              setError(null)
-              setNotice(null)
-              setShowRegister(true)
-            }}
-          >
-            + Register Patient
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setOpenAdmissionForm(true)}
+              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            >
+              Open Student Admission Form
+            </button>
+            <Button
+              onClick={() => {
+                setError(null)
+                setNotice(null)
+                setShowRegister(true)
+              }}
+            >
+              + Register Patient
+            </Button>
+          </div>
         </div>
         {notice ? (
           <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
@@ -413,7 +423,7 @@ function Patients() {
               <option value="Pending">Pending</option>
             </select>
             <button className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
-              ⬇ Export List
+              Export List
             </button>
           </div>
         </section>
@@ -505,6 +515,9 @@ function Patients() {
               load()
             }}
           />
+        ) : null}
+        {openAdmissionForm ? (
+          <StudentAdmissionForm onClose={() => setOpenAdmissionForm(false)} />
         ) : null}
       </div>
     </>

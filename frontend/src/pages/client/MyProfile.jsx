@@ -28,15 +28,10 @@ const Field = ({ label, value, tone = 'default', loading = false }) => (
   </div>
 )
 
-const Card = ({ title, icon, action, children }) => (
+const Card = ({ title, action, children }) => (
   <section className="rounded-2xl bg-white p-5 shadow-sm">
     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-      <div className="flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded bg-purple-100 text-purple-700">
-          {icon}
-        </div>
-        <div className="text-sm font-semibold text-purple-800">{title}</div>
-      </div>
+      <div className="text-sm font-semibold text-purple-800">{title}</div>
       {action}
     </div>
     <div className="pt-4">{children}</div>
@@ -122,7 +117,7 @@ function MyProfile() {
 
   return (
     <>
-      <PageHeader title="My Profile" subtitle={patient?.full_name} />
+      <PageHeader title="My Profile" />
       <div className="flex-1 overflow-y-auto p-6">
         <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-purple-800 p-6 text-white">
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
@@ -147,7 +142,7 @@ function MyProfile() {
                 <div className="text-2xl font-bold">{patient?.full_name}</div>
                 <div className="text-xs opacity-80">Patient ID: {patient?.patient_id}</div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {clinical?.iep_level ? <Pill>★ {clinical.iep_level}</Pill> : null}
+                  {clinical?.iep_level ? <Pill>{clinical.iep_level}</Pill> : null}
                   {clinic?.name ? <Pill>{clinic.name}</Pill> : null}
                   {clinical?.treating_psychologist_name ? (
                     <Pill>{clinical.treating_psychologist_name}</Pill>
@@ -163,7 +158,7 @@ function MyProfile() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <Card title="Personal Information" icon="●">
+          <Card title="Personal Information">
             <div className="grid grid-cols-2 gap-4">
               <Field loading={loading} label="Full Name" value={patient?.full_name} />
               <Field loading={loading} label="Patient ID" value={patient?.patient_id} />
@@ -176,7 +171,7 @@ function MyProfile() {
             </div>
           </Card>
 
-          <Card title="Clinical Information" icon="◆">
+          <Card title="Clinical Information">
             <div className="grid grid-cols-2 gap-4">
               <Field loading={loading} label="Chief Complaint" value={clinical?.chief_complaint} />
               <Field loading={loading} label="Working Diagnosis" value={clinical?.working_diagnosis} />
@@ -200,7 +195,7 @@ function MyProfile() {
             </div>
           </Card>
 
-          <Card title="Guardian & Emergency Contact" icon="■">
+          <Card title="Guardian & Emergency Contact">
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Field loading={loading} label="Guardian Name" value={guardian?.full_name} />
@@ -216,7 +211,7 @@ function MyProfile() {
             </div>
           </Card>
 
-          <Card title="Account Settings" icon="✦">
+          <Card title="Account Settings">
             <SettingsRow
               title="Change Password"
               subtitle="Keep your account secure"

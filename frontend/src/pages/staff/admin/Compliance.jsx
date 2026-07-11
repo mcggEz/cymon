@@ -181,7 +181,7 @@ function Compliance() {
                     <td className="py-3 text-slate-700">{r.doc}</td>
                     <td className="py-3 text-xs text-slate-500">{r.code}</td>
                     <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>{r.due}</td>
-                    <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>● {r.label}</td>
+                    <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>{r.label}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         <button

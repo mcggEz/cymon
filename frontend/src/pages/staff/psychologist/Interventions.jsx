@@ -6,6 +6,7 @@ import Modal from '../../../components/ui/Modal'
 import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
+import SpedIepForm from './SpedIepForm'
 import { api } from '../../../lib/api'
 
 const STATUS_META = {
@@ -96,6 +97,7 @@ function Interventions() {
   const [query, setQuery] = useState('')
   const [shown, setShown] = useState(PAGE_SIZE)
   const [showForm, setShowForm] = useState(false)
+  const [openForm, setOpenForm] = useState(false)
   const [notice, setNotice] = useState(null)
 
   const load = () =>
@@ -135,12 +137,20 @@ function Interventions() {
                 All assigned clients with current Support Level and milestone completion
               </p>
             </div>
-            <button
-              onClick={() => setShowForm(true)}
-              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-            >
-              + New Plan
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setOpenForm(true)}
+                className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+              >
+                Open SPED IEP Form
+              </button>
+              <button
+                onClick={() => setShowForm(true)}
+                className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+              >
+                + New Plan
+              </button>
+            </div>
           </div>
           {notice ? (
             <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
@@ -183,10 +193,10 @@ function Interventions() {
               </div>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-                  ✏ View / Edit
+                  View / Edit
                 </button>
                 <button className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                  ⬇ Export
+                  Export
                 </button>
               </div>
             </article>
@@ -200,7 +210,7 @@ function Interventions() {
               onClick={() => setShown((s) => s + PAGE_SIZE)}
               className="rounded-full bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
             >
-              Click to View More ▾
+              Click to View More
             </button>
           </div>
         ) : null}
@@ -217,6 +227,8 @@ function Interventions() {
           }}
         />
       ) : null}
+
+      {openForm ? <SpedIepForm onClose={() => setOpenForm(false)} /> : null}
     </>
   )
 }

@@ -13,13 +13,12 @@ const STATUS_TONE = {
   'No Data': 'bg-slate-100 text-slate-600',
 }
 
-const Stat = ({ value, label, icon, color }) => (
-  <div className="flex items-center justify-between rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+const Stat = ({ value, label }) => (
+  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
     <div>
       <div className="text-xs font-semibold text-slate-500">{label}</div>
       <div className="mt-1 text-3xl font-bold text-slate-800">{value}</div>
     </div>
-    <div className={`flex h-9 w-9 items-center justify-center rounded-md ${color}`}>{icon}</div>
   </div>
 )
 
@@ -40,7 +39,7 @@ function ReportModal({ row, onClose }) {
             Close Preview
           </button>
           <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            🖨 Print Official Report
+            Print Official Report
           </button>
         </div>
       }
@@ -107,9 +106,9 @@ function ScoringAnalytics() {
       <StaffHeader title="Student Scoring Analytics" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.avgCafat ?? '—'} label="Avg. CAFAT Score" icon="📝" color="bg-purple-100 text-purple-700" />
-          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.assessmentsThisMonth ?? '—'} label="Assessments This Month" icon="📋" color="bg-emerald-100 text-emerald-700" />
-          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.needsSupport ?? '—'} label="Students Needing Support" icon="⚠" color="bg-amber-100 text-amber-700" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.avgCafat ?? '—'} label="Avg. CAFAT Score" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.assessmentsThisMonth ?? '—'} label="Assessments This Month" />
+          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.needsSupport ?? '—'} label="Students Needing Support" />
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -133,7 +132,7 @@ function ScoringAnalytics() {
               ))}
             </select>
             <button className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
-              ⬇ Export CSV Report
+              Export CSV Report
             </button>
           </div>
 
@@ -180,7 +179,7 @@ function ScoringAnalytics() {
                     </td>
                     <td className="py-3">
                       <RowAction variant="view" onClick={() => setActive(r)}>
-                        📝 Report
+                        Report
                       </RowAction>
                     </td>
                   </tr>

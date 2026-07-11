@@ -3,6 +3,7 @@ import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
 import Avatar from '../../../components/ui/Avatar'
+import BehavioralAssessmentForm from './BehavioralAssessmentForm'
 
 const STATUS_META = {
   draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700', primary: 'Continue Drafting' },
@@ -13,11 +14,8 @@ const STATUS_META = {
 }
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
-const Stat = ({ value, label, icon, loading }) => (
-  <div className="flex items-center gap-3 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-purple-100 text-purple-700">
-      {icon}
-    </div>
+const Stat = ({ value, label, loading }) => (
+  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
     <div>
       {loading ? (
         <Skeleton className="h-8 w-12" />
@@ -74,7 +72,7 @@ function PreviewModal({ row, onClose }) {
             Close
           </button>
           <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            🖨 Print / Download
+            Print / Download
           </button>
         </div>
       </div>
@@ -84,6 +82,7 @@ function PreviewModal({ row, onClose }) {
 
 function DraftingReports() {
   const [active, setActive] = useState(null)
+  const [openForm, setOpenForm] = useState(null)
   const [drafts, setDrafts] = useState([])
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -114,20 +113,26 @@ function DraftingReports() {
 
   return (
     <>
-      <StaffHeader
-        title="Drafting Reports"
-        subtitle="Behavioral Assessment Form (FO-06) ready for Psychologist review"
-        showSearch={false}
-      />
+      <StaffHeader title="Drafting Reports" />
       <div className="flex-1 overflow-y-auto p-6">
-        <h1 className="text-2xl font-bold text-purple-800">Report Ledger</h1>
-        <p className="text-sm text-slate-500">
-          Synthesize assessment scores and observations into official reports.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-purple-800">Report Ledger</h1>
+            <p className="text-sm text-slate-500">
+              Synthesize assessment scores and observations into official reports.
+            </p>
+          </div>
+          <button
+            onClick={() => setOpenForm('behavioral')}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Open Behavioral Assessment Form
+          </button>
+        </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Stat value={summary?.inProgress ?? '—'} label="Drafts in Progress" icon="📝" loading={loading} />
-          <Stat value={summary?.readyForReview ?? '—'} label="Ready for Review" icon="✅" loading={loading} />
+          <Stat value={summary?.inProgress ?? '—'} label="Drafts in Progress" loading={loading} />
+          <Stat value={summary?.readyForReview ?? '—'} label="Ready for Review" loading={loading} />
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
@@ -186,13 +191,13 @@ function DraftingReports() {
                   href="#editor"
                   className="rounded-md bg-purple-700 px-4 py-2 text-center text-sm font-medium text-white hover:bg-purple-800"
                 >
-                  ✏ {meta.primary}
+                  {meta.primary}
                 </a>
                 <button
                   onClick={() => setActive(d)}
                   className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50"
                 >
-                  👁 Preview
+                  Preview
                 </button>
               </div>
               {['draft', 'in_progress', 'revise_requested'].includes(d.status) ? (
@@ -201,7 +206,7 @@ function DraftingReports() {
                   disabled={busyId === d.id}
                   className="mt-3 w-full rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
                 >
-                  {busyId === d.id ? 'Submitting…' : '✓ Submit for Psychologist Review'}
+                  {busyId === d.id ? 'Submitting…' : 'Submit for Psychologist Review'}
                 </button>
               ) : null}
             </article>
@@ -225,7 +230,7 @@ function DraftingReports() {
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_280px]">
             <div className="space-y-4">
               <div className="rounded-md border border-purple-200 bg-purple-50 p-4">
-                <div className="text-sm font-semibold text-purple-800">👤 I. Personal Information</div>
+                <div className="text-sm font-semibold text-purple-800">I. Personal Information</div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                   <label>
                     <div className="font-semibold text-purple-700">Full Name</div>
@@ -250,7 +255,7 @@ function DraftingReports() {
               </div>
 
               <div className="rounded-md border border-purple-200 bg-purple-50 p-4">
-                <div className="text-sm font-semibold text-purple-800">📚 II & III. Background Information</div>
+                <div className="text-sm font-semibold text-purple-800">II & III. Background Information</div>
                 <label className="mt-3 block text-xs">
                   <div className="font-semibold text-purple-700">A. Reason for Referral</div>
                   <textarea rows={2} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-2 py-1 text-sm" />
@@ -262,7 +267,7 @@ function DraftingReports() {
               </div>
 
               <div className="rounded-md border border-purple-200 bg-purple-50 p-4">
-                <div className="text-sm font-semibold text-purple-800">🧪 IV. Assessment Methods</div>
+                <div className="text-sm font-semibold text-purple-800">IV. Assessment Methods</div>
                 <div className="mt-2 space-y-1 text-sm">
                   {['Caregiver Behavioral Observation Checklist', 'Mini-Mental Status Examination', 'Child Adaptive Functioning Assessment Tool'].map((m) => (
                     <label key={m} className="flex items-center gap-2">
@@ -274,7 +279,7 @@ function DraftingReports() {
               </div>
 
               <div className="rounded-md border border-purple-200 bg-purple-50 p-4">
-                <div className="text-sm font-semibold text-purple-800">📊 V. Behavioral Observations Data</div>
+                <div className="text-sm font-semibold text-purple-800">V. Behavioral Observations Data</div>
                 <div className="mt-2 text-xs font-semibold text-purple-700">
                   A. Caregiver Behavioral Checklist Summary
                 </div>
@@ -294,7 +299,7 @@ function DraftingReports() {
               </div>
 
               <div className="rounded-md border border-purple-200 bg-purple-50 p-4">
-                <div className="text-sm font-semibold text-purple-800">✏ Clinical Synthesis</div>
+                <div className="text-sm font-semibold text-purple-800">Clinical Synthesis</div>
                 <label className="mt-3 block text-xs">
                   <div className="font-semibold text-purple-700">VI. Summary of Findings</div>
                   <textarea rows={2} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-2 py-1 text-sm" />
@@ -310,7 +315,7 @@ function DraftingReports() {
               </div>
 
               <div className="rounded-md border border-purple-200 bg-purple-50 p-4">
-                <div className="text-sm font-semibold text-purple-800">⚖ Authentication & Approval</div>
+                <div className="text-sm font-semibold text-purple-800">Authentication & Approval</div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                   <div>
                     <div className="font-semibold text-purple-700">PREPARED BY:</div>
@@ -329,7 +334,7 @@ function DraftingReports() {
             </div>
 
             <aside className="rounded-md border border-purple-200 bg-purple-50 p-4">
-              <div className="text-sm font-semibold text-purple-800">📋 CLINICAL DATA SOURCES</div>
+              <div className="text-sm font-semibold text-purple-800">CLINICAL DATA SOURCES</div>
               <div className="mt-3 space-y-3 text-xs">
                 {[
                   { code: 'Caregiver FO-03', label: 'Source: Maria (Mother)', flag: 'Flagged: "Experiences intense meltdowns lasting >10 mins."', status: 'Processed', tone: 'emerald' },
@@ -358,15 +363,18 @@ function DraftingReports() {
 
           <div className="mt-5 grid grid-cols-2 gap-3">
             <button className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50">
-              💾 Save Draft
+              Save Draft
             </button>
             <button className="rounded-md bg-emerald-500 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-600">
-              ✓ Finalize & Submit
+              Finalize & Submit
             </button>
           </div>
         </section>
 
         {active ? <PreviewModal row={active} onClose={() => setActive(null)} /> : null}
+        {openForm === 'behavioral' ? (
+          <BehavioralAssessmentForm onClose={() => setOpenForm(null)} />
+        ) : null}
       </div>
     </>
   )

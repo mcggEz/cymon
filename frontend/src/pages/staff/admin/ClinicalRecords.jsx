@@ -3,46 +3,56 @@ import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
-import Modal from '../../../components/ui/Modal'
+import ReportDocument from './ReportDocument'
+import { buildReport, printReport } from './report'
 import { api } from '../../../lib/api'
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
 
-function PreviewModal({ row, onClose }) {
+// Full-screen PDF-style viewer: dark toolbar + gray canvas + the white A4 page.
+function DocumentViewer({ row, onClose }) {
+  const report = buildReport(row)
+
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onClose()
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   return (
-    <Modal
-      title="Progress Summary Report (PSR)"
-      subtitle={`${row.name} · Requested: 2026-03-28`}
-      onClose={onClose}
-      footer={
-        <div className="flex items-center justify-end gap-2">
-          <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Close Preview
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-slate-900/80"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${report.title} preview`}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-slate-700 bg-slate-900 px-4 py-3 text-white">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold">{report.title}</div>
+          <div className="truncate text-xs text-slate-400">
+            {report.meta[0]?.value} · Form {report.code}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={() => printReport(report)}
+            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500"
+          >
+            Download PDF
           </button>
-          <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            🖨 Print Document
+          <button
+            onClick={onClose}
+            className="rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Close
           </button>
         </div>
-      }
-    >
-        <pre className="whitespace-pre-wrap rounded-md bg-purple-50 p-4 font-mono text-xs text-slate-700">
-{`PROGRESS SUMMARY REPORT
-ClearMind Psychological Services
-============================================
-
-Student: ${row.name}
-Age/Sex: 7 / Male
-Date of Report: March 28, 2026
-
-SUMMARY OF PROGRESS:
-${row.name} has shown significant improvement in his fine motor skills over the last 3 months. He can now successfully sort pegs by color with minimal prompting. However, attention span during seated tasks remains a target area for the next quarter.
-
-RECOMMENDATIONS:
-- Continue 2x/week occupational therapy.
-- Implement a visual timer for seated tasks at home and school.`}
-        </pre>
-    </Modal>
+      </div>
+      <div className="flex-1 overflow-y-auto bg-slate-500/30 p-4 sm:p-10">
+        <ReportDocument report={report} />
+      </div>
+    </div>
   )
 }
 
@@ -143,7 +153,10 @@ function ClinicalRecords() {
                   <td className="py-3 text-slate-600">{r.date}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      <button className="text-sm font-medium text-purple-700 hover:text-purple-900">
+                      <button
+                        onClick={() => printReport(buildReport(r))}
+                        className="text-sm font-medium text-purple-700 hover:text-purple-900"
+                      >
                         Download PDF
                       </button>
                       <RowAction variant="view" onClick={() => setActive(r)}>
@@ -158,7 +171,7 @@ function ClinicalRecords() {
           </div>
         </section>
 
-        {active ? <PreviewModal row={active} onClose={() => setActive(null)} /> : null}
+        {active ? <DocumentViewer row={active} onClose={() => setActive(null)} /> : null}
       </div>
     </>
   )

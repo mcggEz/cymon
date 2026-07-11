@@ -22,7 +22,7 @@ function requireRole(...roles) {
   };
 }
 
-router.use(requireAuth, requireRole('psychometrician', 'admin'));
+router.use(requireAuth, requireRole('psychometrician', 'admin', 'speech_therapist', 'occupational_therapist'));
 
 const SESSION_LABEL = {
   mmse: 'MMSE Assessment',
@@ -244,6 +244,67 @@ router.post('/activity-logs', async (req, res, next) => {
       .single();
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json({ log: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// fetch a template's structure so the psychometrician can administer it
+router.get('/assessment-templates/:templateId', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: template, error } = await supabase
+      .from('assessment_templates')
+      .select('id, title, document_type_code, structure, max_score')
+      .eq('id', req.params.templateId)
+      .maybeSingle();
+    if (error) return next(error);
+    if (!template) return res.status(404).json({ error: 'Assessment not found' });
+    res.json({ template });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// record an assessment the psychometrician administered for a patient
+router.post('/assessments/:templateId/submit', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, answers = {}, domain_scores = {}, total_score, max_score } = req.body || {};
+    if (!patient_id) return res.status(400).json({ error: 'patient_id is required' });
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const { data, error } = await supabase
+      .from('assessment_submissions')
+      .insert({
+        patient_id,
+        template_id: req.params.templateId,
+        respondent_profile_id: req.profile.id,
+        respondent_name: req.profile.display_name,
+        respondent_relationship: null,
+        answers,
+        domain_scores,
+        total_score: total_score ?? null,
+        max_score: max_score ?? null,
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+      })
+      .select('id, status')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    await supabase
+      .from('assessment_assignments')
+      .update({ status: 'submitted' })
+      .eq('patient_id', patient_id)
+      .eq('template_id', req.params.templateId)
+      .in('status', ['assigned', 'in_progress']);
+    res.status(201).json({ submission: data });
   } catch (err) {
     next(err);
   }

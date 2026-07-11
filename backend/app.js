@@ -8,6 +8,7 @@ const clientRoutes = require('./routes/client');
 const adminRoutes = require('./routes/admin');
 const psychologistRoutes = require('./routes/psychologist');
 const psychometricianRoutes = require('./routes/psychometrician');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/client', clientRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/psychologist', psychologistRoutes);
 app.use('/api/psychometrician', psychometricianRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });

@@ -521,61 +521,6 @@ router.get('/assessments', requireAuth, requireClient, async (req, res, next) =>
   }
 });
 
-router.get('/assessments/:templateId', requireAuth, requireClient, async (req, res, next) => {
-  if (!ensureConfigured(res)) return;
-  try {
-    const patient = await requirePatient(req, res);
-    if (!patient) return;
-    const { data: template, error } = await supabase
-      .from('assessment_templates')
-      .select('id, title, document_type_code, structure, max_score')
-      .eq('id', req.params.templateId)
-      .maybeSingle();
-    if (error) return next(error);
-    if (!template) return res.status(404).json({ error: 'Assessment not found' });
-    res.json({ template });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post('/assessments/:templateId/submit', requireAuth, requireClient, async (req, res, next) => {
-  if (!ensureConfigured(res)) return;
-  try {
-    const patient = await requirePatient(req, res);
-    if (!patient) return;
-    const { answers = {}, domain_scores = {}, total_score, max_score, respondent_name, respondent_relationship } = req.body || {};
-    const { data, error } = await supabase
-      .from('assessment_submissions')
-      .insert({
-        patient_id: patient.id,
-        template_id: req.params.templateId,
-        respondent_profile_id: req.profile.id,
-        respondent_name: respondent_name || req.profile.display_name,
-        respondent_relationship: respondent_relationship || null,
-        answers,
-        domain_scores,
-        total_score: total_score ?? null,
-        max_score: max_score ?? null,
-        status: 'submitted',
-        submitted_at: new Date().toISOString(),
-      })
-      .select('id, status')
-      .single();
-    if (error) return res.status(400).json({ error: error.message });
-    // flip any matching assignment to submitted
-    await supabase
-      .from('assessment_assignments')
-      .update({ status: 'submitted' })
-      .eq('patient_id', patient.id)
-      .eq('template_id', req.params.templateId)
-      .in('status', ['assigned', 'in_progress']);
-    res.status(201).json({ submission: data });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // update the caregiver's child (edit profile)
 router.patch('/patient', requireAuth, requireClient, async (req, res, next) => {
   if (!ensureConfigured(res)) return;
@@ -641,51 +586,6 @@ router.patch('/patient', requireAuth, requireClient, async (req, res, next) => {
       }
     }
 
-    res.json({ ok: true });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// ---------- notifications ----------
-
-router.get('/notifications', requireAuth, requireClient, async (req, res, next) => {
-  if (!ensureConfigured(res)) return;
-  try {
-    const [{ data, error }, { count }] = await Promise.all([
-      supabase
-        .from('notifications')
-        .select('id, type, title, body, link, read_at, created_at')
-        .eq('recipient_id', req.profile.id)
-        .order('created_at', { ascending: false })
-        .limit(20),
-      supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('recipient_id', req.profile.id)
-        .is('read_at', null),
-    ]);
-    if (error) return next(error);
-    res.json({ notifications: data || [], unread: count || 0 });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Mark notifications read. Body: { ids: [...] } to mark specific ones,
-// or omit ids to mark all of the caregiver's notifications read.
-router.post('/notifications/read', requireAuth, requireClient, async (req, res, next) => {
-  if (!ensureConfigured(res)) return;
-  try {
-    const { ids } = req.body || {};
-    let query = supabase
-      .from('notifications')
-      .update({ read_at: new Date().toISOString() })
-      .eq('recipient_id', req.profile.id)
-      .is('read_at', null);
-    if (Array.isArray(ids) && ids.length) query = query.in('id', ids);
-    const { error } = await query;
-    if (error) return res.status(400).json({ error: error.message });
     res.json({ ok: true });
   } catch (err) {
     next(err);

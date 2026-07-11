@@ -55,15 +55,15 @@ export const api = {
   me: () => request('/api/auth/me', { auth: true }),
   changePassword: (payload) => request('/api/auth/change-password', { method: 'POST', body: payload, auth: true }),
   health: () => request('/api/health'),
+  // Per-recipient notifications — same endpoint for client and staff.
+  notifications: () => request('/api/notifications', { auth: true }),
+  markNotificationsRead: (ids) =>
+    request('/api/notifications/read', { method: 'POST', body: { ids }, auth: true }),
   client: {
     getPatient: () => request('/api/client/patient', { auth: true }),
     createPatient: (payload) => request('/api/client/patient', { method: 'POST', body: payload, auth: true }),
     updatePatient: (payload) => request('/api/client/patient', { method: 'PATCH', body: payload, auth: true }),
-    uploadPatientPhoto: (payload) => request('/api/client/patient/photo', { method: 'POST', body: payload, auth: true }),
     home: () => request('/api/client/home', { auth: true }),
-    notifications: () => request('/api/client/notifications', { auth: true }),
-    markNotificationsRead: (ids) =>
-      request('/api/client/notifications/read', { method: 'POST', body: { ids }, auth: true }),
     activityLogs: () => request('/api/client/activity-logs', { auth: true }),
     addActivityLog: (payload) => request('/api/client/activity-logs', { method: 'POST', body: payload, auth: true }),
     appointments: () => request('/api/client/appointments', { auth: true }),
@@ -72,9 +72,6 @@ export const api = {
     submitWaiver: (code, payload) =>
       request(`/api/client/waivers/${code}`, { method: 'POST', body: payload, auth: true }),
     assessments: () => request('/api/client/assessments', { auth: true }),
-    assessmentTemplate: (id) => request(`/api/client/assessments/${id}`, { auth: true }),
-    submitAssessment: (id, payload) =>
-      request(`/api/client/assessments/${id}/submit`, { method: 'POST', body: payload, auth: true }),
     survey: () => request('/api/client/survey', { auth: true }),
     submitSurvey: (payload) => request('/api/client/survey', { method: 'POST', body: payload, auth: true }),
   },
@@ -108,7 +105,6 @@ export const api = {
       request(`/api/admin/assessments/${id}`, { method: 'PATCH', body: { is_active }, auth: true }),
     resolveAssessmentRequest: (id, status) =>
       request(`/api/admin/assessment-requests/${id}`, { method: 'PATCH', body: { status }, auth: true }),
-    surveys: () => request('/api/admin/surveys', { auth: true }),
     employees: () => request('/api/admin/employees', { auth: true }),
     createEmployee: (payload) =>
       request('/api/admin/employees', { method: 'POST', body: payload, auth: true }),
@@ -142,6 +138,9 @@ export const api = {
     activityLogs: () => request('/api/psychometrician/activity-logs', { auth: true }),
     addActivityLog: (payload) =>
       request('/api/psychometrician/activity-logs', { method: 'POST', body: payload, auth: true }),
+    assessmentTemplate: (id) => request(`/api/psychometrician/assessment-templates/${id}`, { auth: true }),
+    submitAssessment: (id, payload) =>
+      request(`/api/psychometrician/assessments/${id}/submit`, { method: 'POST', body: payload, auth: true }),
     assignAssessment: (payload) =>
       request('/api/psychometrician/assignments', { method: 'POST', body: payload, auth: true }),
     requestAssessment: (payload) =>

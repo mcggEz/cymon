@@ -25,7 +25,6 @@ function SurveyPrompt() {
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-purple-200 bg-white px-4 py-3 shadow-sm">
       <div className="flex items-center gap-3">
-        <span className="text-2xl">🦋</span>
         <div className="text-sm text-slate-700">
           <span className="font-semibold text-purple-800">How are we doing?</span> Take a 2-minute survey to help
           ClearMind improve.
@@ -46,7 +45,7 @@ function SurveyPrompt() {
           to="/client/survey"
           className="rounded-md bg-purple-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-800"
         >
-          Take survey →
+          Take survey
         </Link>
       </div>
     </div>

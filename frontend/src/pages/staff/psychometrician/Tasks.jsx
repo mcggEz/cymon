@@ -32,11 +32,10 @@ function Tasks() {
 
   return (
     <>
-      <StaffHeader title={`Good Day, ${profile?.display_name || 'Doctor'}!`} subtitle="Welcome to CyMon" showSearch={false} />
+      <StaffHeader title={`Good Day, ${profile?.display_name || 'Doctor'}!`} />
       <div className="flex-1 overflow-y-auto p-6">
         <section className="rounded-2xl bg-gradient-to-r from-purple-700 to-purple-900 p-5 text-white">
-          <div className="flex items-center gap-2 text-base font-semibold">
-            <span>💡</span>
+          <div className="text-base font-semibold">
             Daily Clinical Reminders & Instructions
           </div>
           <ul className="mt-3 space-y-2 text-sm text-purple-50">
@@ -91,7 +90,7 @@ function Tasks() {
                   <div className="mt-0.5 text-sm text-slate-600">
                     {t.detail}{' '}
                     <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                      📍 {t.room}
+                      {t.room}
                     </span>
                   </div>
                 </div>
@@ -110,7 +109,7 @@ function Tasks() {
                       : 'bg-purple-700 text-white hover:bg-purple-800',
                   ].join(' ')}
                 >
-                  {t.status === 'COMPLETED' ? 'Draft Report 📝' : 'Start Assessment →'}
+                  {t.status === 'COMPLETED' ? 'Draft Report' : 'Start Assessment'}
                 </button>
               </li>
             ))}

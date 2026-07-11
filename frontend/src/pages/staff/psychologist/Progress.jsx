@@ -6,6 +6,7 @@ import Modal from '../../../components/ui/Modal'
 import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
+import ProgressSummaryReportForm from './ProgressSummaryReportForm'
 import { api } from '../../../lib/api'
 
 const tone = {
@@ -72,7 +73,7 @@ function GenerateReportModal({ patients, onClose, onCreated }) {
         <Input label="Report Title" tone="purple" value={f.title} onChange={set('title')} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input label="Period (e.g. Mar 2026)" tone="purple" value={f.period} onChange={set('period')} />
-          <Input label="Trend (e.g. ↑ Improving)" tone="purple" value={f.trend} onChange={set('trend')} />
+          <Input label="Trend (e.g. Improving)" tone="purple" value={f.trend} onChange={set('trend')} />
         </div>
         {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
       </form>
@@ -87,6 +88,7 @@ function Progress() {
   const [query, setQuery] = useState('')
   const [shown, setShown] = useState(PAGE_SIZE)
   const [showForm, setShowForm] = useState(false)
+  const [openForm, setOpenForm] = useState(false)
   const [notice, setNotice] = useState(null)
 
   const load = () =>
@@ -126,12 +128,20 @@ function Progress() {
                 Monthly Progress Summary Reports (PSR - FO-08) analyzing student trajectory
               </p>
             </div>
-            <button
-              onClick={() => setShowForm(true)}
-              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-            >
-              + Generate Report
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setOpenForm(true)}
+                className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+              >
+                Open Progress Summary Report
+              </button>
+              <button
+                onClick={() => setShowForm(true)}
+                className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+              >
+                + Generate Report
+              </button>
+            </div>
           </div>
           {notice ? (
             <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
@@ -160,7 +170,7 @@ function Progress() {
           ) : null}
           {!loading && paged.map((i) => {
             const meta = STATUS_META[i.status] || STATUS_META.draft
-            const trendTone = i.trend && i.trend.includes('↑') ? 'emerald' : 'amber'
+            const trendTone = i.trend && i.trend.toLowerCase().includes('improv') ? 'emerald' : 'amber'
             return (
             <article key={i.id} className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between">
@@ -181,13 +191,13 @@ function Progress() {
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-                  ✏ View
+                  View
                 </button>
                 <button className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                  📊 Analytics
+                  Analytics
                 </button>
                 <button className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                  ⬇ Export
+                  Export
                 </button>
               </div>
             </article>
@@ -201,7 +211,7 @@ function Progress() {
               onClick={() => setShown((s) => s + PAGE_SIZE)}
               className="rounded-full bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
             >
-              Click to View More ▾
+              Click to View More
             </button>
           </div>
         ) : null}
@@ -218,6 +228,8 @@ function Progress() {
           }}
         />
       ) : null}
+
+      {openForm ? <ProgressSummaryReportForm onClose={() => setOpenForm(false)} /> : null}
     </>
   )
 }

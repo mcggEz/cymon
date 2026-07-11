@@ -4,6 +4,7 @@ import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import Modal from '../../../components/ui/Modal'
 import SearchBar from '../../../components/ui/SearchBar'
 import { api } from '../../../lib/api'
+import AttendanceSessionForm from './AttendanceSessionForm'
 
 const SESSION_LABEL = {
   mmse: 'MMSE',
@@ -89,7 +90,7 @@ function BookModal({ patients, practitioners, onClose, onBooked }) {
             disabled={busy}
             className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
           >
-            {busy ? 'Booking…' : '📅 Book Appointment'}
+            {busy ? 'Booking…' : 'Book Appointment'}
           </button>
         </div>
       }
@@ -182,6 +183,7 @@ function BookModal({ patients, practitioners, onClose, onBooked }) {
 
 function Schedule() {
   const [open, setOpen] = useState(false)
+  const [openAttendanceForm, setOpenAttendanceForm] = useState(false)
   const [appts, setAppts] = useState([])
   const [loading, setLoading] = useState(true)
   const [cursor, setCursor] = useState(() => {
@@ -283,16 +285,24 @@ function Schedule() {
 
   return (
     <>
-      <StaffHeader title="Clinic Master Schedule" showSearch={false} />
+      <StaffHeader title="Clinic Master Schedule" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-purple-800">Clinic Master Schedule</h1>
-          <button
-            onClick={() => setOpen(true)}
-            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-          >
-            + Add Appointment
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setOpenAttendanceForm(true)}
+              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            >
+              Open Attendance & Session Record
+            </button>
+            <button
+              onClick={() => setOpen(true)}
+              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            >
+              + Add Appointment
+            </button>
+          </div>
         </div>
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Appointments and sessions for all practitioners
@@ -331,9 +341,9 @@ function Schedule() {
                   <button
                     onClick={() => shiftMonth(-1)}
                     aria-label="Previous month"
-                    className="rounded-md bg-purple-700 px-2 py-1 text-xs text-white hover:bg-purple-800"
+                    className="rounded-md bg-purple-700 px-2 py-1 text-xs font-semibold text-white hover:bg-purple-800"
                   >
-                    ◀
+                    Prev
                   </button>
                   <div className="flex items-center gap-3">
                     <div className="text-lg font-bold">{monthLabel}</div>
@@ -347,9 +357,9 @@ function Schedule() {
                   <button
                     onClick={() => shiftMonth(1)}
                     aria-label="Next month"
-                    className="rounded-md bg-purple-700 px-2 py-1 text-xs text-white hover:bg-purple-800"
+                    className="rounded-md bg-purple-700 px-2 py-1 text-xs font-semibold text-white hover:bg-purple-800"
                   >
-                    ▶
+                    Next
                   </button>
                 </div>
                 <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold tracking-wider text-purple-700">
@@ -386,7 +396,7 @@ function Schedule() {
           </section>
 
           <aside className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold text-purple-800">📅 Appointments</div>
+            <div className="text-sm font-semibold text-purple-800">Appointments</div>
             {loading ? (
               <div className="mt-3">
                 <SkeletonText lines={5} />
@@ -421,6 +431,9 @@ function Schedule() {
           onClose={() => setOpen(false)}
           onBooked={onBooked}
         />
+      ) : null}
+      {openAttendanceForm ? (
+        <AttendanceSessionForm onClose={() => setOpenAttendanceForm(false)} />
       ) : null}
     </>
   )

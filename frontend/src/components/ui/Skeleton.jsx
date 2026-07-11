@@ -1,8 +1,8 @@
 // Reusable shimmer skeleton. Size/shape it with Tailwind classes:
-//   <Skeleton className="h-10 w-full" />          → a bar
-//   <Skeleton className="h-12 w-12 rounded-full" />→ an avatar
-//   <SkeletonText lines={3} />                     → stacked text lines
-//   <SkeletonText lines={5} as="rows" />           → list/table row blocks
+//   <Skeleton className="h-10 w-full" />           - a bar
+//   <Skeleton className="h-12 w-12 rounded-full" /> - an avatar
+//   <SkeletonText lines={3} />                      - stacked text lines
+//   <SkeletonText lines={5} as="rows" />            - list/table row blocks
 
 function Skeleton({ className = '', rounded = 'rounded-md' }) {
   return <div aria-hidden="true" className={`skeleton ${rounded} ${className}`} />

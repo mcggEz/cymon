@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import PageHeader from './PageHeader'
 import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
@@ -32,14 +31,11 @@ function Tabs({ value, onChange }) {
   )
 }
 
-function AssessmentCard({ a, onOpen }) {
+function AssessmentCard({ a }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
       <div className="h-3 bg-gradient-to-r from-purple-600 to-purple-800" />
       <div className="flex items-start gap-4 p-5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-700">
-          {a.icon || '⊕'}
-        </div>
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div className="text-base font-semibold text-purple-800">{a.title}</div>
@@ -54,12 +50,9 @@ function AssessmentCard({ a, onOpen }) {
             <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700">
               {a.code}
             </span>
-            <button
-              onClick={onOpen}
-              className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-800"
-            >
-              Start →
-            </button>
+            <span className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
+              Administered by clinician
+            </span>
           </div>
         </div>
       </div>
@@ -76,14 +69,9 @@ function RecordCard({ r }) {
     <article className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
       <div className="h-3 bg-gradient-to-r from-purple-600 to-purple-800" />
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-700">
-            {r.icon || '⊕'}
-          </div>
-          <div>
-            <div className="text-base font-semibold text-purple-800">{r.title}</div>
-            <div className="text-xs text-slate-500">📅 Submitted: {fmtDate(r.submitted_at)}</div>
-          </div>
+        <div>
+          <div className="text-base font-semibold text-purple-800">{r.title}</div>
+          <div className="text-xs text-slate-500">Submitted: {fmtDate(r.submitted_at)}</div>
         </div>
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -112,7 +100,6 @@ function AssessmentServices() {
   const [assigned, setAssigned] = useState([])
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
 
   useEffect(() => {
     let on = true
@@ -137,8 +124,8 @@ function AssessmentServices() {
       <PageHeader title="Assessment Services" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
-          These assessments are about your child&apos;s behaviors and experiences. Answer based on what
-          you observe at home. Responses are reviewed by your clinician.
+          These assessments are administered by your clinician during sessions. You can see what has
+          been assigned to your child here; official results are shared with you after clinical review.
         </div>
 
         <div className="mt-5">
@@ -148,8 +135,7 @@ function AssessmentServices() {
         {tab === 'records' ? (
           <>
             <div className="mt-5 rounded-2xl bg-amber-50 p-5">
-              <div className="flex items-center gap-2 text-amber-700">
-                <span>📣</span>
+              <div className="text-amber-700">
                 <span className="text-base font-bold">Official Clinical Results</span>
               </div>
               <p className="mt-2 text-sm text-slate-700">
@@ -188,9 +174,7 @@ function AssessmentServices() {
               </div>
             ) : null}
             {!loading &&
-              assigned.map((a) => (
-                <AssessmentCard key={a.id} a={a} onOpen={() => navigate(`/client/assessments/${a.template_id}`)} />
-              ))}
+              assigned.map((a) => <AssessmentCard key={a.id} a={a} />)}
           </div>
         )}
       </div>

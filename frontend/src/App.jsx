@@ -7,7 +7,6 @@ import HomeProgress from './pages/client/HomeProgress'
 import DailyActivity from './pages/client/DailyActivity'
 import MyProfile from './pages/client/MyProfile'
 import AssessmentServices from './pages/client/AssessmentServices'
-import AssessmentDetail from './pages/client/AssessmentDetail'
 import Announcement from './pages/client/Announcement'
 import Appointments from './pages/client/Appointments'
 import Waivers from './pages/client/Waivers'
@@ -35,7 +34,6 @@ import AdminClinicalRecords from './pages/staff/admin/ClinicalRecords'
 import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
 import AdminAuditTrail from './pages/staff/admin/AuditTrail'
-import AdminSurveyResults from './pages/staff/admin/SurveyResults'
 import PsychometricianLayout from './pages/staff/PsychometricianLayout'
 import Tasks from './pages/staff/psychometrician/Tasks'
 import PmAssessments from './pages/staff/psychometrician/Assessments'
@@ -63,7 +61,6 @@ function App() {
           <Route path="activity" element={<DailyActivity />} />
           <Route path="profile" element={<MyProfile />} />
           <Route path="assessments" element={<AssessmentServices />} />
-          <Route path="assessments/:id" element={<AssessmentDetail />} />
           <Route path="announcements" element={<Announcement />} />
           <Route path="appointments" element={<Appointments />} />
           <Route path="waivers" element={<Waivers />} />
@@ -74,7 +71,7 @@ function App() {
         <Route
           path="/psychologist"
           element={
-            <RequireAuth roles={['psychologist', 'speech_therapist', 'occupational_therapist']}>
+            <RequireAuth roles={['psychologist']}>
               <PsychologistLayout />
             </RequireAuth>
           }
@@ -91,7 +88,7 @@ function App() {
         <Route
           path="/psychometrician"
           element={
-            <RequireAuth roles={['psychometrician']}>
+            <RequireAuth roles={['psychometrician', 'speech_therapist', 'occupational_therapist']}>
               <PsychometricianLayout />
             </RequireAuth>
           }
@@ -122,7 +119,6 @@ function App() {
           <Route path="records" element={<AdminClinicalRecords />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="audit" element={<AdminAuditTrail />} />
-          <Route path="surveys" element={<AdminSurveyResults />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

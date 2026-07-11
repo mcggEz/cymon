@@ -12,7 +12,6 @@ const NAV = [
   { to: '/admin/records', label: 'Clinical Records', d: 'M6 4h9l3 3v13H6zM9 12h6M9 16h6' },
   { to: '/admin/announcements', label: 'Announcements', d: 'M4 11l16-7v16zM4 11v4l3 1v4' },
   { to: '/admin/audit', label: 'Audit Trail', d: 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z' },
-  { to: '/admin/surveys', label: 'Survey Results', d: 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11' },
 ]
 
 function AdminLayout() {

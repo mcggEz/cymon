@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import PageHeader from './PageHeader'
 import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
+import ConsentWaiverForm from './ConsentWaiverForm'
+import SummerScapeConsentForm from './SummerScapeConsentForm'
 
-const ICONS = { 'CMPS:SE-FO-01': '⊕', 'CMPS:SE-FO-02': '✓', 'CMPS:SE-FO-12': '☀', 'CMPS:SE-FO-13': '☀' }
 const STATUS_META = {
   submitted: { label: 'Submitted', cls: 'bg-emerald-100 text-emerald-700' },
   approved: { label: 'Approved', cls: 'bg-emerald-100 text-emerald-700' },
@@ -17,6 +18,7 @@ function Waivers() {
   const navigate = useNavigate()
   const [forms, setForms] = useState([])
   const [loading, setLoading] = useState(true)
+  const [openForm, setOpenForm] = useState(null)
 
   useEffect(() => {
     let on = true
@@ -40,6 +42,21 @@ function Waivers() {
           Filled out by Leo&apos;s parent or guardian upon enrollment and program registration.
         </div>
 
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            onClick={() => setOpenForm('consent')}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Open Consent &amp; Waiver Form
+          </button>
+          <button
+            onClick={() => setOpenForm('summerscape')}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Open SummerScape Consent Form
+          </button>
+        </div>
+
         <div className="mt-5 flex flex-col gap-4">
           {loading
             ? Array.from({ length: 3 }).map((_, i) => (
@@ -57,9 +74,6 @@ function Waivers() {
               >
                 <div className="h-3 bg-gradient-to-r from-purple-600 to-purple-800" />
                 <div className="flex items-start gap-4 p-5">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-700">
-                    {ICONS[f.code] || '✓'}
-                  </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div className="text-base font-semibold text-purple-800">{f.title}</div>
@@ -80,6 +94,11 @@ function Waivers() {
           })}
         </div>
       </div>
+
+      {openForm === 'consent' ? <ConsentWaiverForm onClose={() => setOpenForm(null)} /> : null}
+      {openForm === 'summerscape' ? (
+        <SummerScapeConsentForm onClose={() => setOpenForm(null)} />
+      ) : null}
     </>
   )
 }

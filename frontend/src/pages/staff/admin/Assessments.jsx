@@ -70,7 +70,7 @@ function Assessments() {
 
   return (
     <>
-      <StaffHeader title="Assessment Services" subtitle="Activate assessments and review activation requests" />
+      <StaffHeader title="Assessment Services" />
       <div className="flex-1 overflow-y-auto p-6">
         {notice ? (
           <div className="mb-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>

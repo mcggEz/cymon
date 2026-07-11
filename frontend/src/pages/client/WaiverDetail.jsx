@@ -105,7 +105,7 @@ function WaiverDetail() {
           onClick={() => navigate('/client/waivers')}
           className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-purple-700 hover:text-purple-900"
         >
-          ← Back
+          Back
         </button>
 
         <h1 className="text-center text-xl font-bold tracking-wider text-purple-800">
@@ -191,7 +191,7 @@ function WaiverDetail() {
         ) : null}
 
         <Button className="mt-4" fullWidth size="lg" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? 'Submitting…' : '✓ Submit Consent and Waiver'}
+          {submitting ? 'Submitting…' : 'Submit Consent and Waiver'}
         </Button>
       </div>
     </>

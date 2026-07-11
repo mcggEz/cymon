@@ -7,11 +7,11 @@ import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 const MOODS = [
-  { id: 'very_bad', label: 'Very Bad', color: 'bg-red-400', emoji: '😣' },
-  { id: 'sad', label: 'Sad', color: 'bg-orange-400', emoji: '🙁' },
-  { id: 'okay', label: 'Okay', color: 'bg-yellow-400', emoji: '😐' },
-  { id: 'good', label: 'Good', color: 'bg-green-400', emoji: '🙂' },
-  { id: 'great', label: 'Great', color: 'bg-emerald-500', emoji: '😄' },
+  { id: 'very_bad', label: 'Very Bad', color: 'bg-red-400' },
+  { id: 'sad', label: 'Sad', color: 'bg-orange-400' },
+  { id: 'okay', label: 'Okay', color: 'bg-yellow-400' },
+  { id: 'good', label: 'Good', color: 'bg-green-400' },
+  { id: 'great', label: 'Great', color: 'bg-emerald-500' },
 ]
 
 const TASK_LABEL = { yes_all: 'Yes, all', some: 'Some', none: 'None' }
@@ -142,9 +142,7 @@ function DailyActivity() {
                         : 'border-slate-200 text-slate-600 hover:border-purple-300',
                     ].join(' ')}
                   >
-                    <div className={`mb-1 flex h-9 w-9 items-center justify-center rounded-full text-base ${m.color}`}>
-                      {m.emoji}
-                    </div>
+                    <div className={`mb-1 h-9 w-9 rounded-full ${m.color}`} />
                     {m.label}
                   </button>
                 )

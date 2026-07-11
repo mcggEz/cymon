@@ -2,7 +2,6 @@ const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
 const { createNotification } = require('../lib/notify');
 const { patientName } = require('../lib/names');
-const { SURVEY } = require('../lib/survey');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -958,33 +957,6 @@ router.patch('/assessment-requests/:id', async (req, res, next) => {
       link: '/psychometrician/assessments',
     });
     res.json({ ok: true });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// research survey results (the questionnaire + every response in this clinic)
-router.get('/surveys', async (req, res, next) => {
-  if (!ensureConfigured(res)) return;
-  try {
-    const { data, error } = await supabase
-      .from('survey_responses')
-      .select(
-        'id, answers, created_at, patient_id, respondent:respondent_profile_id(display_name), patients(first_name, middle_name, last_name)'
-      )
-      .eq('clinic_id', req.profile.clinic_id)
-      .order('created_at', { ascending: false });
-    if (error) return next(error);
-    res.json({
-      survey: SURVEY,
-      responses: (data || []).map((r) => ({
-        id: r.id,
-        respondent: r.respondent ? r.respondent.display_name : 'Parent',
-        patient: r.patients ? patientName(r.patients) : null,
-        answers: r.answers || {},
-        submittedAt: r.created_at,
-      })),
-    });
   } catch (err) {
     next(err);
   }

@@ -221,17 +221,10 @@ function Landing() {
 
         <div className="relative z-20 mx-auto w-full max-w-7xl">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-violet" />
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-200/80">
-                ClearMind Psychological Services
-              </span>
-            </div>
-
-            <h1 className="mt-6 font-sans text-4xl font-semibold leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
-              Compassionate care,
+            <h1 className="font-sans text-4xl font-semibold leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
+              Clarity of Mind,
               <br />
-              <span className="text-violet">simplified.</span>
+              <span className="text-violet">Journey to Wellness.</span>
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">

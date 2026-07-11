@@ -60,8 +60,7 @@ function Appointments() {
         </div>
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white shadow-sm">
-          <header className="flex items-center gap-2 border-b border-purple-100 bg-amber-50 px-5 py-3">
-            <span className="text-amber-600">⚑</span>
+          <header className="border-b border-purple-100 bg-amber-50 px-5 py-3">
             <div className="text-sm font-semibold text-amber-800">Upcoming Appointments</div>
           </header>
           <ul className="divide-y divide-purple-100">

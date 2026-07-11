@@ -149,7 +149,7 @@ function Announcements() {
 
   return (
     <>
-      <StaffHeader title="Announcements" showSearch={false} />
+      <StaffHeader title="Announcements" />
       <div className="flex-1 overflow-y-auto p-6">
         <h1 className="text-3xl font-bold text-purple-800">Announcements</h1>
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
@@ -159,7 +159,7 @@ function Announcements() {
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
           <section className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
             <header className="bg-purple-700 px-5 py-3 text-white">
-              <div className="text-lg font-bold">{editingId ? '✏ Edit Announcement' : '✏ New Announcement'}</div>
+              <div className="text-lg font-bold">{editingId ? 'Edit Announcement' : 'New Announcement'}</div>
               <div className="text-xs opacity-80">Publish to all or specific audience</div>
             </header>
             <form className="space-y-4 p-5">
@@ -175,9 +175,9 @@ function Announcements() {
               <div>
                 <div className="text-xs font-semibold tracking-wider text-purple-700">TYPE</div>
                 <div className="mt-1 flex flex-wrap gap-2">
-                  <TypeChip active={type === 'urgent'} onClick={() => setType('urgent')} label="🚨 Urgent" color="bg-rose-100 text-rose-700" />
-                  <TypeChip active={type === 'event'} onClick={() => setType('event')} label="🎉 Event" color="bg-amber-100 text-amber-700" />
-                  <TypeChip active={type === 'info'} onClick={() => setType('info')} label="ℹ General Info" color="bg-sky-100 text-sky-700" />
+                  <TypeChip active={type === 'urgent'} onClick={() => setType('urgent')} label="Urgent" color="bg-rose-100 text-rose-700" />
+                  <TypeChip active={type === 'event'} onClick={() => setType('event')} label="Event" color="bg-amber-100 text-amber-700" />
+                  <TypeChip active={type === 'info'} onClick={() => setType('info')} label="General Info" color="bg-sky-100 text-sky-700" />
                 </div>
               </div>
               <div>
@@ -245,7 +245,6 @@ function Announcements() {
                   ATTACH PROMOTIONAL IMAGE <span className="text-slate-400">(Optional)</span>
                 </div>
                 <div className="mt-1 flex flex-col items-center gap-2 rounded-md border-2 border-dashed border-purple-300 bg-purple-50 p-6 text-xs text-slate-500">
-                  <span className="text-2xl">🖼</span>
                   <div>Click or drag to upload flyer</div>
                   <div>JPG, PNG up to 5MB</div>
                 </div>
@@ -265,8 +264,8 @@ function Announcements() {
                       ? 'Saving…'
                       : 'Publishing…'
                     : editingId
-                      ? '💾 Save Changes'
-                      : '📣 Publish Announcement'}
+                      ? 'Save Changes'
+                      : 'Publish Announcement'}
                 </button>
                 {editingId ? (
                   <button
@@ -283,7 +282,7 @@ function Announcements() {
           </section>
 
           <aside className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold text-purple-800">📋 PUBLISHED</div>
+            <div className="text-sm font-semibold text-purple-800">PUBLISHED</div>
             <ul className="mt-3 space-y-3">
               {loading
                 ? Array.from({ length: 3 }).map((_, i) => (
@@ -322,7 +321,7 @@ function Announcements() {
                       onClick={() => startEdit(p)}
                       className="rounded-md border border-purple-200 px-2 py-1 text-purple-700 hover:bg-purple-50"
                     >
-                      ✏ Edit
+                      Edit
                     </button>
                     <button
                       type="button"
@@ -330,7 +329,7 @@ function Announcements() {
                       disabled={deletingId === p.id}
                       className="rounded-md border border-rose-200 px-2 py-1 text-rose-600 hover:bg-rose-50 disabled:opacity-60"
                     >
-                      {deletingId === p.id ? 'Removing…' : '🗑 Remove'}
+                      {deletingId === p.id ? 'Removing…' : 'Remove'}
                     </button>
                   </div>
                 </li>

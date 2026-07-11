@@ -56,9 +56,9 @@ function Login() {
 
   const destinationFor = (r) => {
     if (r === 'admin') return '/admin'
-    if (r === 'psychometrician') return '/psychometrician'
-    if (r === 'psychologist' || r === 'speech_therapist' || r === 'occupational_therapist') {
-      return '/psychologist'
+    if (r === 'psychologist') return '/psychologist'
+    if (r === 'psychometrician' || r === 'speech_therapist' || r === 'occupational_therapist') {
+      return '/psychometrician'
     }
     return '/client/home'
   }
@@ -112,7 +112,7 @@ function Login() {
             <img src="/logo-cymon.png" alt="CyMon" className="mb-5 block h-16 w-16 rounded-2xl object-cover shadow-sm" />
             <span className="font-serif italic text-6xl font-bold text-charcoal">CyMon</span>
             <p className="mt-4 max-w-xs text-sm text-slate-600 leading-relaxed">
-              Compassionate care, organized. A digital home for the SPED program at ClearMind Psychological Services.
+              Clarity of Mind, Journey to Wellness. A digital home for the SPED program at ClearMind Psychological Services.
             </p>
           </div>
         </aside>

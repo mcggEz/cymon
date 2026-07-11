@@ -56,7 +56,7 @@ function IntakeInterview() {
 
   return (
     <>
-      <StaffHeader title="Intake Interview" showSearch={false} />
+      <StaffHeader title="Intake Interview" />
       <form onSubmit={save} className="flex-1 overflow-y-auto p-6">
         <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           First assessment before treatment — record the patient&apos;s concerns, background, and
