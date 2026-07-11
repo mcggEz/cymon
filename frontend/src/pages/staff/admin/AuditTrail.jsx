@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
+import Pagination from '../../../components/ui/Pagination'
 import { api } from '../../../lib/api'
+
+const PAGE_SIZE = 20
 
 const SEVERITY_META = {
   info: { label: 'INFO', cls: 'bg-sky-50 text-sky-700 border-sky-200' },
@@ -28,6 +31,7 @@ function AuditTrail() {
   const [searchTerm, setSearchTerm] = useState('')
   const [actionFilter, setActionFilter] = useState('All')
   const [selectedLog, setSelectedLog] = useState(null)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     let on = true
@@ -59,6 +63,8 @@ function AuditTrail() {
     return matchesSearch && matchesAction
   })
 
+  const pageRows = filteredLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
     <>
       <StaffHeader title="System Audit Trail" />
@@ -78,7 +84,10 @@ function AuditTrail() {
               type="text"
               placeholder="Search by actor, detail or action…"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setPage(1)
+              }}
               className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-violet focus:ring-2 focus:ring-violet/10 transition-all font-sans"
             />
           </div>
@@ -86,7 +95,10 @@ function AuditTrail() {
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Action:</span>
             <select
               value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
+              onChange={(e) => {
+                setActionFilter(e.target.value)
+                setPage(1)
+              }}
               className="bg-slate-50/50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-violet cursor-pointer font-sans"
             >
               {actions.map((a) => (
@@ -108,25 +120,26 @@ function AuditTrail() {
                   <th className="py-3 text-left">Action</th>
                   <th className="py-3 text-left">Detail</th>
                   <th className="py-3 text-left">Severity</th>
+                  <th className="py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={`s${i}`}>
-                      <td colSpan="5" className="py-3">
+                      <td colSpan="6" className="py-3">
                         <Skeleton className="h-6 w-full" />
                       </td>
                     </tr>
                   ))
                 ) : filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan="6" className="py-6 text-center text-sm text-slate-500">
                       {logs.length === 0 ? 'No audit activity recorded yet.' : 'No matching audit logs found.'}
                     </td>
                   </tr>
                 ) : (
-                  filteredLogs.map((log) => {
+                  pageRows.map((log) => {
                     const sev = SEVERITY_META[log.severity] || SEVERITY_META.info
                     return (
                       <tr
@@ -154,6 +167,17 @@ function AuditTrail() {
                             {sev.label}
                           </span>
                         </td>
+                        <td className="py-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedLog(log)
+                            }}
+                            className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
+                          >
+                            View
+                          </button>
+                        </td>
                       </tr>
                     )
                   })
@@ -161,6 +185,7 @@ function AuditTrail() {
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filteredLogs.length} onPage={setPage} />
         </div>
 
         {selectedLog && (

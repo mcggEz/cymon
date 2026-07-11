@@ -3,8 +3,10 @@ import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
-import Modal from '../../../components/ui/Modal'
+import Pagination from '../../../components/ui/Pagination'
 import { api } from '../../../lib/api'
+
+const PAGE_SIZE = 20
 
 const STATUS_TONE = {
   Mastered: 'bg-emerald-100 text-emerald-700',
@@ -22,51 +24,6 @@ const Stat = ({ value, label }) => (
   </div>
 )
 
-function ReportModal({ row, onClose }) {
-  return (
-    <Modal
-      title="Finalized Behavioral Assessment Report"
-      subtitle={
-        <>
-          {row.name} · Approved Mar 30, 2026 ·{' '}
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">Approved</span>
-        </>
-      }
-      onClose={onClose}
-      footer={
-        <div className="flex items-center justify-end gap-2">
-          <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Close Preview
-          </button>
-          <button className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
-            Print Official Report
-          </button>
-        </div>
-      }
-    >
-        <div className="space-y-4 text-sm text-slate-700">
-          <section>
-            <div className="text-sm font-semibold tracking-wider text-purple-700">SUMMARY OF FINDINGS</div>
-            <p className="mt-1">
-              {row.name} demonstrated an excellent grasp of numerical and spatial concepts during
-              testing. He followed multi-step instructions effortlessly.
-            </p>
-          </section>
-          <section>
-            <div className="text-sm font-semibold tracking-wider text-purple-700">AREAS OF CONCERN</div>
-            <p className="mt-1">No significant behavioral concerns at this time.</p>
-          </section>
-          <section>
-            <div className="text-sm font-semibold tracking-wider text-purple-700">RECOMMENDATIONS</div>
-            <p className="mt-1">
-              Recommend continuing the current mainstreaming plan without additional support hours.
-            </p>
-          </section>
-        </div>
-    </Modal>
-  )
-}
-
 function ScoringAnalytics() {
   const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
@@ -74,6 +31,7 @@ function ScoringAnalytics() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     let on = true
@@ -100,6 +58,7 @@ function ScoringAnalytics() {
     const ms = statusFilter === 'all' || r.status === statusFilter
     return mq && ms
   })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -111,17 +70,24 @@ function ScoringAnalytics() {
           <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.needsSupport ?? '—'} label="Students Needing Support" />
         </div>
 
-        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+        <div className="mt-5 flex gap-6">
+        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <SearchBar
               value={query}
-              onChange={setQuery}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
               placeholder="Search student name…"
               className="flex-1"
             />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
               className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
             >
               <option value="all">All Statuses</option>
@@ -166,7 +132,7 @@ function ScoringAnalytics() {
                   </tr>
                 ) : null}
                 {!loading &&
-                  filtered.map((r) => (
+                  pageRows.map((r) => (
                   <tr key={r.id}>
                     <td className="py-3 font-medium text-slate-800">{r.name}</td>
                     <td className="py-3">{r.beh ?? '—'}</td>
@@ -179,7 +145,7 @@ function ScoringAnalytics() {
                     </td>
                     <td className="py-3">
                       <RowAction variant="view" onClick={() => setActive(r)}>
-                        Report
+                        View
                       </RowAction>
                     </td>
                   </tr>
@@ -187,9 +153,76 @@ function ScoringAnalytics() {
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
         </section>
 
-        {active ? <ReportModal row={active} onClose={() => setActive(null)} /> : null}
+        {active ? (
+          <>
+            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
+            <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-lg font-semibold text-purple-800">Details</div>
+                <button onClick={() => setActive(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div className="col-span-2">
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Student</dt>
+                  <dd className="font-medium text-purple-800">{active.name || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Behavioral Score</dt>
+                  <dd className="font-medium text-purple-800">{active.beh ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">GARS-3 Index</dt>
+                  <dd className="font-medium text-purple-800">{active.gars ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">CAFAT Score</dt>
+                  <dd className="font-medium text-purple-800">{active.cafat ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Status</dt>
+                  <dd>
+                    <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${STATUS_TONE[active.status] || STATUS_TONE['No Data']}`}>
+                      {active.status || '—'}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="mt-5 space-y-4 text-sm text-slate-700">
+                <section>
+                  <div className="text-xs font-semibold tracking-wider text-purple-700">SUMMARY OF FINDINGS</div>
+                  <p className="mt-1">
+                    {active.name} demonstrated an excellent grasp of numerical and spatial concepts during
+                    testing, and followed multi-step instructions effortlessly.
+                  </p>
+                </section>
+                <section>
+                  <div className="text-xs font-semibold tracking-wider text-purple-700">AREAS OF CONCERN</div>
+                  <p className="mt-1">No significant behavioral concerns at this time.</p>
+                </section>
+                <section>
+                  <div className="text-xs font-semibold tracking-wider text-purple-700">RECOMMENDATIONS</div>
+                  <p className="mt-1">
+                    Recommend continuing the current mainstreaming plan without additional support hours.
+                  </p>
+                </section>
+              </div>
+
+              <div className="mt-5">
+                <button className="w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
+                  Print Official Report
+                </button>
+              </div>
+            </aside>
+          </>
+        ) : null}
+        </div>
       </div>
     </>
   )

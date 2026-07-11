@@ -8,8 +8,11 @@ import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
+import Pagination from '../../../components/ui/Pagination'
 import StudentAdmissionForm from './StudentAdmissionForm'
 import StudentAdmissionDocument from './StudentAdmissionDocument'
+
+const PAGE_SIZE = 20
 
 const tone = {
   emerald: 'bg-emerald-100 text-emerald-700',
@@ -135,6 +138,7 @@ function Patients() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [page, setPage] = useState(1)
   const [openAdmissionForm, setOpenAdmissionForm] = useState(false)
   const [notice, setNotice] = useState(null)
 
@@ -165,6 +169,7 @@ function Patients() {
     const ms = statusFilter === 'all' || r.status === statusFilter
     return mq && ms
   })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -195,13 +200,19 @@ function Patients() {
           <div className="flex items-center justify-between gap-3">
             <SearchBar
               value={query}
-              onChange={setQuery}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
               placeholder="Search by name or ID…"
               className="flex-1"
             />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
               className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
             >
               <option value="all">All Statuses</option>
@@ -244,7 +255,7 @@ function Patients() {
                   </td>
                 </tr>
               ) : null}
-              {!loading && filtered.map((r) => (
+              {!loading && pageRows.map((r) => (
                 <tr key={r.id}>
                   <td className="py-3">
                     <div className="font-semibold text-slate-800">{r.name}</div>
@@ -269,6 +280,7 @@ function Patients() {
             </tbody>
           </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
         </section>
 
         {active ? (

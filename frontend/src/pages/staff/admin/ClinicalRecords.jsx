@@ -3,9 +3,12 @@ import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
+import Pagination from '../../../components/ui/Pagination'
 import ReportDocument from './ReportDocument'
 import { buildReport, printReport } from './report'
 import { api } from '../../../lib/api'
+
+const PAGE_SIZE = 20
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
@@ -62,6 +65,7 @@ function ClinicalRecords() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     let on = true
@@ -84,6 +88,7 @@ function ClinicalRecords() {
     const mt = typeFilter === 'all' || r.type === typeFilter
     return mq && mt
   })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -98,13 +103,19 @@ function ClinicalRecords() {
           <div className="flex items-center gap-3">
             <SearchBar
               value={query}
-              onChange={setQuery}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
               placeholder="Search student name"
               className="flex-1"
             />
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              onChange={(e) => {
+                setTypeFilter(e.target.value)
+                setPage(1)
+              }}
               className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
             >
               <option value="all">All Document Types</option>
@@ -146,7 +157,7 @@ function ClinicalRecords() {
                 </tr>
               ) : null}
               {!loading &&
-                filtered.map((r) => (
+                pageRows.map((r) => (
                 <tr key={r.id}>
                   <td className="py-3 font-medium text-slate-800">{r.name}</td>
                   <td className="py-3 text-slate-700">{r.type}</td>
@@ -169,6 +180,7 @@ function ClinicalRecords() {
             </tbody>
           </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
         </section>
 
         {active ? <DocumentViewer row={active} onClose={() => setActive(null)} /> : null}

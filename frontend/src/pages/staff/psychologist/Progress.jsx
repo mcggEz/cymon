@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
+import Pagination from '../../../components/ui/Pagination'
+import RowAction from '../../../components/ui/RowAction'
 import ProgressSummaryReportForm from './ProgressSummaryReportForm'
 import { api } from '../../../lib/api'
 
@@ -17,14 +19,15 @@ const STATUS_META = {
   in_progress: { label: 'In Progress', tone: 'amber' },
 }
 
-const PAGE_SIZE = 5
+const PAGE_SIZE = 20
 
 function Progress() {
+  const [active, setActive] = useState(null)
   const [items, setItems] = useState([])
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
-  const [shown, setShown] = useState(PAGE_SIZE)
+  const [page, setPage] = useState(1)
   const [openForm, setOpenForm] = useState(false)
   const [notice, setNotice] = useState(null)
 
@@ -51,7 +54,7 @@ function Progress() {
   const visible = q
     ? items.filter((i) => i.name.toLowerCase().includes(q) || (i.period || '').toLowerCase().includes(q))
     : items
-  const paged = visible.slice(0, shown)
+  const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -80,14 +83,15 @@ function Progress() {
               value={query}
               onChange={(v) => {
                 setQuery(v)
-                setShown(PAGE_SIZE)
+                setPage(1)
               }}
               placeholder="Search reports by student or period…"
             />
           </div>
         </section>
 
-        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+        <div className="mt-5 flex gap-6">
+        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
@@ -96,13 +100,14 @@ function Progress() {
                   <th className="py-3 text-left">Period</th>
                   <th className="py-3 text-left">Trend</th>
                   <th className="py-3 text-left">Status</th>
+                  <th className="py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={4} className="py-3">
+                        <td colSpan={5} className="py-3">
                           <Skeleton className="h-8 w-full" />
                         </td>
                       </tr>
@@ -110,7 +115,7 @@ function Progress() {
                   : null}
                 {!loading && visible.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
                       {q ? 'No reports match your search.' : 'No progress reports yet.'}
                     </td>
                   </tr>
@@ -137,24 +142,52 @@ function Progress() {
                             {meta.label}
                           </span>
                         </td>
+                        <td className="py-3">
+                          <RowAction variant="view" onClick={() => setActive(i)}>
+                            View
+                          </RowAction>
+                        </td>
                       </tr>
                     )
                   })}
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={visible.length} onPage={setPage} />
         </section>
 
-        {!loading && shown < visible.length ? (
-          <div className="mt-5 text-center">
-            <button
-              onClick={() => setShown((s) => s + PAGE_SIZE)}
-              className="rounded-full bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-            >
-              Click to View More
-            </button>
-          </div>
+        {active ? (
+          <>
+            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
+            <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-lg font-semibold text-purple-800">Details</div>
+                <button onClick={() => setActive(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Student</div>
+                  <div className="font-medium text-purple-800">{active.name || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Period</div>
+                  <div className="font-medium text-purple-800">{active.period || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Trend</div>
+                  <div className="font-medium text-purple-800">{active.trend || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
+                  <div className="font-medium text-purple-800">{(STATUS_META[active.status] || STATUS_META.draft).label}</div>
+                </div>
+              </dl>
+            </aside>
+          </>
         ) : null}
+        </div>
       </div>
 
       {openForm ? (

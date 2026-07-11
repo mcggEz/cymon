@@ -3,7 +3,11 @@ import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
+import Pagination from '../../../components/ui/Pagination'
+import RowAction from '../../../components/ui/RowAction'
 import BehavioralAssessmentForm from './BehavioralAssessmentForm'
+
+const PAGE_SIZE = 20
 
 const STATUS_META = {
   draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700' },
@@ -20,6 +24,7 @@ const Stat = ({ value, label, loading }) => (
 )
 
 function DraftingReports() {
+  const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -27,6 +32,7 @@ function DraftingReports() {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     let on = true
@@ -51,6 +57,7 @@ function DraftingReports() {
     const ms = statusFilter === 'all' || r.status === statusFilter
     return mq && mt && ms
   })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -77,17 +84,24 @@ function DraftingReports() {
           <Stat value={summary?.approved ?? '—'} label="Approved" loading={loading} />
         </div>
 
-        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+        <div className="mt-5 flex gap-6">
+        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
             <SearchBar
               value={query}
-              onChange={setQuery}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
               placeholder="Search by student or report…"
               className="w-64"
             />
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              onChange={(e) => {
+                setTypeFilter(e.target.value)
+                setPage(1)
+              }}
               className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
             >
               <option value="all">All Report Types</option>
@@ -96,7 +110,10 @@ function DraftingReports() {
             </select>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
               className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
             >
               <option value="all">All Statuses</option>
@@ -115,13 +132,14 @@ function DraftingReports() {
                   <th className="py-3 text-left">Title</th>
                   <th className="py-3 text-left">Date</th>
                   <th className="py-3 text-left">Status</th>
+                  <th className="py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={5} className="py-3">
+                        <td colSpan={6} className="py-3">
                           <Skeleton className="h-6 w-full" />
                         </td>
                       </tr>
@@ -129,13 +147,13 @@ function DraftingReports() {
                   : null}
                 {!loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan={6} className="py-6 text-center text-sm text-slate-500">
                       No reports match your filters.
                     </td>
                   </tr>
                 ) : null}
                 {!loading &&
-                  filtered.map((r) => {
+                  pageRows.map((r) => {
                     const meta = STATUS_META[r.status] || STATUS_META.draft
                     return (
                       <tr key={`${r.type}-${r.id}`}>
@@ -151,13 +169,60 @@ function DraftingReports() {
                             {meta.label}
                           </span>
                         </td>
+                        <td className="py-3">
+                          <RowAction variant="view" onClick={() => setActive(r)}>
+                            View
+                          </RowAction>
+                        </td>
                       </tr>
                     )
                   })}
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
         </section>
+
+        {active ? (
+          <>
+            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
+            <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-lg font-semibold text-purple-800">Details</div>
+                <button onClick={() => setActive(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Report Type</div>
+                  <div className="font-medium text-purple-800">{active.typeLabel || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Student</div>
+                  <div className="font-medium text-purple-800">{active.name || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">ID</div>
+                  <div className="font-medium text-purple-800">{active.sid || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Title</div>
+                  <div className="font-medium text-purple-800">{active.title || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Date</div>
+                  <div className="font-medium text-purple-800">{fmtDate(active.date)}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
+                  <div className="font-medium text-purple-800">{(STATUS_META[active.status] || STATUS_META.draft).label}</div>
+                </div>
+              </dl>
+            </aside>
+          </>
+        ) : null}
+        </div>
 
         {openForm === 'behavioral' ? <BehavioralAssessmentForm onClose={() => setOpenForm(null)} /> : null}
       </div>

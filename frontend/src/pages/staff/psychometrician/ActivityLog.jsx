@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
+import Pagination from '../../../components/ui/Pagination'
 import DailyActivityReportForm from './DailyActivityReportForm'
+
+const PAGE_SIZE = 20
 
 const STATUS_META = {
   draft: { label: 'Draft', tone: 'bg-amber-100 text-amber-700', action: 'Edit Log' },
@@ -18,6 +21,9 @@ function ActivityLog() {
   const [rows, setRows] = useState([])
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const load = () =>
     api.psychometrician
@@ -80,7 +86,7 @@ function ActivityLog() {
             {rows.length === 0 ? (
               <li className="py-4 text-sm text-slate-500">No session logs yet.</li>
             ) : null}
-            {rows.map((r) => {
+            {pageRows.map((r) => {
               const meta = STATUS_META[r.status] || STATUS_META.draft
               return (
               <li
@@ -107,6 +113,7 @@ function ActivityLog() {
               </>
             )}
           </ul>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
         </section>
 
         {active ? (

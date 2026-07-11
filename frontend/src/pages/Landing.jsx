@@ -16,6 +16,48 @@ const RoleItem = ({ title, body }) => (
   </div>
 )
 
+// Right-side hero visual: a rotated diamond lattice (the CMPS brand collage
+// look) — photo tiles interleaved with solid purple accent diamonds, over a
+// purple underlay so the seams read as the purple diagonals in the reference.
+// Photos are professional therapy-session stock (Unsplash, free for commercial
+// use) served from the Unsplash CDN; a grey gradient shows through if a tile's
+// image fails to load.
+const CLINIC_PHOTOS = [
+  'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=800&q=70&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1551847677-dc82d764e1eb?w=800&q=70&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1604881991720-f91add269bed?w=800&q=70&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1488901512066-cd403111aeb2?w=800&q=70&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1541533260371-b8fc9b596d84?w=800&q=70&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1573495804664-b1c0849525af?w=800&q=70&auto=format&fit=crop',
+]
+
+function HeroCollage() {
+  // 4x4 lattice. 'p' = purple accent diamond; a number indexes CLINIC_PHOTOS.
+  const tiles = ['p', 0, 1, 'p', 2, 3, 4, 5, 5, 4, 3, 2, 'p', 1, 0, 'p']
+  return (
+    <div className="relative aspect-square w-full overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-br from-violet/50 to-purple-900/70"
+      />
+      <div className="absolute left-1/2 top-1/2 grid w-[142%] -translate-x-1/2 -translate-y-1/2 rotate-45 grid-cols-4 gap-1.5">
+        {tiles.map((t, i) => (
+          <div key={i} className="aspect-square overflow-hidden rounded-[3px] ring-1 ring-white/10">
+            {t === 'p' ? (
+              <div className="h-full w-full bg-gradient-to-br from-violet to-purple-800" />
+            ) : (
+              <div
+                className="h-full w-full -rotate-45 scale-150 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 bg-cover bg-center"
+                style={{ backgroundImage: `url(${CLINIC_PHOTOS[t]})` }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function Landing() {
   const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
@@ -219,8 +261,8 @@ function Landing() {
           style={{ background: 'radial-gradient(circle, rgba(221,128,188,0.10) 0%, rgba(23,20,31,0) 70%)' }}
         />
 
-        <div className="relative z-20 mx-auto w-full max-w-7xl">
-          <div className="max-w-3xl">
+        <div className="relative z-20 mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="max-w-2xl">
             <h1 className="font-sans text-4xl font-semibold leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
               Clarity of Mind, <span className="text-violet">Journey to Wellness.</span>
             </h1>
@@ -241,6 +283,9 @@ function Landing() {
                 </svg>
               </button>
             </div>
+          </div>
+          <div className="hidden lg:block">
+            <HeroCollage />
           </div>
         </div>
       </section>

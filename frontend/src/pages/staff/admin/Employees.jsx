@@ -6,7 +6,10 @@ import Skeleton from '../../../components/ui/Skeleton'
 import Modal from '../../../components/ui/Modal'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
+import Pagination from '../../../components/ui/Pagination'
 import { api } from '../../../lib/api'
+
+const PAGE_SIZE = 20
 
 const ROLES = [
   { value: 'psychologist', label: 'Psychologist / Clinician' },
@@ -243,6 +246,7 @@ function Employees() {
   const [listError, setListError] = useState(null)
   const [query, setQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
+  const [page, setPage] = useState(1)
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
   const toggleRole = (r) =>
@@ -353,6 +357,7 @@ function Employees() {
     const matchesRole = roleFilter === 'all' || e.role === roleFilter
     return matchesQ && matchesRole
   })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -492,13 +497,19 @@ function Employees() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SearchBar
               value={query}
-              onChange={setQuery}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
               placeholder="Search by name or email…"
               className="flex-1"
             />
             <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={(e) => {
+                setRoleFilter(e.target.value)
+                setPage(1)
+              }}
               className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
             >
               <option value="all">All Roles</option>
@@ -545,7 +556,7 @@ function Employees() {
                   </tr>
                 ) : null}
                 {!loadingList &&
-                  filtered.map((emp) => {
+                  pageRows.map((emp) => {
                     return (
                       <tr key={emp.id}>
                         <td className="py-3">
@@ -580,6 +591,7 @@ function Employees() {
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
         </section>
 
         {viewing ? (

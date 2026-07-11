@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
+import RowAction from '../../../components/ui/RowAction'
+import Pagination from '../../../components/ui/Pagination'
 import { api } from '../../../lib/api'
+
+const PAGE_SIZE = 20
 
 const TABS = ['All Issues', 'Overdue', 'Pending Signature', 'SPED (FO-02)', 'SummerScape (FO-13)']
 
@@ -34,10 +38,12 @@ const Stat = ({ value, label, color }) => (
 function Compliance() {
   const [tab, setTab] = useState('All Issues')
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [active, setActive] = useState(null)
 
   const load = () => api.admin.compliance().then(setData).catch(() => {})
 
@@ -95,6 +101,7 @@ function Compliance() {
       (r.sid || '').toLowerCase().includes(q)
     return matchesTab && matchesQuery
   })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -115,12 +122,16 @@ function Compliance() {
           <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.total ?? '—'} label="Total Students" color="text-sky-600" />
         </div>
 
-        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+        <div className="mt-5 flex gap-6">
+        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center gap-2 border-b border-purple-100 pb-3">
             {TABS.map((t) => (
               <button
                 key={t}
-                onClick={() => setTab(t)}
+                onClick={() => {
+                  setTab(t)
+                  setPage(1)
+                }}
                 className={[
                   'rounded-full px-3 py-1 text-xs font-semibold',
                   tab === t ? 'bg-purple-700 text-white' : 'text-purple-700 hover:bg-purple-50',
@@ -131,7 +142,10 @@ function Compliance() {
             ))}
             <SearchBar
               value={query}
-              onChange={setQuery}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
               placeholder="Search students…"
               className="ml-auto w-56"
             />
@@ -168,7 +182,7 @@ function Compliance() {
                   </tr>
                 ) : null}
                 {!loading &&
-                  filtered.map((r) => (
+                  pageRows.map((r) => (
                   <tr key={r.id}>
                     <td className="py-3">
                       <div className="font-medium text-slate-800">{r.student}</div>
@@ -184,6 +198,9 @@ function Compliance() {
                     <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>{r.label}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
+                        <RowAction variant="view" onClick={() => setActive(r)}>
+                          View
+                        </RowAction>
                         <button
                           onClick={() => remind(r)}
                           disabled={busyId === r.id}
@@ -205,6 +222,7 @@ function Compliance() {
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
 
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
             <div>Showing {filtered.length} compliance issues</div>
@@ -213,6 +231,73 @@ function Compliance() {
             </div>
           </div>
         </section>
+
+        {active ? (
+          <>
+            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
+            <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-lg font-semibold text-purple-800">Details</div>
+                <button onClick={() => setActive(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Student</dt>
+                  <dd className="font-medium text-purple-800">{active.student || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Student ID</dt>
+                  <dd className="font-medium text-purple-800">{active.sid || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Parent / Guardian</dt>
+                  <dd className="font-medium text-purple-800">{active.parent || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Email</dt>
+                  <dd className="font-medium text-purple-800">{active.email || '—'}</dd>
+                </div>
+                <div className="col-span-2">
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Missing Document</dt>
+                  <dd className="font-medium text-purple-800">{active.doc || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Form Code</dt>
+                  <dd className="font-medium text-purple-800">{active.code || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Due Date</dt>
+                  <dd className={`font-medium ${tone[active.tone] || 'text-purple-800'}`}>{active.due || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">Status</dt>
+                  <dd className={`font-medium ${tone[active.tone] || 'text-purple-800'}`}>{active.label || '—'}</dd>
+                </div>
+              </dl>
+
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => remind(active)}
+                  disabled={busyId === active.id}
+                  className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
+                >
+                  {busyId === active.id ? '…' : 'Remind'}
+                </button>
+                <button
+                  onClick={() => markProcessed(active)}
+                  disabled={busyId === active.id}
+                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-50"
+                >
+                  {busyId === active.id ? '…' : 'Process'}
+                </button>
+              </div>
+            </aside>
+          </>
+        ) : null}
+        </div>
       </div>
     </>
   )

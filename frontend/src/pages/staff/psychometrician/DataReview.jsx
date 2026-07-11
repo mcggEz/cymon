@@ -4,8 +4,11 @@ import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
+import Pagination from '../../../components/ui/Pagination'
 import Modal from '../../../components/ui/Modal'
 import { useAuth } from '../../../auth/useAuth'
+
+const PAGE_SIZE = 20
 
 const STATUS_META = {
   draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700' },
@@ -146,6 +149,7 @@ function DataReview() {
   const [processing, setProcessing] = useState(false)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [page, setPage] = useState(1)
 
   const load = () =>
     api.psychometrician
@@ -167,6 +171,7 @@ function DataReview() {
     const ms = statusFilter === 'all' || r.status === statusFilter
     return mq && ms
   })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const markProcessed = async (id) => {
     setProcessing(true)
@@ -209,13 +214,19 @@ function DataReview() {
           <div className="flex items-center justify-between gap-3">
             <SearchBar
               value={query}
-              onChange={setQuery}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
               placeholder="Search by student or caregiver…"
               className="w-72"
             />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
               className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
             >
               <option value="all">All Statuses</option>
@@ -261,7 +272,7 @@ function DataReview() {
                   </tr>
                 ) : null}
                 {!loading &&
-                  filtered.map((r) => {
+                  pageRows.map((r) => {
                   const meta = STATUS_META[r.status] || STATUS_META.submitted
                   return (
                   <tr key={r.id}>
@@ -291,6 +302,7 @@ function DataReview() {
               </tbody>
             </table>
           </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
         </section>
 
         {active ? (
