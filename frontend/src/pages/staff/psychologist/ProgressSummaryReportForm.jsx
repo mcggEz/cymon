@@ -1,206 +1,182 @@
 import { useState } from 'react'
 import FormShell from '../../../components/ui/FormShell'
-import FormSection from '../../../components/ui/FormSection'
-import FormField from '../../../components/ui/FormField'
-import SignaturePad from '../../../components/ui/SignaturePad'
-import { fieldInput, fieldTextarea } from '../../../components/ui/formStyles'
+import FormHeading from '../../../components/ui/FormHeading'
+import BlankField from '../../../components/ui/BlankField'
 
-const DOMAINS = ['Conceptual', 'Social', 'Bodily Kinesthetics', 'Practical']
+const th =
+  'border border-slate-500 bg-purple-100 px-2 py-1 text-center text-xs font-bold text-slate-800'
+const inputCell = 'border border-slate-500 p-0 align-top'
+const planCellInput =
+  'w-full resize-y bg-transparent px-2 py-1 text-sm text-slate-900 focus:bg-purple-50 focus:outline-none'
 
-const ASSESS_PLACEHOLDERS = {
-  Conceptual:
-    'e.g. During the cup-stacking activity, describe independence level, hand-over-hand assistance needed, and progress across attempts.',
-  Social:
-    'e.g. During group activities (Zumba, action imitation), describe engagement, ability to follow steps, and peer interaction.',
-  'Bodily Kinesthetics':
-    'e.g. During ball throwing/catching or gross motor activities, describe coordination, force/control, and response to guidance.',
-  Practical:
-    'e.g. During ADL board or self-care tasks, describe independence, verbal/physical assistance required, and specific difficulties observed.',
-}
+const DATA_DOMAINS = [
+  'Conceptual Domain',
+  'Social Domain',
+  'Bodily Kinesthetics Domain',
+  'Practical Domain',
+]
 
-// Some domains contribute more than one plan card (Conceptual appears twice in
-// the standard plan). Cards follow the domain order below, filtered by the Data
-// checklist above.
-const PLAN_ROW_TEMPLATE = {
-  Practical: ['Practical Domain'],
-  Conceptual: ['Conceptual Domain', 'Conceptual Domain (Receptive/Expressive Labeling)'],
-  'Bodily Kinesthetics': ['Bodily Kinesthetic Domain'],
-  Social: ['Social Domain'],
-}
-const PLAN_ORDER = ['Practical', 'Conceptual', 'Bodily Kinesthetics', 'Social']
+const emptyRow = () => ({
+  objective: '',
+  activities: '',
+  timeFrame: '',
+  responsible: '',
+  outcome: '',
+})
 
 function ProgressSummaryReportForm({ onClose }) {
-  const [domains, setDomains] = useState(() =>
-    DOMAINS.reduce((acc, d) => ({ ...acc, [d]: true }), {})
-  )
-  const [preparedSig, setPreparedSig] = useState(null)
-  const [notedSig, setNotedSig] = useState(null)
+  const [rows, setRows] = useState(() => [emptyRow(), emptyRow(), emptyRow()])
 
-  const toggleDomain = (d) => setDomains((s) => ({ ...s, [d]: !s[d] }))
-  const activeDomains = DOMAINS.filter((d) => domains[d])
-  const planCards = PLAN_ORDER.filter((d) => domains[d]).flatMap((d) =>
-    PLAN_ROW_TEMPLATE[d].map((label) => ({ domain: d, label }))
-  )
+  const update = (i, key, value) =>
+    setRows((r) => r.map((row, idx) => (idx === i ? { ...row, [key]: value } : row)))
+  const addRow = () => setRows((r) => [...r, emptyRow()])
+  const removeRow = (i) => setRows((r) => (r.length > 1 ? r.filter((_, idx) => idx !== i) : r))
 
   return (
     <FormShell
       title="Monthly Progress Summary Report (PSR)"
-      subtitle="Reporting period, domain assessment, and activity plan"
-      code="CMPS:SE-FO-08 rev.0"
+      code="CMPS:SE-FO-09 rev.0 03172026"
+      confidential={false}
       onClose={onClose}
     >
-      <FormSection eyebrow="Period" title="Reporting Period">
-        <FormField label="Reporting Period" hint="e.g. March – May 2026">
-          <input type="text" className={fieldInput} placeholder="e.g. March – May 2026" />
-        </FormField>
-      </FormSection>
+      {/* Reporting period + client information header */}
+      <div className="mb-4 space-y-2">
+        <BlankField label="Reporting Period" hint="e.g. March – May 2026" labelClassName="w-40" />
+        <BlankField label="Full Name" labelClassName="w-40" />
+        <BlankField label="Age / Sex" labelClassName="w-40" />
+        <BlankField label="Diagnosis" labelClassName="w-40" />
+      </div>
 
-      <FormSection eyebrow="01" title="Client Information">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <FormField label="Full Name">
-            <input type="text" className={fieldInput} placeholder="e.g. Dela Cruz, Juan M." />
-          </FormField>
-          <FormField label="Age / Sex">
-            <input type="text" className={fieldInput} placeholder="e.g. 6 / Male" />
-          </FormField>
-          <FormField label="Diagnosis">
-            <input type="text" className={fieldInput} placeholder="e.g. ASD, Level 1" />
-          </FormField>
+      <FormHeading numeral="">Data</FormHeading>
+      <p className="text-sm text-slate-800">
+        The client participated in a series of group activities that measured the client&apos;s
+        adaptive functioning in the following domains:
+      </p>
+      <ul className="mt-1 mb-2 list-disc pl-8 text-sm text-slate-800">
+        {DATA_DOMAINS.map((d) => (
+          <li key={d}>{d}</li>
+        ))}
+      </ul>
+      <textarea
+        rows={4}
+        className="w-full border border-slate-400 p-2 text-sm focus:border-purple-600 focus:outline-none"
+        placeholder="Describe the group activities conducted and the domains they measured during this reporting period."
+      />
+
+      <FormHeading numeral="">Assessment</FormHeading>
+      <textarea
+        rows={16}
+        className="w-full border border-slate-400 p-2 text-sm focus:border-purple-600 focus:outline-none"
+        placeholder="Summarize the client's overall demeanor and engagement, then describe observations per domain (Conceptual, Social, Practical, Bodily Kinesthetics): independence level, assistance required, and specific behaviors observed across attempts."
+      />
+
+      <FormHeading numeral="">Plan</FormHeading>
+      <p className="mb-2 text-sm text-slate-800">
+        These are the following Activity Plan to be implemented:
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px] border-collapse">
+          <thead>
+            <tr>
+              <th className={th}>Objective</th>
+              <th className={th}>Activities</th>
+              <th className={th}>Time Frame</th>
+              <th className={th}>Responsible Person</th>
+              <th className={th}>Expected Outcome</th>
+              <th className={`${th} w-10 print:hidden`} />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i}>
+                <td className={inputCell}>
+                  <textarea
+                    rows={4}
+                    className={planCellInput}
+                    value={row.objective}
+                    onChange={(e) => update(i, 'objective', e.target.value)}
+                  />
+                </td>
+                <td className={inputCell}>
+                  <textarea
+                    rows={4}
+                    className={planCellInput}
+                    value={row.activities}
+                    onChange={(e) => update(i, 'activities', e.target.value)}
+                  />
+                </td>
+                <td className={inputCell}>
+                  <textarea
+                    rows={4}
+                    className={planCellInput}
+                    value={row.timeFrame}
+                    onChange={(e) => update(i, 'timeFrame', e.target.value)}
+                  />
+                </td>
+                <td className={inputCell}>
+                  <textarea
+                    rows={4}
+                    className={planCellInput}
+                    value={row.responsible}
+                    onChange={(e) => update(i, 'responsible', e.target.value)}
+                  />
+                </td>
+                <td className={inputCell}>
+                  <textarea
+                    rows={4}
+                    className={planCellInput}
+                    value={row.outcome}
+                    onChange={(e) => update(i, 'outcome', e.target.value)}
+                  />
+                </td>
+                <td className="border border-slate-500 p-0 text-center align-middle print:hidden">
+                  <button
+                    type="button"
+                    onClick={() => removeRow(i)}
+                    className="px-2 py-1 text-xs font-medium text-rose-600 hover:text-rose-800"
+                    title="Remove row"
+                  >
+                    ×
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button
+        type="button"
+        onClick={addRow}
+        className="mt-2 border border-dashed border-purple-400 px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-50 print:hidden"
+      >
+        Add row
+      </button>
+
+      {/* Sign-off */}
+      <div className="mt-8 grid gap-8 sm:grid-cols-2">
+        <div>
+          <div className="text-slate-800">Prepared by:</div>
+          <div className="mt-7 font-bold text-slate-900">MARWIN A. GILBERO JR.</div>
+          <div className="text-slate-700">Clinic Intern – Pamantasan ng Cabuyao</div>
+          <div className="text-slate-700">Master of Arts in Psychology</div>
         </div>
-      </FormSection>
-
-      <FormSection eyebrow="02" title="Data">
-        <p className="mb-3 text-[11px] text-slate-400">
-          Select which domains this reporting period&apos;s activities measured. This also
-          determines which sections appear below in Assessment and Plan.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {DOMAINS.map((d) => {
-            const on = domains[d]
-            return (
-              <label
-                key={d}
-                className={[
-                  'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold',
-                  on
-                    ? 'border-purple-400 bg-purple-50 text-purple-900'
-                    : 'border-purple-200 text-slate-600',
-                ].join(' ')}
-              >
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-purple-700"
-                  checked={on}
-                  onChange={() => toggleDomain(d)}
-                />
-                {d} Domain
-              </label>
-            )
-          })}
-        </div>
-      </FormSection>
-
-      <FormSection eyebrow="03" title="Assessment">
-        <FormField label="General Overview" className="mb-4">
-          <textarea
-            className={fieldTextarea}
-            placeholder="Describe the client's overall demeanor, engagement, and general observations across the reporting period."
-          />
-        </FormField>
-        <div className="space-y-3">
-          {activeDomains.map((d) => (
-            <div key={d} className="rounded-xl border border-purple-100 bg-purple-50/30 p-4">
-              <div className="mb-2 font-serif text-sm font-semibold text-purple-900">
-                {d} Domain
-              </div>
-              <textarea className={fieldTextarea} placeholder={ASSESS_PLACEHOLDERS[d]} />
-            </div>
-          ))}
-          {activeDomains.length === 0 ? (
-            <p className="py-4 text-center text-sm text-slate-400">
-              Select at least one domain in Data above to add assessment sections.
-            </p>
-          ) : null}
-        </div>
-      </FormSection>
-
-      <FormSection eyebrow="04" title="Plan">
-        <p className="mb-3 text-[11px] text-slate-400">
-          Activity plan to be implemented next. Cards follow the domains selected in Data above —
-          fill in each field as your own observation/plan.
-        </p>
-        <div className="space-y-3">
-          {planCards.map((card, i) => (
-            <div
-              key={`${card.label}-${i}`}
-              className="rounded-xl border border-purple-100 bg-purple-50/30 p-4"
-            >
-              <div className="mb-3 font-serif text-sm font-semibold text-purple-900">
-                {card.label}
-              </div>
-              <FormField label="Objective" className="mb-3">
-                <textarea className={fieldTextarea} placeholder="Type the objective for this domain" />
-              </FormField>
-              <FormField label="Activities" className="mb-3">
-                <textarea
-                  className={fieldTextarea}
-                  placeholder="Type the activities / observations for this domain"
-                />
-              </FormField>
-              <div className="mb-3 grid gap-4 sm:grid-cols-2">
-                <FormField label="Time Frame">
-                  <input type="text" className={fieldInput} placeholder="e.g. Once a week" />
-                </FormField>
-                <FormField label="Responsible Person">
-                  <input type="text" className={fieldInput} placeholder="e.g. Activity Therapist" />
-                </FormField>
-              </div>
-              <FormField label="Expected Outcome">
-                <textarea className={fieldTextarea} placeholder="Type the expected outcome" />
-              </FormField>
-            </div>
-          ))}
-          {planCards.length === 0 ? (
-            <p className="py-4 text-center text-sm text-slate-400">
-              Select at least one domain in Data above to add plan cards.
-            </p>
-          ) : null}
-        </div>
-      </FormSection>
-
-      <FormSection eyebrow="05" title="Sign-off">
-        <p className="mb-3 text-[11px] text-slate-400">
-          Prepared by the assigned Registered Psychometrician (RPm); noted and approved by the
-          Registered Psychologist (RPsy).
-        </p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-purple-100 bg-purple-50/30 p-4">
-            <div className="mb-1 font-serif text-sm font-semibold text-purple-900">Prepared by</div>
-            <div className="mb-3 text-xs text-slate-500">Registered Psychometrician (RPm)</div>
-            <FormField label="Name" className="mb-3">
-              <input type="text" className={fieldInput} placeholder="Full name of RPm" />
-            </FormField>
-            <FormField label="License Number" className="mb-3">
-              <input type="text" className={fieldInput} placeholder="RPm license no." />
-            </FormField>
-            <SignaturePad label="Signature" value={preparedSig} onChange={setPreparedSig} />
+        <div>
+          <div className="text-slate-800">Reviewed by:</div>
+          <div className="mt-7 font-bold text-slate-900">
+            MS. CRISTINE LAE C. ERASGA, RPsy, RPm, CHRA
           </div>
-
-          <div className="rounded-xl border border-purple-100 bg-purple-50/30 p-4">
-            <div className="mb-1 font-serif text-sm font-semibold text-purple-900">
-              Noted / Approved by
-            </div>
-            <div className="mb-3 text-xs text-slate-500">Registered Psychologist (RPsy)</div>
-            <FormField label="Name" className="mb-3">
-              <input type="text" className={fieldInput} placeholder="Full name of RPsy" />
-            </FormField>
-            <FormField label="License Number" className="mb-3">
-              <input type="text" className={fieldInput} placeholder="RPsy license no." />
-            </FormField>
-            <SignaturePad label="Signature" value={notedSig} onChange={setNotedSig} />
-          </div>
+          <div className="text-slate-700">Supervising Psychologist</div>
+          <div className="text-slate-700">License Number: 0001942</div>
         </div>
-      </FormSection>
+        <div>
+          <div className="text-slate-800">Noted by:</div>
+          <div className="mt-7 font-bold text-slate-900">
+            DR. JINKY C. MALABANAN, RPm, RPsy, LPT, CHRA
+          </div>
+          <div className="text-slate-700">Executive Director</div>
+          <div className="text-slate-700">License Number: 0002278</div>
+        </div>
+      </div>
     </FormShell>
   )
 }

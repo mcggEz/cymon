@@ -1,19 +1,26 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 
-const CLINIC = {
-  name: 'ClearMind Psychological Services',
-  tagline: 'Clarity of Mind, Journey to Wellness.',
-  addr1: 'Blk 1 Lot 7 Palmsville Subdivision',
-  addr2: 'Brgy. Banlic, Cabuyao City, Laguna 4025',
-  contact: 'clearmind.psychservices@gmail.com · (+639)92-916-4078',
-}
+const CABUYAO = [
+  'Blk 1 Lot 7 Palmsville Subdivision',
+  'Brgy. Banlic, Cabuyao City, Laguna 4025',
+  'cabuyaoadmin@clearmindpsychservices.com',
+  '(+639)92-916-4078',
+]
+const ALABANG = [
+  'Unit 4-M, Westgate Tower, Madrigal Business',
+  'Park, 1709 Investment Dr, Barangay Ayala',
+  'Alabang, Muntinlupa City, Philippines, 1780',
+  'alabangadmin@clearmindpsychservices.com',
+  '(+639)70-885-8948',
+]
 
-// Full-screen document shell for a clinic form: a dark viewer toolbar (hidden in
-// print) over a white A4 "paper" holding the shared ClearMind letterhead, title,
-// and the form body. The SAME markup is what prints — "Print / Save as PDF" runs
-// window.print(), and the print stylesheet hides the app and toolbar so only the
-// paper prints. Portaled to <body> so print isolation works regardless of nesting.
+// Full-screen document shell that reproduces the printed CMPS form template:
+// a dual-office letterhead (Cabuyao / ClearMind wordmark / Alabang), a bordered
+// content frame carrying the form code + title, and the "Clarity of Mind,
+// Journey to Wellness." footer, over faint purple wave decoration. The SAME
+// markup prints — the print stylesheet hides the app and the viewer toolbar and
+// forces exact colors so the letterhead and frame render into the PDF.
 function FormShell({ title, subtitle, code, confidential = true, onReset, onClose, children }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -29,7 +36,7 @@ function FormShell({ title, subtitle, code, confidential = true, onReset, onClos
       aria-modal="true"
       aria-label={title}
     >
-      <style>{`@media print{#root{display:none!important}#form-portal{position:static!important;background:#fff!important}@page{size:A4;margin:14mm}}`}</style>
+      <style>{`@media print{#root{display:none!important}#form-portal{position:static!important;background:#fff!important}#form-portal *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}@page{size:A4;margin:10mm}}`}</style>
 
       <div className="flex items-center justify-between gap-3 border-b border-slate-700 bg-slate-900 px-4 py-3 text-white print:hidden">
         <div className="min-w-0">
@@ -61,43 +68,62 @@ function FormShell({ title, subtitle, code, confidential = true, onReset, onClos
       </div>
 
       <div className="flex-1 overflow-y-auto bg-slate-500/30 p-4 sm:p-8 print:overflow-visible print:bg-white print:p-0">
-        <article className="mx-auto w-full max-w-[900px] bg-white p-6 shadow-xl ring-1 ring-black/5 sm:p-10 print:max-w-none print:p-0 print:shadow-none print:ring-0">
-          <header className="flex flex-wrap items-start justify-between gap-3 border-b border-purple-100 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-purple-700 to-purple-400 font-serif text-lg font-semibold text-white">
-                CM
-              </div>
-              <div>
-                <div className="font-serif text-lg font-semibold text-purple-900">{CLINIC.name}</div>
-                <div className="text-[11px] italic text-purple-400">{CLINIC.tagline}</div>
+        <article className="relative mx-auto w-full max-w-[850px] overflow-hidden bg-white px-7 pb-4 pt-6 shadow-xl ring-1 ring-black/5 sm:px-10 print:max-w-none print:shadow-none print:ring-0">
+          {/* faint purple wave decoration (approximation of the printed template) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-40"
+            style={{ background: 'radial-gradient(120% 80% at 50% -20%, rgba(124,58,237,0.10), transparent 70%)' }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-44"
+            style={{ background: 'radial-gradient(120% 90% at 50% 120%, rgba(124,58,237,0.14), transparent 70%)' }}
+          />
+
+          {/* Letterhead */}
+          <header className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <div className="text-center text-[9px] leading-tight text-purple-800">
+              <div className="text-[11px] font-bold tracking-wide">CABUYAO</div>
+              {CABUYAO.map((l) => (
+                <div key={l} className="font-semibold">{l}</div>
+              ))}
+            </div>
+            <div className="text-center">
+              <div className="font-serif text-2xl font-semibold leading-none text-purple-800">ClearMind</div>
+              <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-purple-500">
+                Psychological Services
               </div>
             </div>
-            <div className="text-right text-[11px] leading-relaxed text-slate-500">
-              {CLINIC.addr1}
-              <br />
-              {CLINIC.addr2}
-              <br />
-              {CLINIC.contact}
-              {code ? (
-                <>
-                  <br />
-                  <span className="font-mono text-[10px] text-purple-400">{code}</span>
-                </>
-              ) : null}
+            <div className="text-center text-[9px] leading-tight text-purple-800">
+              <div className="text-[11px] font-bold tracking-wide">ALABANG</div>
+              {ALABANG.map((l) => (
+                <div key={l} className="font-semibold">{l}</div>
+              ))}
             </div>
           </header>
 
-          <div className="mt-4 text-center">
-            <h1 className="font-serif text-2xl font-semibold text-purple-900">{title}</h1>
-            {subtitle ? <div className="mt-0.5 text-sm text-slate-500">{subtitle}</div> : null}
-            {confidential ? (
-              <div className="mt-2 inline-flex rounded-full bg-rose-50 px-3 py-1 text-[11px] font-semibold tracking-wide text-rose-600">
-                Highly Confidential
-              </div>
+          {/* Bordered content frame */}
+          <div className="relative mt-3 border-[1.5px] border-slate-900 px-6 py-4">
+            {code ? (
+              <div className="text-right text-[11px] font-bold text-purple-700">{code}</div>
             ) : null}
+            <div className="text-center">
+              <h1 className="text-lg font-bold uppercase tracking-wide text-purple-800">{title}</h1>
+              {subtitle ? (
+                <div className="text-sm font-bold uppercase tracking-wide text-purple-800">{subtitle}</div>
+              ) : null}
+              {confidential ? (
+                <div className="text-xs font-bold text-purple-700">(Highly Confidential)</div>
+              ) : null}
+            </div>
+            <div className="mt-3">{children}</div>
           </div>
 
-          <div className="mt-6">{children}</div>
+          {/* Footer tagline */}
+          <div className="relative mt-2 text-center font-serif text-sm italic text-purple-700">
+            Clarity of Mind, Journey to Wellness.
+          </div>
         </article>
       </div>
     </div>,

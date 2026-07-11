@@ -1,310 +1,265 @@
-import { useMemo, useState } from 'react'
+import { Fragment } from 'react'
 import FormShell from '../../../components/ui/FormShell'
-import FormSection from '../../../components/ui/FormSection'
-import FormField from '../../../components/ui/FormField'
-import SignaturePad from '../../../components/ui/SignaturePad'
-import { fieldInput } from '../../../components/ui/formStyles'
+import FormHeading from '../../../components/ui/FormHeading'
+import BlankField from '../../../components/ui/BlankField'
+import { blankInput, cellInput } from '../../../components/ui/formStyles'
+
+const th =
+  'border border-slate-500 bg-purple-100 px-2 py-1 text-center text-xs font-bold text-slate-800'
+const rowLabelCell = 'border border-slate-500 bg-purple-50 px-2 py-1 text-left text-sm text-slate-800'
+const inputCell = 'border border-slate-500 p-0 text-center'
+
+const YNA = ['Yes', 'No', 'N/A']
+const YN = ['Yes', 'No']
 
 const DOMAINS = [
   {
-    title: 'I. Practical Domain',
-    subs: [
-      { label: 'A. Appearance', type: 'yna', items: ['Dresses appropriately for the occasion'] },
+    numeral: 'I',
+    heading: 'Practical Domain',
+    columns: YNA,
+    categories: [
       {
-        label: 'B. Activities of Daily Living',
-        type: 'yna',
+        name: 'A. APPEARANCE',
+        items: [{ n: 1, text: 'Dresses appropiate to the occassion' }],
+      },
+      {
+        name: 'B. ACTIVITIES OF DAILY LIVING',
         items: [
-          'Opens a simple container or zipper',
-          'Can demonstrate handwashing when asked',
-          'Removes or puts on a cloth/item (shoe, earring)',
-          'Can independently drink from a cup or bottle',
+          { n: 1, text: 'Opens a simple container or zipper' },
+          { n: 2, text: 'Can demonstrate handwashing when asked' },
+          { n: 3, text: 'Removes or puts on an cloth/item (shoe,earring)' },
+          { n: 4, text: 'Can independently drink from a cup or bottle' },
         ],
       },
     ],
   },
   {
-    title: 'II. Conceptual Domain',
-    subs: [
+    numeral: 'II',
+    heading: 'Conceptual Domain',
+    columns: YNA,
+    categories: [
       {
-        label: 'A. Object Recognition',
-        type: 'yna',
+        name: 'A. OBJECT RECOGNITION',
         items: [
-          'Names at least two (2) familiar objects (pen, bottle)',
-          'Can identify familiar faces (mother, father)',
+          { n: 1, text: 'Names at least two(2) familiar objects (pen, bottle)' },
+          { n: 2, text: 'Can identify familiar faces (mother, father)' },
         ],
       },
       {
-        label: 'B. Identifying Details',
-        type: 'yna',
-        items: ['Can state his/her own name', 'Can tell his/her birthday and/or age'],
-      },
-      {
-        label: 'C. Place Recognition',
-        type: 'yna',
-        items: ['Can identify the current location', 'Can tell his/her home address (landmark)'],
-      },
-      {
-        label: 'D. Time Perception',
-        type: 'yna',
-        items: ['Can identify current time (approximate acceptable)', 'Can identify the current year'],
-      },
-      {
-        label: 'E. Memory',
-        type: 'yna',
-        items: ['Can recall simple past details (food eaten yesterday)', 'Can repeat two named objects'],
-      },
-    ],
-  },
-  {
-    title: 'III. Social Domain',
-    subs: [
-      {
-        label: 'A. Affect & Interaction',
-        type: 'yna',
+        name: 'B. IDENTIFYING DETAILS',
         items: [
-          'Makes eye contact when name is called',
-          'Responds to greetings (verbal or gesture)',
-          'Can show emotions (happy, sad)',
-          'Does not show aggressive behaviors',
-          'Can identify basic emotions',
+          { n: 1, text: 'Can state his/her own name' },
+          { n: 2, text: 'Can tell his/her birthday and/or age' },
+        ],
+      },
+      {
+        name: 'C. PLACE RECOGNITION',
+        items: [
+          { n: 1, text: 'Can identify the current location' },
+          { n: 2, text: 'Can tell his/her home address (landmark)' },
+        ],
+      },
+      {
+        name: 'D. TIME PERCEPTION',
+        items: [
+          { n: 1, text: 'Can identify current time (approximate acceptable)' },
+          { n: 2, text: 'Can identify the current year' },
+        ],
+      },
+      {
+        name: 'E. MEMORY',
+        items: [
+          { n: 1, text: 'Can recall simple past details (food eaten yesterday)' },
+          { n: 2, text: 'Can repeat two named objects' },
         ],
       },
     ],
   },
   {
-    title: 'IV. Bodily Kinesthetics Domain',
-    subs: [
+    numeral: 'III',
+    heading: 'Social Domain',
+    columns: YNA,
+    categories: [
       {
-        label: 'A. Fine Motor Skills',
-        type: 'yna',
+        name: 'A. AFFECT & INTERACTION',
         items: [
-          'Can hold objects appropriately (pencil)',
-          'Writes letters or name legibly',
-          'Can color within the lines',
-          'Can demonstrate hand-eye coordination (tracing)',
-          'Can copy basic shapes (circle, triangle, square)',
-        ],
-      },
-      {
-        label: 'B. Gross Motor Skills',
-        type: 'yna',
-        items: [
-          'Can stand on one foot briefly',
-          'Walks steadily across the room',
-          'Can jump forward with both feet together',
-          'Climb stairs using alternating feet',
+          { n: 1, text: 'Makes eye contact when name is called' },
+          { n: 1, text: 'Responds to greetings (verbal or gesture)' },
+          { n: 2, text: 'Can show emotions (happy, sad)' },
+          { n: 3, text: 'Does not show aggressive behaviors' },
+          { n: 4, text: 'Can identify basic emotions' },
         ],
       },
     ],
   },
   {
-    title: 'Perceptual Disturbances',
-    subs: [{ label: null, type: 'yna', items: ['Hallucination', 'Delusions'] }],
+    numeral: 'IV',
+    heading: 'Bodily Kinesthetics Domain',
+    columns: YNA,
+    categories: [
+      {
+        name: 'A. FINE MOTOR SKILLS',
+        items: [
+          { n: 1, text: 'Can hold obejcts appropriately (pencil)' },
+          { n: 2, text: 'Writes letters or name legibly' },
+          { n: 4, text: 'Can color within the lines' },
+          { n: 5, text: 'Can demonstrate hand-eye coordination (tracing)' },
+          { n: 6, text: 'Can copy basic shapes (circle, triangle, square)' },
+        ],
+      },
+      {
+        name: 'B. GROSS MOTOR SKILLS',
+        items: [
+          { n: 1, text: 'Can stand on one foot briefly' },
+          { n: 2, text: 'Walks steadily across the room' },
+          { n: 3, text: 'Can jump forward with boot feet together' },
+          { n: 4, text: 'Climb stairs using alternating feet' },
+        ],
+      },
+    ],
   },
   {
-    title: 'Stimming',
-    subs: [
+    numeral: '',
+    heading: 'Perceptual Disturbances',
+    columns: YNA,
+    categories: [
       {
-        label: null,
-        type: 'yn',
+        name: 'PERCEPTUAL DISTURBANCES',
         items: [
-          'Verbal (echolalia, humming)',
-          'Auditory (sound sensitivity)',
-          'Visual (fixation to objects, constant eye movement)',
-          'Proprioceptive (jumping, crashing into objects)',
-          'Vestibular (rocking, spinning)',
-          'Oral (chewing, biting, sucking)',
-          'Tactile (excoriation, skin rubbing, fidgeting)',
+          { n: 1, text: 'Hallucination' },
+          { n: 2, text: 'Delusions' },
+        ],
+      },
+    ],
+  },
+  {
+    numeral: '',
+    heading: 'Stimming',
+    columns: YN,
+    categories: [
+      {
+        name: 'STIMMING',
+        items: [
+          { n: 1, text: 'Verbal (echolalia, humming)' },
+          { n: 2, text: 'Auditory (sound sensitivity)' },
+          { n: 3, text: 'Visual (fixation to objects, constant eye movement)' },
+          { n: 4, text: 'Proprioceptive (jumping, crashing into objects)' },
+          { n: 5, text: 'Vestibular (rocking, spinning)' },
+          { n: 6, text: 'Oral (chewing, biting, sucking)' },
+          { n: 7, text: 'Tactile (excoriation, skin rubbing, fidgeting)' },
         ],
       },
     ],
   },
 ]
 
-const ROWS = []
-DOMAINS.forEach((d, di) =>
-  d.subs.forEach((s, si) =>
-    s.items.forEach((text, ii) => ROWS.push({ id: `${di}-${si}-${ii}`, text, type: s.type }))
-  )
-)
-const TOTAL_ITEMS = ROWS.length
-const ROW_NUM = Object.fromEntries(ROWS.map((r, i) => [r.id, i + 1]))
-
-const OPTION_STYLES = {
-  yes: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  no: 'bg-rose-100 text-rose-700 border-rose-200',
-  na: 'bg-slate-100 text-slate-600 border-slate-300',
-}
-
-function AnswerGroup({ id, type, value, onChange }) {
-  const opts =
-    type === 'yn'
-      ? [['yes', 'Yes'], ['no', 'No']]
-      : [['yes', 'Yes'], ['no', 'No'], ['na', 'N/A']]
+function ChecklistTable({ columns, categories }) {
+  const span = columns.length + 3
   return (
-    <div className="flex gap-1">
-      {opts.map(([v, label]) => {
-        const active = value === v
-        return (
-          <label
-            key={v}
-            className={`flex-1 cursor-pointer rounded-md border px-2 py-1.5 text-center text-[11px] font-bold ${
-              active ? OPTION_STYLES[v] : 'border-purple-200 text-slate-500 hover:bg-purple-50'
-            }`}
-          >
-            <input
-              type="radio"
-              name={`row-${id}`}
-              className="sr-only"
-              checked={active}
-              onChange={() => onChange(id, v)}
-            />
-            {label}
-          </label>
-        )
-      })}
-    </div>
-  )
-}
-
-function FormBody() {
-  const [answers, setAnswers] = useState({})
-  const [prevDiag, setPrevDiag] = useState('')
-  const [sig, setSig] = useState(null)
-  const setAnswer = (id, v) => setAnswers((a) => ({ ...a, [id]: v }))
-
-  const answered = useMemo(
-    () => ROWS.filter((r) => answers[r.id]).length,
-    [answers]
-  )
-  const pct = TOTAL_ITEMS ? Math.round((answered / TOTAL_ITEMS) * 100) : 0
-
-  return (
-    <div>
-      <FormSection eyebrow="01" title="Personal Information of Student">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <FormField label="Date">
-            <input type="date" className={fieldInput} />
-          </FormField>
-          <FormField label="Full Name (LN, FN MI)">
-            <input className={fieldInput} placeholder="e.g. Dela Cruz, Juan M." />
-          </FormField>
-          <FormField label="Age / Sex">
-            <input className={fieldInput} placeholder="e.g. 7 / Male" />
-          </FormField>
-          <FormField label="Birthdate">
-            <input type="date" className={fieldInput} />
-          </FormField>
-        </div>
-      </FormSection>
-
-      <FormSection eyebrow="02" title="Diagnosis">
-        <FormField label="Was the student previously diagnosed / assessed?" className="mb-4">
-          <div className="flex max-w-xs gap-2">
-            {['Yes', 'No'].map((v) => (
-              <label
-                key={v}
-                className={`flex-1 cursor-pointer rounded-md border px-3 py-2 text-center text-sm font-semibold ${
-                  prevDiag === v
-                    ? 'border-purple-400 bg-purple-100 text-purple-900'
-                    : 'border-purple-200 text-slate-600 hover:bg-purple-50'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="prevDiag"
-                  className="sr-only"
-                  checked={prevDiag === v}
-                  onChange={() => setPrevDiag(v)}
-                />
-                {v}
-              </label>
-            ))}
-          </div>
-        </FormField>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <FormField label="Diagnosis">
-            <input className={fieldInput} />
-          </FormField>
-          <FormField label="Medical History">
-            <input className={fieldInput} />
-          </FormField>
-          <FormField label="Family History">
-            <input className={fieldInput} />
-          </FormField>
-        </div>
-      </FormSection>
-
-      <FormSection eyebrow="Progress" title="Checklist completion">
-        <div className="h-2 overflow-hidden rounded-full bg-purple-100">
-          <div className="h-full rounded-full bg-purple-700 transition-all" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="mt-1 flex justify-between text-xs text-slate-500">
-          <span>{`${answered} of ${TOTAL_ITEMS} items answered`}</span>
-          <span>{pct}%</span>
-        </div>
-      </FormSection>
-
-      <FormSection eyebrow="03" title="Behavioral Checklist">
-        {DOMAINS.map((domain, di) => (
-          <div key={di}>
-            <div className="mt-6 border-t-2 border-purple-100 pt-3 font-serif text-base font-semibold text-purple-900 first:mt-0 first:border-t-0 first:pt-0">
-              {domain.title}
-            </div>
-            {domain.subs.map((sub, si) => (
-              <div key={si}>
-                {sub.label ? (
-                  <div className="mt-4 text-[12px] font-bold uppercase tracking-wide text-purple-500">
-                    {sub.label}
-                  </div>
-                ) : null}
-                {sub.items.map((text, ii) => {
-                  const id = `${di}-${si}-${ii}`
-                  return (
-                    <div key={id} className="border-b border-dashed border-purple-100 py-3 last:border-b-0">
-                      <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[24px_1fr_200px]">
-                        <div className="font-mono text-[11px] text-purple-300">{ROW_NUM[id]}</div>
-                        <div className="text-sm text-slate-700">{text}</div>
-                        <AnswerGroup id={id} type={sub.type} value={answers[id]} onChange={setAnswer} />
-                      </div>
-                      <input
-                        className={fieldInput + ' mt-2 py-1.5 text-xs sm:ml-8 sm:w-[calc(100%-2rem)]'}
-                        placeholder="Remarks (optional)"
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
-        ))}
-      </FormSection>
-
-      <FormSection eyebrow="Sign-off" title="Signature over Printed Name of Evaluator / Date">
-        <div className="mb-4 grid gap-4 sm:grid-cols-2">
-          <FormField label="Printed Name of Evaluator">
-            <input className={fieldInput} />
-          </FormField>
-          <FormField label="Date">
-            <input type="date" className={fieldInput} />
-          </FormField>
-        </div>
-        <SignaturePad label="Evaluator signature" value={sig} onChange={setSig} />
-      </FormSection>
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <colgroup>
+          <col className="w-8" />
+          <col />
+          {columns.map((c) => (
+            <col key={c} className="w-12" />
+          ))}
+          <col className="w-2/5" />
+        </colgroup>
+        <tbody>
+          {categories.map((cat, ci) => (
+            <Fragment key={cat.name}>
+              {ci === 0 ? (
+                <tr>
+                  <td colSpan={2} className={th}>
+                    {cat.name}
+                  </td>
+                  {columns.map((c) => (
+                    <td key={c} className={th}>
+                      {c}
+                    </td>
+                  ))}
+                  <td className={th}>Remarks</td>
+                </tr>
+              ) : (
+                <tr>
+                  <td colSpan={span} className={th}>
+                    {cat.name}
+                  </td>
+                </tr>
+              )}
+              {cat.items.map((it, ii) => (
+                <tr key={`${cat.name}-${ii}`}>
+                  <td className={`${rowLabelCell} text-center`}>{it.n}</td>
+                  <td className={rowLabelCell}>{it.text}</td>
+                  {columns.map((c) => (
+                    <td key={c} className={inputCell}>
+                      <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
+                    </td>
+                  ))}
+                  <td className={inputCell}>
+                    <input className={cellInput} />
+                  </td>
+                </tr>
+              ))}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
 
 function MmseForm({ onClose }) {
-  const [resetKey, setResetKey] = useState(0)
   return (
     <FormShell
       title="Mini-Mental Status Examination"
       code="CMPS:SE-FO-04 rev.0 02192026"
-      onReset={() => setResetKey((k) => k + 1)}
+      confidential={false}
       onClose={onClose}
     >
-      <FormBody key={resetKey} />
+      <div className="space-y-1">
+        <BlankField label="Date" labelClassName="w-40" />
+
+        <FormHeading numeral="">Personal Information of Student</FormHeading>
+        <BlankField label="Full Name (LN, FN MI)" labelClassName="w-56" />
+        <BlankField label="Age/Sex" labelClassName="w-56" />
+        <BlankField label="Birthdate" labelClassName="w-56" />
+
+        <FormHeading numeral="">Diagnosis</FormHeading>
+        <BlankField
+          label="Was the student previously diagnosed/assessed?"
+          labelClassName="w-auto"
+        >
+          <span className="flex items-center gap-6 text-sm text-slate-800">
+            <label className="flex items-center gap-1.5">
+              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
+              Yes
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
+              No
+            </label>
+          </span>
+        </BlankField>
+        <BlankField label="Diagnosis" labelClassName="w-56" />
+        <BlankField label="Medical History" labelClassName="w-56" />
+        <BlankField label="Family History" labelClassName="w-56" />
+      </div>
+
+      {DOMAINS.map((domain) => (
+        <div key={domain.heading}>
+          <FormHeading numeral={domain.numeral}>{domain.heading}</FormHeading>
+          <ChecklistTable columns={domain.columns} categories={domain.categories} />
+        </div>
+      ))}
+
+      <div className="mx-auto mt-10 max-w-md">
+        <input className={`${blankInput} text-center`} />
+        <div className="mt-1 text-center text-[9px] font-bold uppercase tracking-wide text-slate-700">
+          Signature over Printed Name of Evaluator / Date
+        </div>
+      </div>
     </FormShell>
   )
 }
