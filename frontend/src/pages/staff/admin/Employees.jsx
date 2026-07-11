@@ -81,7 +81,7 @@ const Info = ({ label, value }) => (
   </div>
 )
 
-function EmployeeModal({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
+function EmployeeDetail({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
   const [confirm, setConfirm] = useState(false)
   const [editingRoles, setEditingRoles] = useState(false)
   const [role, setRole] = useState(emp.role)
@@ -113,7 +113,7 @@ function EmployeeModal({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
   }
 
   return (
-    <Modal title="Employee Details" onClose={onClose} maxWidth="max-w-lg">
+    <>
         <div className="flex items-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-sm font-bold text-purple-700">
             {emp.avatar_url ? <img src={emp.avatar_url} alt="" className="h-full w-full object-cover" /> : initialsOf(emp.name)}
@@ -224,7 +224,7 @@ function EmployeeModal({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
             </div>
           )}
         </div>
-    </Modal>
+    </>
   )
 }
 
@@ -511,7 +511,8 @@ function Employees() {
           </div>
         </section>
 
-        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+        <div className="mt-5 flex gap-6">
+        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-sm">
               <thead>
@@ -582,8 +583,26 @@ function Employees() {
         </section>
 
         {viewing ? (
-          <EmployeeModal emp={viewing} onClose={() => setViewing(null)} onDeactivate={deactivate} onSaveRoles={saveRoles} busy={busy} />
+          <>
+            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setViewing(null)} aria-hidden="true" />
+            <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-lg font-semibold text-purple-800">Employee Details</div>
+                <button onClick={() => setViewing(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+              <EmployeeDetail
+                emp={viewing}
+                onClose={() => setViewing(null)}
+                onDeactivate={deactivate}
+                onSaveRoles={saveRoles}
+                busy={busy}
+              />
+            </aside>
+          </>
         ) : null}
+        </div>
       </div>
     </>
   )

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import FormShell from '../../../components/ui/FormShell'
 import FormHeading from '../../../components/ui/FormHeading'
 import BlankField from '../../../components/ui/BlankField'
+import SignatureField from '../../../components/ui/SignatureField'
 import { blankInput } from '../../../components/ui/formStyles'
 import { api } from '../../../lib/api'
 
@@ -62,11 +63,38 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
   const addRow = () => setRows((r) => [...r, emptyRow()])
   const removeRow = (i) => setRows((r) => (r.length > 1 ? r.filter((_, idx) => idx !== i) : r))
 
+  const actions = (
+    <div>
+      {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-purple-800">
+            Trend (optional)
+          </label>
+          <input
+            className={blankInput}
+            value={trend}
+            onChange={(e) => setTrend(e.target.value)}
+            placeholder="e.g. Improving"
+          />
+        </div>
+        <button
+          onClick={save}
+          disabled={saving}
+          className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+        >
+          {saving ? 'Saving…' : 'Save Progress Report'}
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <FormShell
       title="Monthly Progress Summary Report (PSR)"
       code="CMPS:SE-FO-09 rev.0 03172026"
       confidential={false}
+      actions={actions}
       onClose={onClose}
     >
       {/* Reporting period + client information header */}
@@ -197,49 +225,24 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
       <div className="mt-8 grid gap-8 sm:grid-cols-2">
         <div>
           <div className="text-slate-800">Prepared by:</div>
-          <div className="mt-7 font-bold text-slate-900">MARWIN A. GILBERO JR.</div>
+          <div className="mt-3">
+            <SignatureField label="MARWIN A. GILBERO JR." />
+          </div>
           <div className="text-slate-700">Clinic Intern – Pamantasan ng Cabuyao</div>
-          <div className="text-slate-700">Master of Arts in Psychology</div>
         </div>
         <div>
           <div className="text-slate-800">Reviewed by:</div>
-          <div className="mt-7 font-bold text-slate-900">
-            MS. CRISTINE LAE C. ERASGA, RPsy, RPm, CHRA
+          <div className="mt-3">
+            <SignatureField label="MS. CRISTINE LAE C. ERASGA, RPsy, RPm, CHRA" />
           </div>
-          <div className="text-slate-700">Supervising Psychologist</div>
-          <div className="text-slate-700">License Number: 0001942</div>
+          <div className="text-slate-700">Supervising Psychologist · License Number: 0001942</div>
         </div>
         <div>
           <div className="text-slate-800">Noted by:</div>
-          <div className="mt-7 font-bold text-slate-900">
-            DR. JINKY C. MALABANAN, RPm, RPsy, LPT, CHRA
+          <div className="mt-3">
+            <SignatureField label="DR. JINKY C. MALABANAN, RPm, RPsy, LPT, CHRA" />
           </div>
-          <div className="text-slate-700">Executive Director</div>
-          <div className="text-slate-700">License Number: 0002278</div>
-        </div>
-      </div>
-
-      <div className="mt-8 print:hidden">
-        {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-          <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-purple-800">
-              Trend (optional)
-            </label>
-            <input
-              className={blankInput}
-              value={trend}
-              onChange={(e) => setTrend(e.target.value)}
-              placeholder="e.g. Improving"
-            />
-          </div>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
-          >
-            {saving ? 'Saving…' : 'Save Progress Report'}
-          </button>
+          <div className="text-slate-700">Executive Director · License Number: 0002278</div>
         </div>
       </div>
     </FormShell>

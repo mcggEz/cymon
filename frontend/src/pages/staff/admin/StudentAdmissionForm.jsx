@@ -3,6 +3,7 @@ import FormShell from '../../../components/ui/FormShell'
 import FormHeading from '../../../components/ui/FormHeading'
 import BlankField from '../../../components/ui/BlankField'
 import PhotoCapture from '../../../components/ui/PhotoCapture'
+import SignatureField from '../../../components/ui/SignatureField'
 import Button from '../../../components/ui/Button'
 import { blankInput } from '../../../components/ui/formStyles'
 import { api } from '../../../lib/api'
@@ -31,15 +32,6 @@ function YesNo() {
         <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> No
       </label>
     </span>
-  )
-}
-
-function SignatureLine({ label }) {
-  return (
-    <div>
-      <div className="mt-8 border-t border-slate-700" />
-      <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">{label}</div>
-    </div>
   )
 }
 
@@ -104,8 +96,41 @@ function StudentAdmissionForm({ onSaved, onClose }) {
     }
   }
 
+  const actions = created ? (
+    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
+      <div className="font-semibold text-emerald-800">Student registered — {created.name}</div>
+      <div className="mt-1 text-slate-700">
+        Parent login email: <span className="font-mono">{created.email}</span>
+      </div>
+      <div className="text-slate-700">
+        Temporary password: <span className="font-mono">{created.password}</span>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">Share these with the parent so they can sign in.</p>
+      <Button className="mt-3" onClick={onClose}>
+        Done
+      </Button>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+      {error ? <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+      <button
+        onClick={register}
+        disabled={saving}
+        className="rounded-md bg-purple-700 px-6 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+      >
+        {saving ? 'Registering…' : 'Register Student'}
+      </button>
+    </div>
+  )
+
   return (
-    <FormShell title="STUDENT ADMISSION FORM" code="CMPS:SE-FO-01 rev.0 02192026" confidential={false} onClose={onClose}>
+    <FormShell
+      title="STUDENT ADMISSION FORM"
+      code="CMPS:SE-FO-01 rev.0 02192026"
+      confidential={false}
+      actions={actions}
+      onClose={onClose}
+    >
       <FormHeading numeral="">Personal Information</FormHeading>
       <div className="flex gap-6">
         <div className="flex-1 space-y-1.5">
@@ -228,38 +253,8 @@ function StudentAdmissionForm({ onSaved, onClose }) {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-8">
-        <SignatureLine label="Signature over Printed Name of Parent / Date" />
-        <SignatureLine label="Signature over Printed Name of CMPS Representative / Date" />
-      </div>
-
-      {/* Registration (not printed) */}
-      <div className="mt-8 print:hidden">
-        {created ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm">
-            <div className="font-semibold text-emerald-800">Student registered — {created.name}</div>
-            <div className="mt-1 text-slate-700">
-              Parent login email: <span className="font-mono">{created.email}</span>
-            </div>
-            <div className="text-slate-700">
-              Temporary password: <span className="font-mono">{created.password}</span>
-            </div>
-            <p className="mt-1 text-xs text-slate-500">Share these with the parent so they can sign in.</p>
-            <Button className="mt-3" onClick={onClose}>
-              Done
-            </Button>
-          </div>
-        ) : (
-          <>
-            {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
-            <button
-              onClick={register}
-              disabled={saving}
-              className="w-full rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60 sm:w-auto"
-            >
-              {saving ? 'Registering…' : 'Register Student'}
-            </button>
-          </>
-        )}
+        <SignatureField label="Signature over Printed Name of Parent / Date" />
+        <SignatureField label="Signature over Printed Name of CMPS Representative / Date" />
       </div>
     </FormShell>
   )

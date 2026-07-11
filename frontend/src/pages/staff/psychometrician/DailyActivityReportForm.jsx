@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import FormShell from '../../../components/ui/FormShell'
+import SignatureField from '../../../components/ui/SignatureField'
 import { api } from '../../../lib/api'
 import { cellInput } from '../../../components/ui/formStyles'
 
@@ -50,8 +51,30 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
     }
   }
 
+  const actions = (
+    <div>
+      {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button
+          onClick={() => save('draft')}
+          disabled={saving}
+          className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+        >
+          Save Draft
+        </button>
+        <button
+          onClick={() => save('pending')}
+          disabled={saving}
+          className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+        >
+          {saving ? 'Saving…' : 'Submit Daily Activity Report'}
+        </button>
+      </div>
+    </div>
+  )
+
   return (
-    <FormShell title="Daily Activity Report" code="CMPS:SE-FO-08 rev.0 03032026" onClose={onClose}>
+    <FormShell title="Daily Activity Report" code="CMPS:SE-FO-08 rev.0 03032026" actions={actions} onClose={onClose}>
       {/* Activity header block */}
       <div className="overflow-x-auto">
         <table className="w-full table-fixed border-collapse">
@@ -170,39 +193,20 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
       </div>
 
       {/* Signatories */}
-      <div className="mt-10 space-y-8 text-sm">
+      <div className="mt-10 grid gap-8 text-sm sm:grid-cols-2">
         <div>
           <div className="text-slate-800">Prepared by:</div>
-          <div className="mt-7 font-bold text-slate-900">MARWIN A. GILBERO JR., RPm, CHRA</div>
-          <div className="text-slate-700">Clinic Intern</div>
-          <div className="text-slate-700">License Number: 0039850</div>
+          <div className="mt-3">
+            <SignatureField label="MARWIN A. GILBERO JR., RPm, CHRA" />
+          </div>
+          <div className="text-slate-700">Clinic Intern · License Number: 0039850</div>
         </div>
         <div>
           <div className="text-slate-800">Noted by:</div>
-          <div className="mt-7 font-bold text-slate-900">CRISTINE LAE C. ERASGA, RPm, RPsy, CHRA</div>
+          <div className="mt-3">
+            <SignatureField label="CRISTINE LAE C. ERASGA, RPm, RPsy, CHRA" />
+          </div>
           <div className="text-slate-700">Clinic Psychologist</div>
-          <div className="text-slate-700">License Number:</div>
-        </div>
-      </div>
-
-      {/* Save controls (not printed) */}
-      <div className="mt-8 print:hidden">
-        {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <button
-            onClick={() => save('draft')}
-            disabled={saving}
-            className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60"
-          >
-            Save Draft
-          </button>
-          <button
-            onClick={() => save('pending')}
-            disabled={saving}
-            className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
-          >
-            {saving ? 'Saving…' : 'Submit Daily Activity Report'}
-          </button>
         </div>
       </div>
     </FormShell>

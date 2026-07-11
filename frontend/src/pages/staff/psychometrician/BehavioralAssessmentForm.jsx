@@ -1,6 +1,7 @@
 import FormShell from '../../../components/ui/FormShell'
 import FormHeading from '../../../components/ui/FormHeading'
 import BlankField from '../../../components/ui/BlankField'
+import SignatureField from '../../../components/ui/SignatureField'
 import { cellInput } from '../../../components/ui/formStyles'
 
 const th = 'border border-slate-500 bg-purple-100 px-2 py-1 text-center text-xs font-bold text-slate-800'
@@ -42,7 +43,9 @@ function Signatory({ role, name, title, license }) {
   return (
     <div>
       <div className="text-slate-800">{role}</div>
-      <div className="mt-7 font-bold text-slate-900">{name}</div>
+      <div className="mt-3">
+        <SignatureField label={name} />
+      </div>
       <div className="text-slate-700">{title}</div>
       <div className="text-slate-700">
         License Number:{' '}

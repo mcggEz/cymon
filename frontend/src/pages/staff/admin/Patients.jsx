@@ -117,59 +117,6 @@ function EditPatientModal({ row, onClose, onSaved }) {
   )
 }
 
-function ProfileModal({ row, onClose, onEdit }) {
-  return (
-    <Modal
-      title="Patient Profile"
-      subtitle={row.id}
-      onClose={onClose}
-      maxWidth="max-w-lg"
-      footer={
-        <div className="flex items-center justify-end gap-2">
-          <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Close
-          </button>
-          <RowAction variant="edit" className="px-4 py-1.5" onClick={() => onEdit(row)}>
-            Edit
-          </RowAction>
-        </div>
-      }
-    >
-        <div className="text-xs font-semibold tracking-wider text-purple-700">
-          PERSONAL INFORMATION
-        </div>
-        <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Full Name</div>
-            <div className="font-semibold text-purple-800">{row.name}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Age / Sex</div>
-            <div className="font-semibold text-purple-800">{row.age} / {row.sex}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
-            <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[row.tone]}`}>
-              {row.status}
-            </span>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">Admission Form</div>
-            <div className={`text-sm font-semibold ${row.formTone}`}>{row.form}</div>
-          </div>
-        </div>
-
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
-          CLINICAL HISTORY
-        </div>
-        <p className="mt-2 text-sm text-slate-700">
-          No active medical alerts. Patient is currently enrolled in the Standard SPED Program. See
-          Clinical Records for latest Assessment Reports.
-        </p>
-    </Modal>
-  )
-}
-
 function Patients() {
   const [active, setActive] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -246,7 +193,8 @@ function Patients() {
           </div>
         </section>
 
-        <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+        <div className="mt-5 flex gap-6">
+        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead>
@@ -293,7 +241,6 @@ function Patients() {
                       <RowAction variant="view" onClick={() => setActive(r)}>
                         View
                       </RowAction>
-                      <RowAction variant="edit" onClick={() => setEditing(r)}>Edit</RowAction>
                     </div>
                   </td>
                 </tr>
@@ -304,15 +251,55 @@ function Patients() {
         </section>
 
         {active ? (
-          <ProfileModal
-            row={active}
-            onClose={() => setActive(null)}
-            onEdit={(r) => {
-              setActive(null)
-              setEditing(r)
-            }}
-          />
+          <>
+            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
+            <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-lg font-semibold text-purple-800">Student Details</div>
+                <button onClick={() => setActive(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+              <div className="text-xs text-slate-500">ID: {active.id}</div>
+
+              <div className="mt-4 text-xs font-semibold tracking-wider text-purple-700">
+                PERSONAL INFORMATION
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Full Name</div>
+                  <div className="font-semibold text-purple-800">{active.name}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Age / Sex</div>
+                  <div className="font-semibold text-purple-800">{active.age} / {active.sex}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
+                  <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[active.tone]}`}>
+                    {active.status}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Admission Form</div>
+                  <div className={`text-sm font-semibold ${active.formTone}`}>{active.form}</div>
+                </div>
+              </div>
+
+              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
+                CLINICAL HISTORY
+              </div>
+              <p className="mt-2 text-sm text-slate-700">
+                No active medical alerts. Patient is currently enrolled in the Standard SPED Program. See
+                Clinical Records for latest Assessment Reports.
+              </p>
+
+              <button onClick={() => { setEditing(active) }} className="mt-4 w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">Edit</button>
+            </aside>
+          </>
         ) : null}
+        </div>
+
         {editing ? (
           <EditPatientModal
             row={editing}

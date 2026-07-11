@@ -21,7 +21,7 @@ const ALABANG = [
 // Journey to Wellness." footer, over faint purple wave decoration. The SAME
 // markup prints — the print stylesheet hides the app and the viewer toolbar and
 // forces exact colors so the letterhead and frame render into the PDF.
-function FormShell({ title, subtitle, code, confidential = true, onReset, onClose, children }) {
+function FormShell({ title, subtitle, code, confidential = true, onReset, onClose, actions, children }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onKey)
@@ -125,6 +125,10 @@ function FormShell({ title, subtitle, code, confidential = true, onReset, onClos
             Clarity of Mind, Journey to Wellness.
           </div>
         </article>
+
+        {actions ? (
+          <div className="mx-auto mt-4 w-full max-w-[850px] print:hidden">{actions}</div>
+        ) : null}
       </div>
     </div>,
     document.body
