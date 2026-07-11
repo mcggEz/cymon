@@ -784,6 +784,9 @@ router.post('/patients', async (req, res, next) => {
         grade_level: child.grade_level || null,
         home_address: child.home_address || null,
         contact_number: child.contact_number || null,
+        place_of_birth: child.place_of_birth || null,
+        citizenship: child.citizenship || null,
+        religion: child.religion || null,
       })
       .select('*')
       .single();
@@ -805,6 +808,23 @@ router.post('/patients', async (req, res, next) => {
       }
     }
 
+    // Accept either a `guardians` array (mother + father) or a single `guardian`.
+    const guardianList = (
+      Array.isArray(req.body.guardians) && req.body.guardians.length
+        ? req.body.guardians
+        : [guardian]
+    ).filter((g) => g && g.full_name);
+    const guardianRows = guardianList.map((g, i) => ({
+      patient_id: patient.id,
+      full_name: g.full_name,
+      relationship: g.relationship || null,
+      contact_number: g.contact_number || null,
+      email: g.email || null,
+      occupation: g.occupation || null,
+      employer: g.employer || null,
+      is_primary: i === 0,
+    }));
+
     await Promise.all([
       supabase.from('clinical_profiles').insert({
         patient_id: patient.id,
@@ -813,18 +833,10 @@ router.post('/patients', async (req, res, next) => {
         secondary_diagnosis: clinical.secondary_diagnosis || null,
         date_enrolled: clinical.date_enrolled || null,
         referral_source: clinical.referral_source || null,
+        allergies: clinical.allergies || null,
       }),
-      guardian.full_name
-        ? supabase.from('guardians').insert({
-            patient_id: patient.id,
-            full_name: guardian.full_name,
-            relationship: guardian.relationship || null,
-            contact_number: guardian.contact_number || null,
-            email: guardian.email || null,
-            occupation: guardian.occupation || null,
-            employer: guardian.employer || null,
-            is_primary: true,
-          })
+      guardianRows.length
+        ? supabase.from('guardians').insert(guardianRows)
         : Promise.resolve(),
       emergency.full_name
         ? supabase.from('emergency_contacts').insert({
@@ -839,6 +851,35 @@ router.post('/patients', async (req, res, next) => {
     ]);
 
     res.status(201).json({ patient });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// full profile (patient + clinical + guardians + emergency) for the detail panel
+router.get('/patients/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: patient, error } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (error) return next(error);
+    if (!patient || patient.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const [{ data: clinical }, { data: guardians }, { data: emergency }] = await Promise.all([
+      supabase.from('clinical_profiles').select('*').eq('patient_id', patient.id).maybeSingle(),
+      supabase.from('guardians').select('*').eq('patient_id', patient.id).order('is_primary', { ascending: false }),
+      supabase.from('emergency_contacts').select('*').eq('patient_id', patient.id).limit(1).maybeSingle(),
+    ]);
+    res.json({
+      patient: { ...patient, full_name: patientName(patient), age: ageFromDob(patient.date_of_birth) },
+      clinical: clinical || null,
+      guardians: guardians || [],
+      emergency: emergency || null,
+    });
   } catch (err) {
     next(err);
   }

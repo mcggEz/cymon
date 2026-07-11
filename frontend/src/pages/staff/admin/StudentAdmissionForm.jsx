@@ -44,10 +44,23 @@ function StudentAdmissionForm({ onSaved, onClose }) {
     sex: '',
     nickName: '',
     presentAddress: '',
+    placeOfBirth: '',
+    citizenship: '',
+    religion: '',
     motherName: '',
+    motherOccupation: '',
+    motherMobile: '',
     motherEmail: '',
     fatherName: '',
+    fatherOccupation: '',
+    fatherMobile: '',
     fatherEmail: '',
+    emergencyName: '',
+    emergencyContact: '',
+    emergencyRelation: '',
+    diagnosis: '',
+    disability: '',
+    allergies: '',
     iepLevel: '',
   })
   const [photo, setPhoto] = useState(null)
@@ -81,11 +94,38 @@ function StudentAdmissionForm({ onSaved, onClose }) {
           date_of_birth: f.birthdate,
           sex: f.sex,
           home_address: f.presentAddress,
+          place_of_birth: f.placeOfBirth,
+          citizenship: f.citizenship,
+          religion: f.religion,
           photo,
         },
-        clinical: { iep_level: f.iepLevel || null },
-        guardian: { full_name: f.motherName || f.fatherName, email, relationship: 'Parent' },
-        emergency: {},
+        clinical: {
+          iep_level: f.iepLevel || null,
+          primary_diagnosis: f.diagnosis || null,
+          secondary_diagnosis: f.disability || null,
+          allergies: f.allergies || null,
+        },
+        guardians: [
+          {
+            full_name: f.motherName,
+            relationship: 'Mother',
+            occupation: f.motherOccupation,
+            contact_number: f.motherMobile,
+            email: f.motherEmail,
+          },
+          {
+            full_name: f.fatherName,
+            relationship: 'Father',
+            occupation: f.fatherOccupation,
+            contact_number: f.fatherMobile,
+            email: f.fatherEmail,
+          },
+        ],
+        emergency: {
+          full_name: f.emergencyName,
+          relationship: f.emergencyRelation,
+          contact_number: f.emergencyContact,
+        },
       })
       setCreated({ name: `${f.firstName} ${f.lastName}`, email, password })
       onSaved?.()
@@ -146,7 +186,9 @@ function StudentAdmissionForm({ onSaved, onClose }) {
           <BlankField label="Birthdate (Month/Day/Date)">
             <input type="date" className={blankInput} value={f.birthdate} onChange={set('birthdate')} />
           </BlankField>
-          <BlankField label="Place of Birth" />
+          <BlankField label="Place of Birth">
+            <input className={blankInput} value={f.placeOfBirth} onChange={set('placeOfBirth')} />
+          </BlankField>
           <BlankField label="Age/Sex">
             <div className="flex gap-2">
               <input className={blankInput} placeholder="Age" />
@@ -182,8 +224,12 @@ function StudentAdmissionForm({ onSaved, onClose }) {
           label="Permanent Address"
           hint="(if not same as Present Address. Otherwise, put “Same”)"
         />
-        <BlankField label="Citizenship" />
-        <BlankField label="Religion" />
+        <BlankField label="Citizenship">
+          <input className={blankInput} value={f.citizenship} onChange={set('citizenship')} />
+        </BlankField>
+        <BlankField label="Religion">
+          <input className={blankInput} value={f.religion} onChange={set('religion')} />
+        </BlankField>
       </div>
 
       <FormHeading numeral="">Parent Information</FormHeading>
@@ -191,16 +237,24 @@ function StudentAdmissionForm({ onSaved, onClose }) {
         <BlankField label="Name of Mother/Guardian">
           <input className={blankInput} value={f.motherName} onChange={set('motherName')} />
         </BlankField>
-        <BlankField label="Occupation" />
-        <BlankField label="Mobile Number" />
+        <BlankField label="Occupation">
+          <input className={blankInput} value={f.motherOccupation} onChange={set('motherOccupation')} />
+        </BlankField>
+        <BlankField label="Mobile Number">
+          <input className={blankInput} value={f.motherMobile} onChange={set('motherMobile')} />
+        </BlankField>
         <BlankField label="Email Address">
           <input type="email" className={blankInput} value={f.motherEmail} onChange={set('motherEmail')} />
         </BlankField>
         <BlankField label="Name of Father/Guardian">
           <input className={blankInput} value={f.fatherName} onChange={set('fatherName')} />
         </BlankField>
-        <BlankField label="Occupation" />
-        <BlankField label="Mobile Number" />
+        <BlankField label="Occupation">
+          <input className={blankInput} value={f.fatherOccupation} onChange={set('fatherOccupation')} />
+        </BlankField>
+        <BlankField label="Mobile Number">
+          <input className={blankInput} value={f.fatherMobile} onChange={set('fatherMobile')} />
+        </BlankField>
         <BlankField label="Email Address">
           <input type="email" className={blankInput} value={f.fatherEmail} onChange={set('fatherEmail')} />
         </BlankField>
@@ -208,9 +262,15 @@ function StudentAdmissionForm({ onSaved, onClose }) {
 
       <FormHeading numeral="">Emergency Contact Information</FormHeading>
       <div className="space-y-1.5">
-        <BlankField label="Name of Emergency Contact Person" labelClassName="w-64" />
-        <BlankField label="Contact Number" labelClassName="w-64" />
-        <BlankField label="Relation to the Client" labelClassName="w-64" />
+        <BlankField label="Name of Emergency Contact Person" labelClassName="w-64">
+          <input className={blankInput} value={f.emergencyName} onChange={set('emergencyName')} />
+        </BlankField>
+        <BlankField label="Contact Number" labelClassName="w-64">
+          <input className={blankInput} value={f.emergencyContact} onChange={set('emergencyContact')} />
+        </BlankField>
+        <BlankField label="Relation to the Client" labelClassName="w-64">
+          <input className={blankInput} value={f.emergencyRelation} onChange={set('emergencyRelation')} />
+        </BlankField>
       </div>
 
       <FormHeading numeral="">Diagnosis</FormHeading>
@@ -219,7 +279,9 @@ function StudentAdmissionForm({ onSaved, onClose }) {
         <YesNo />
       </div>
       <div className="mt-1.5">
-        <BlankField label="Diagnosis" />
+        <BlankField label="Diagnosis">
+          <input className={blankInput} value={f.diagnosis} onChange={set('diagnosis')} />
+        </BlankField>
       </div>
 
       <FormHeading numeral="">Disability/Impairment</FormHeading>
@@ -230,11 +292,15 @@ function StudentAdmissionForm({ onSaved, onClose }) {
         <YesNo />
       </div>
       <div className="mt-1.5">
-        <BlankField label="Diagnosis" />
+        <BlankField label="Diagnosis">
+          <input className={blankInput} value={f.disability} onChange={set('disability')} />
+        </BlankField>
       </div>
 
       <FormHeading numeral="">Allergies</FormHeading>
-      <BlankField label="" />
+      <BlankField label="">
+        <input className={blankInput} value={f.allergies} onChange={set('allergies')} />
+      </BlankField>
 
       <FormHeading numeral="">Enrollment Type</FormHeading>
       <div className="space-y-1 text-sm text-slate-800">

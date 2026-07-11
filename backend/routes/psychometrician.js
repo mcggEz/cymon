@@ -182,7 +182,7 @@ router.get('/activity-logs', async (req, res, next) => {
     const [{ data, error }, { data: roster }] = await Promise.all([
       supabase
         .from('session_logs')
-        .select('id, session_number, session_date, activity_title, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .select('id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status, patients(first_name, middle_name, last_name, clinic_id)')
         .order('session_date', { ascending: false }),
       supabase
         .from('patients')
@@ -199,6 +199,10 @@ router.get('/activity-logs', async (req, res, next) => {
         date: r.session_date,
         session_number: r.session_number,
         detail: r.activity_title,
+        target_domain: r.target_domain,
+        objectives: r.objectives,
+        procedure: r.procedure,
+        observations: r.observations,
         status: r.status,
       })),
       patients: (roster || []).map((p) => ({ id: p.id, name: patientName(p) })),

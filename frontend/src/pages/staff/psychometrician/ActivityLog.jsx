@@ -120,7 +120,7 @@ function ActivityLog() {
                 </button>
               </div>
 
-              <div className="text-xs text-slate-500">Undergraduate Level · CMPS:SE-FO-07</div>
+              <div className="text-xs text-slate-500">CMPS:SE-FO-07</div>
 
               <div className="mt-4 text-xs font-semibold tracking-wider text-purple-700">
                 ACTIVITY DETAILS
@@ -132,36 +132,35 @@ function ActivityLog() {
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500">Date of Activity</div>
-                  <div className="font-semibold text-purple-800">{active.mon} {active.day}, 2026 · Session 04</div>
+                  <div className="font-semibold text-purple-800">
+                    {active.mon} {active.day}
+                    {active.session_number ? ` · Session ${active.session_number}` : ''}
+                  </div>
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500">Activity Title</div>
-                  <div className="font-semibold text-purple-800">{active.detail}</div>
+                  <div className="font-semibold text-purple-800">{active.detail || '—'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500">Target Domain</div>
-                  <div className="font-semibold text-purple-800">Cognition / Fine Motor</div>
+                  <div className="font-semibold text-purple-800">{active.target_domain || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
+                  <div className="font-semibold capitalize text-purple-800">{active.status}</div>
                 </div>
               </div>
 
-              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
-                PROCEDURE & OBJECTIVE
-              </div>
-              <p className="mt-2 text-sm text-slate-700">
-                <span className="font-semibold">Objective:</span> Student will sort 10 pegs by color with
-                minimum verbal prompting.
-                <br />
-                <span className="font-semibold">Procedure:</span> The therapist placed a board/box of pegs
-                in front of the student. The student was asked to &quot;Find the red ones.&quot;
-              </p>
+              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">OBJECTIVES</div>
+              <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{active.objectives || '—'}</p>
+
+              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">ACTIVITY PROCEDURE</div>
+              <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{active.procedure || '—'}</p>
 
               <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
                 BEHAVIORAL OBSERVATIONS
               </div>
-              <p className="mt-2 text-sm text-slate-700">
-                <span className="font-semibold">Prepared by:</span> Erika Faustino, RPm ·{' '}
-                <span className="text-amber-600">Pending Review</span>
-              </p>
+              <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{active.observations || '—'}</p>
             </aside>
           </>
         ) : null}

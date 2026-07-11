@@ -25,6 +25,13 @@ const Section = ({ title, hint, children }) => (
   </section>
 )
 
+const Field = ({ label, value }) => (
+  <div>
+    <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+    <div className="font-medium text-purple-800">{value || '—'}</div>
+  </div>
+)
+
 const FORM_LABEL = { complete: 'Complete', pending: 'Pending', in_progress: 'In Progress' }
 
 function toRow(p) {
@@ -119,6 +126,7 @@ function EditPatientModal({ row, onClose, onSaved }) {
 
 function Patients() {
   const [active, setActive] = useState(null)
+  const [detail, setDetail] = useState(null)
   const [editing, setEditing] = useState(null)
   const [rows, setRows] = useState([])
   const [error, setError] = useState(null)
@@ -133,6 +141,16 @@ function Patients() {
       .patients()
       .then((d) => setRows(d.patients.map(toRow)))
       .catch((e) => setError(e.message))
+
+  const openDetail = (r) => {
+    setActive(r)
+    setDetail(null)
+    api.admin.patient(r.uuid).then(setDetail).catch(() => {})
+  }
+  const closeDetail = () => {
+    setActive(null)
+    setDetail(null)
+  }
 
   useEffect(() => {
     load().finally(() => setLoading(false))
@@ -238,7 +256,7 @@ function Patients() {
                   <td className={`py-3 font-medium ${r.formTone}`}>{r.form}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-2">
-                      <RowAction variant="view" onClick={() => setActive(r)}>
+                      <RowAction variant="view" onClick={() => openDetail(r)}>
                         View
                       </RowAction>
                     </div>
@@ -252,49 +270,82 @@ function Patients() {
 
         {active ? (
           <>
-            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
+            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={closeDetail} aria-hidden="true" />
             <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
               <div className="mb-3 flex items-center justify-between">
                 <div className="text-lg font-semibold text-purple-800">Student Details</div>
-                <button onClick={() => setActive(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                <button onClick={closeDetail} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
                 </button>
               </div>
+
+              {detail?.patient?.photo_url ? (
+                <img src={detail.patient.photo_url} alt="" className="mb-3 h-24 w-24 rounded-lg object-cover ring-1 ring-purple-200" />
+              ) : null}
               <div className="text-xs text-slate-500">ID: {active.id}</div>
 
-              <div className="mt-4 text-xs font-semibold tracking-wider text-purple-700">
-                PERSONAL INFORMATION
-              </div>
-              <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Full Name</div>
-                  <div className="font-semibold text-purple-800">{active.name}</div>
+              <div className="mt-4 text-xs font-semibold tracking-wider text-purple-700">PERSONAL INFORMATION</div>
+              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <Field label="Full Name" value={detail?.patient?.full_name || active.name} />
+                <Field
+                  label="Age / Sex"
+                  value={`${detail?.patient?.age ?? active.age} / ${cap(detail?.patient?.sex || active.rawSex)}`}
+                />
+                <Field label="Birthdate" value={detail?.patient?.date_of_birth} />
+                <Field label="Place of Birth" value={detail?.patient?.place_of_birth} />
+                <Field label="Nickname" value={detail?.patient?.nick_name} />
+                <Field label="Citizenship" value={detail?.patient?.citizenship} />
+                <Field label="Religion" value={detail?.patient?.religion} />
+                <Field label="Status" value={active.status} />
+                <div className="col-span-2">
+                  <Field label="Present Address" value={detail?.patient?.home_address} />
                 </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Age / Sex</div>
-                  <div className="font-semibold text-purple-800">{active.age} / {active.sex}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
-                  <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[active.tone]}`}>
-                    {active.status}
-                  </span>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Admission Form</div>
-                  <div className={`text-sm font-semibold ${active.formTone}`}>{active.form}</div>
-                </div>
-              </div>
+              </dl>
 
-              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
-                CLINICAL HISTORY
-              </div>
-              <p className="mt-2 text-sm text-slate-700">
-                No active medical alerts. Patient is currently enrolled in the Standard SPED Program. See
-                Clinical Records for latest Assessment Reports.
-              </p>
+              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">PARENT / GUARDIAN</div>
+              {(detail?.guardians || []).length ? (
+                <div className="mt-2 space-y-3 text-sm">
+                  {detail.guardians.map((g) => (
+                    <div key={g.id}>
+                      <div className="font-semibold text-purple-800">
+                        {g.full_name}{' '}
+                        {g.relationship ? <span className="text-xs font-normal text-slate-500">({g.relationship})</span> : null}
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        {[g.occupation, g.contact_number, g.email].filter(Boolean).join(' · ') || '—'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-500">—</p>
+              )}
 
-              <button onClick={() => { setEditing(active) }} className="mt-4 w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">Edit</button>
+              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">EMERGENCY CONTACT</div>
+              {detail?.emergency ? (
+                <div className="mt-2 text-sm">
+                  <div className="font-semibold text-purple-800">
+                    {detail.emergency.full_name}{' '}
+                    {detail.emergency.relationship ? <span className="text-xs font-normal text-slate-500">({detail.emergency.relationship})</span> : null}
+                  </div>
+                  <div className="text-xs text-slate-600">{detail.emergency.contact_number || '—'}</div>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-500">—</p>
+              )}
+
+              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">CLINICAL & ENROLLMENT</div>
+              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <Field label="Diagnosis" value={detail?.clinical?.primary_diagnosis} />
+                <Field label="Disability / Impairment" value={detail?.clinical?.secondary_diagnosis} />
+                <Field label="Enrollment (IEP)" value={detail?.clinical?.iep_level} />
+                <Field label="Allergies" value={detail?.clinical?.allergies} />
+                <Field label="Admission Form" value={active.form} />
+              </dl>
+
+              <button onClick={() => { setEditing(active) }} className="mt-5 w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800">
+                Edit
+              </button>
             </aside>
           </>
         ) : null}
