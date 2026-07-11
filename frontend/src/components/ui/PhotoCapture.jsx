@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 // Photo input that can either open the device webcam and snap a frame, or fall
 // back to a file upload. Emits a JPEG/PNG data URL via onChange. Stops the camera
 // stream on capture, cancel, and unmount so the webcam light never lingers.
-function PhotoCapture({ value, onChange }) {
+function PhotoCapture({ value, onChange, square = false }) {
   const videoRef = useRef(null)
   const fileRef = useRef(null)
   const streamRef = useRef(null)
@@ -47,10 +47,21 @@ function PhotoCapture({ value, onChange }) {
   const capture = () => {
     const video = videoRef.current
     if (!video) return
+    const vw = video.videoWidth || 320
+    const vh = video.videoHeight || 240
     const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth || 320
-    canvas.height = video.videoHeight || 240
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
+    const ctx = canvas.getContext('2d')
+    if (square) {
+      // Centered square crop for a 2x2 ID photo.
+      const side = Math.min(vw, vh)
+      canvas.width = side
+      canvas.height = side
+      ctx.drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, side, side)
+    } else {
+      canvas.width = vw
+      canvas.height = vh
+      ctx.drawImage(video, 0, 0, vw, vh)
+    }
     onChange(canvas.toDataURL('image/jpeg', 0.9))
     stop()
   }

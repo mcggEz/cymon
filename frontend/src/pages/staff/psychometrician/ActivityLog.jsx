@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
-import Avatar from '../../../components/ui/Avatar'
 import DailyActivityReportForm from './DailyActivityReportForm'
 
 const STATUS_META = {
@@ -79,28 +78,12 @@ function PreviewModal({ row, onClose }) {
   )
 }
 
-const blankLog = {
-  patient_id: '',
-  session_number: '',
-  session_date: '',
-  activity_title: '',
-  target_domain: '',
-  objectives: '',
-  procedure: '',
-  observations: '',
-}
-
 function ActivityLog() {
   const [active, setActive] = useState(null)
   const [openForm, setOpenForm] = useState(null)
   const [rows, setRows] = useState([])
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState(blankLog)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState(null)
-  const [notice, setNotice] = useState(null)
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const load = () =>
     api.psychometrician
@@ -121,26 +104,6 @@ function ActivityLog() {
     }
   }, [])
 
-  const save = async (status) => {
-    setError(null)
-    setNotice(null)
-    if (!form.patient_id || !form.activity_title) {
-      setError('Please choose a student and enter an activity title.')
-      return
-    }
-    setSubmitting(true)
-    try {
-      await api.psychometrician.addActivityLog({ ...form, status })
-      setForm(blankLog)
-      setNotice(status === 'pending' ? 'Activity report submitted for review.' : 'Draft saved.')
-      await load()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   return (
     <>
       <StaffHeader title="Daily Activity Report" />
@@ -153,20 +116,12 @@ function ActivityLog() {
                 Review past sessions, edit drafts, or track approval statuses.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setOpenForm('dailyActivity')}
-                className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-              >
-                Open Daily Activity Report Form
-              </button>
-              <a
-                href="#new"
-                className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50"
-              >
-                + New Log Entry
-              </a>
-            </div>
+            <button
+              onClick={() => setOpenForm('dailyActivity')}
+              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            >
+              Open Daily Activity Report Form
+            </button>
           </div>
 
           <div className="mt-4 flex items-center gap-3">
@@ -221,95 +176,9 @@ function ActivityLog() {
           </ul>
         </section>
 
-        <section id="new" className="mt-6 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start gap-4">
-            <Avatar name="Jordan Smith" size="lg" />
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-purple-800 text-center">Daily Activity Report</h2>
-              <div className="text-center text-xs text-slate-500">
-                Undergraduate Level · CMPS:SE-FO-07 rev.4 03/22/2026
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-md border border-purple-200 bg-purple-50 p-4">
-            <div className="text-sm font-semibold text-purple-800">Activity Details</div>
-            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <label className="text-xs sm:col-span-2">
-                <div className="font-semibold text-purple-700">NAME OF THE STUDENT *</div>
-                <select
-                  value={form.patient_id}
-                  onChange={set('patient_id')}
-                  className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm"
-                >
-                  <option value="">Select a student…</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs">
-                <div className="font-semibold text-purple-700">SESSION NUMBER</div>
-                <input type="number" value={form.session_number} onChange={set('session_number')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="12" />
-              </label>
-              <label className="text-xs">
-                <div className="font-semibold text-purple-700">DATE OF THE ACTIVITY</div>
-                <input type="date" value={form.session_date} onChange={set('session_date')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" />
-              </label>
-              <label className="text-xs">
-                <div className="font-semibold text-purple-700">TARGETED DOMAINS</div>
-                <input value={form.target_domain} onChange={set('target_domain')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="Motor Skills" />
-              </label>
-              <label className="text-xs">
-                <div className="font-semibold text-purple-700">TITLE OF THE ACTIVITY *</div>
-                <input value={form.activity_title} onChange={set('activity_title')} className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm" placeholder="Sensory Integration Play" />
-              </label>
-              <label className="text-xs sm:col-span-2">
-                <div className="font-semibold text-purple-700">OBJECTIVES</div>
-                <textarea rows={2} value={form.objectives} onChange={set('objectives')} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm" />
-              </label>
-              <label className="text-xs sm:col-span-2">
-                <div className="font-semibold text-purple-700">ACTIVITY PROCEDURE</div>
-                <textarea rows={3} value={form.procedure} onChange={set('procedure')} className="mt-1 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm" />
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-md border border-purple-200 bg-purple-50 p-4">
-            <div className="text-sm font-semibold text-purple-800">Behavioral Observations</div>
-            <textarea
-              rows={4}
-              value={form.observations}
-              onChange={set('observations')}
-              placeholder="Responses and displayed behavior during the session…"
-              className="mt-3 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm"
-            />
-          </div>
-
-          {error ? <div className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
-          {notice ? <div className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</div> : null}
-
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button
-              onClick={() => save('draft')}
-              disabled={submitting}
-              className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60"
-            >
-              Save Draft
-            </button>
-            <button
-              onClick={() => save('pending')}
-              disabled={submitting}
-              className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
-            >
-              {submitting ? 'Saving…' : 'Submit Daily Activity Report'}
-            </button>
-          </div>
-        </section>
-
         {active ? <PreviewModal row={active} onClose={() => setActive(null)} /> : null}
         {openForm === 'dailyActivity' ? (
-          <DailyActivityReportForm onClose={() => setOpenForm(null)} />
+          <DailyActivityReportForm patients={patients} onSaved={load} onClose={() => setOpenForm(null)} />
         ) : null}
       </div>
     </>

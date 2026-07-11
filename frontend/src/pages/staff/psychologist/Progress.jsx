@@ -2,10 +2,6 @@ import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
-import Modal from '../../../components/ui/Modal'
-import Input from '../../../components/ui/Input'
-import Select from '../../../components/ui/Select'
-import Button from '../../../components/ui/Button'
 import ProgressSummaryReportForm from './ProgressSummaryReportForm'
 import { api } from '../../../lib/api'
 
@@ -23,71 +19,12 @@ const STATUS_META = {
 
 const PAGE_SIZE = 5
 
-function GenerateReportModal({ patients, onClose, onCreated }) {
-  const [f, setF] = useState({ patient_id: '', title: 'Monthly Progress Summary', period: '', trend: '' })
-  const [err, setErr] = useState(null)
-  const [busy, setBusy] = useState(false)
-  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }))
-
-  const submit = async (e) => {
-    e.preventDefault()
-    setErr(null)
-    if (!f.patient_id || !f.title) {
-      setErr('Please choose a student and enter a report title.')
-      return
-    }
-    setBusy(true)
-    try {
-      await api.psychologist.addProgressReport(f)
-      onCreated()
-    } catch (e2) {
-      setErr(e2.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Modal
-      title="Generate Progress Report"
-      subtitle="Progress Summary Report (FO-08)"
-      onClose={onClose}
-      footer={
-        <div className="flex items-center justify-end gap-3">
-          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Cancel
-          </button>
-          <Button type="submit" form="generate-progress-form" size="lg" disabled={busy}>
-            {busy ? 'Generating…' : 'Generate Draft'}
-          </Button>
-        </div>
-      }
-    >
-      <form id="generate-progress-form" onSubmit={submit} className="space-y-4">
-        <Select label="Student" value={f.patient_id} onChange={set('patient_id')}>
-          <option value="">Select a student…</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </Select>
-        <Input label="Report Title" tone="purple" value={f.title} onChange={set('title')} />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label="Period (e.g. Mar 2026)" tone="purple" value={f.period} onChange={set('period')} />
-          <Input label="Trend (e.g. Improving)" tone="purple" value={f.trend} onChange={set('trend')} />
-        </div>
-        {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
-      </form>
-    </Modal>
-  )
-}
-
 function Progress() {
   const [items, setItems] = useState([])
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [shown, setShown] = useState(PAGE_SIZE)
-  const [showForm, setShowForm] = useState(false)
   const [openForm, setOpenForm] = useState(false)
   const [notice, setNotice] = useState(null)
 
@@ -128,20 +65,12 @@ function Progress() {
                 Monthly Progress Summary Reports (PSR - FO-08) analyzing student trajectory
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setOpenForm(true)}
-                className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-              >
-                Open Progress Summary Report
-              </button>
-              <button
-                onClick={() => setShowForm(true)}
-                className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-              >
-                + Generate Report
-              </button>
-            </div>
+            <button
+              onClick={() => setOpenForm(true)}
+              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+            >
+              Open Progress Summary Report
+            </button>
           </div>
           {notice ? (
             <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
@@ -217,19 +146,16 @@ function Progress() {
         ) : null}
       </div>
 
-      {showForm ? (
-        <GenerateReportModal
+      {openForm ? (
+        <ProgressSummaryReportForm
           patients={patients}
-          onClose={() => setShowForm(false)}
-          onCreated={() => {
-            setShowForm(false)
-            setNotice('Progress report draft generated.')
+          onSaved={() => {
+            setNotice('Progress report draft saved.')
             load()
           }}
+          onClose={() => setOpenForm(false)}
         />
       ) : null}
-
-      {openForm ? <ProgressSummaryReportForm onClose={() => setOpenForm(false)} /> : null}
     </>
   )
 }

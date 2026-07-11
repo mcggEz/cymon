@@ -1,6 +1,25 @@
+import { useState } from 'react'
 import FormShell from '../../../components/ui/FormShell'
 import FormHeading from '../../../components/ui/FormHeading'
 import BlankField from '../../../components/ui/BlankField'
+import PhotoCapture from '../../../components/ui/PhotoCapture'
+import Button from '../../../components/ui/Button'
+import { blankInput } from '../../../components/ui/formStyles'
+import { api } from '../../../lib/api'
+
+const ENROLLMENT = [
+  { value: 'HSN', label: 'Higher Support Needs Program (HSN) - 48 hours per month' },
+  { value: 'MSN', label: 'Moderate Support Needs Program (MSN) - 36 hours per month' },
+  { value: 'LSN', label: 'Low Support Needs Program (LSN) - 24 hours per month' },
+  { value: 'Individual', label: 'Individual Session' },
+]
+
+const genPassword = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+  let s = ''
+  for (let i = 0; i < 10; i += 1) s += chars[Math.floor(Math.random() * chars.length)]
+  return s
+}
 
 function YesNo() {
   return (
@@ -24,26 +43,108 @@ function SignatureLine({ label }) {
   )
 }
 
-function StudentAdmissionForm({ onClose }) {
+function StudentAdmissionForm({ onSaved, onClose }) {
+  const [f, setF] = useState({
+    lastName: '',
+    firstName: '',
+    middleName: '',
+    birthdate: '',
+    sex: '',
+    nickName: '',
+    presentAddress: '',
+    motherName: '',
+    motherEmail: '',
+    fatherName: '',
+    fatherEmail: '',
+    iepLevel: '',
+  })
+  const [photo, setPhoto] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [created, setCreated] = useState(null)
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }))
+
+  const register = async () => {
+    setError(null)
+    const email = f.motherEmail.trim() || f.fatherEmail.trim()
+    if (!f.firstName.trim() || !f.lastName.trim() || !f.birthdate || !f.sex) {
+      setError('Student first name, last name, birthdate, and sex are required.')
+      return
+    }
+    if (!email) {
+      setError('A parent email is required to create the student’s login.')
+      return
+    }
+    setSaving(true)
+    const password = genPassword()
+    try {
+      await api.admin.createPatient({
+        parent_email: email,
+        parent_password: password,
+        child: {
+          first_name: f.firstName,
+          middle_name: f.middleName,
+          last_name: f.lastName,
+          nick_name: f.nickName,
+          date_of_birth: f.birthdate,
+          sex: f.sex,
+          home_address: f.presentAddress,
+          photo,
+        },
+        clinical: { iep_level: f.iepLevel || null },
+        guardian: { full_name: f.motherName || f.fatherName, email, relationship: 'Parent' },
+        emergency: {},
+      })
+      setCreated({ name: `${f.firstName} ${f.lastName}`, email, password })
+      onSaved?.()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <FormShell title="STUDENT ADMISSION FORM" code="CMPS:SE-FO-01 rev.0 02192026" confidential={false} onClose={onClose}>
       <FormHeading numeral="">Personal Information</FormHeading>
       <div className="flex gap-6">
         <div className="flex-1 space-y-1.5">
-          <BlankField label="Last Name" />
-          <BlankField label="First Name" />
-          <BlankField label="Middle Name" />
-          <BlankField label="Birthdate (Month/Day/Date)" />
+          <BlankField label="Last Name">
+            <input className={blankInput} value={f.lastName} onChange={set('lastName')} />
+          </BlankField>
+          <BlankField label="First Name">
+            <input className={blankInput} value={f.firstName} onChange={set('firstName')} />
+          </BlankField>
+          <BlankField label="Middle Name">
+            <input className={blankInput} value={f.middleName} onChange={set('middleName')} />
+          </BlankField>
+          <BlankField label="Birthdate (Month/Day/Date)">
+            <input type="date" className={blankInput} value={f.birthdate} onChange={set('birthdate')} />
+          </BlankField>
           <BlankField label="Place of Birth" />
-          <BlankField label="Age/Sex" />
+          <BlankField label="Age/Sex">
+            <div className="flex gap-2">
+              <input className={blankInput} placeholder="Age" />
+              <select className={blankInput} value={f.sex} onChange={set('sex')}>
+                <option value="">Sex</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </BlankField>
           <div className="h-4" />
-          <BlankField label="Nickname" />
-          <BlankField label="Present Address" />
+          <BlankField label="Nickname">
+            <input className={blankInput} value={f.nickName} onChange={set('nickName')} />
+          </BlankField>
+          <BlankField label="Present Address">
+            <input className={blankInput} value={f.presentAddress} onChange={set('presentAddress')} />
+          </BlankField>
         </div>
-        <div className="shrink-0">
-          <div className="flex h-44 w-36 items-center justify-center border border-slate-900 text-center text-sm text-slate-500">
+        <div className="shrink-0 print:hidden">
+          <div className="mb-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">
             2X2 ID Picture
           </div>
+          <PhotoCapture value={photo} onChange={setPhoto} square />
         </div>
       </div>
 
@@ -62,14 +163,22 @@ function StudentAdmissionForm({ onClose }) {
 
       <FormHeading numeral="">Parent Information</FormHeading>
       <div className="space-y-1.5">
-        <BlankField label="Name of Mother/Guardian" />
+        <BlankField label="Name of Mother/Guardian">
+          <input className={blankInput} value={f.motherName} onChange={set('motherName')} />
+        </BlankField>
         <BlankField label="Occupation" />
         <BlankField label="Mobile Number" />
-        <BlankField label="Email Address" />
-        <BlankField label="Name of Father/Guardian" />
+        <BlankField label="Email Address">
+          <input type="email" className={blankInput} value={f.motherEmail} onChange={set('motherEmail')} />
+        </BlankField>
+        <BlankField label="Name of Father/Guardian">
+          <input className={blankInput} value={f.fatherName} onChange={set('fatherName')} />
+        </BlankField>
         <BlankField label="Occupation" />
         <BlankField label="Mobile Number" />
-        <BlankField label="Email Address" />
+        <BlankField label="Email Address">
+          <input type="email" className={blankInput} value={f.fatherEmail} onChange={set('fatherEmail')} />
+        </BlankField>
       </div>
 
       <FormHeading numeral="">Emergency Contact Information</FormHeading>
@@ -104,15 +213,16 @@ function StudentAdmissionForm({ onClose }) {
 
       <FormHeading numeral="">Enrollment Type</FormHeading>
       <div className="space-y-1 text-sm text-slate-800">
-        {[
-          'Higher Support Needs Program (HSN) - 48 hours per month',
-          'Moderate Support Needs Program (MSN) - 36 hours per month',
-          'Low Support Needs Program (LSN) - 24 hours per month',
-          'Individual Session',
-        ].map((opt) => (
-          <label key={opt} className="flex items-center gap-2">
-            <input type="checkbox" className="h-3.5 w-3.5 shrink-0 accent-purple-700" />
-            {opt}
+        {ENROLLMENT.map((opt) => (
+          <label key={opt.value} className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="enrollment"
+              className="h-3.5 w-3.5 shrink-0 accent-purple-700"
+              checked={f.iepLevel === opt.value}
+              onChange={() => setF((s) => ({ ...s, iepLevel: opt.value }))}
+            />
+            {opt.label}
           </label>
         ))}
       </div>
@@ -120,6 +230,36 @@ function StudentAdmissionForm({ onClose }) {
       <div className="mt-6 grid grid-cols-2 gap-8">
         <SignatureLine label="Signature over Printed Name of Parent / Date" />
         <SignatureLine label="Signature over Printed Name of CMPS Representative / Date" />
+      </div>
+
+      {/* Registration (not printed) */}
+      <div className="mt-8 print:hidden">
+        {created ? (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm">
+            <div className="font-semibold text-emerald-800">Student registered — {created.name}</div>
+            <div className="mt-1 text-slate-700">
+              Parent login email: <span className="font-mono">{created.email}</span>
+            </div>
+            <div className="text-slate-700">
+              Temporary password: <span className="font-mono">{created.password}</span>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">Share these with the parent so they can sign in.</p>
+            <Button className="mt-3" onClick={onClose}>
+              Done
+            </Button>
+          </div>
+        ) : (
+          <>
+            {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+            <button
+              onClick={register}
+              disabled={saving}
+              className="w-full rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60 sm:w-auto"
+            >
+              {saving ? 'Registering…' : 'Register Student'}
+            </button>
+          </>
+        )}
       </div>
     </FormShell>
   )

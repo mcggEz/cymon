@@ -2,6 +2,8 @@ import { useState } from 'react'
 import FormShell from '../../../components/ui/FormShell'
 import FormHeading from '../../../components/ui/FormHeading'
 import BlankField from '../../../components/ui/BlankField'
+import { blankInput } from '../../../components/ui/formStyles'
+import { api } from '../../../lib/api'
 
 const th =
   'border border-slate-500 bg-purple-100 px-2 py-1 text-center text-xs font-bold text-slate-800'
@@ -24,8 +26,36 @@ const emptyRow = () => ({
   outcome: '',
 })
 
-function ProgressSummaryReportForm({ onClose }) {
+function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
   const [rows, setRows] = useState(() => [emptyRow(), emptyRow(), emptyRow()])
+  const [patientId, setPatientId] = useState('')
+  const [period, setPeriod] = useState('')
+  const [trend, setTrend] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const save = async () => {
+    setError(null)
+    if (!patientId) {
+      setError('Please choose a student.')
+      return
+    }
+    setSaving(true)
+    try {
+      await api.psychologist.addProgressReport({
+        patient_id: patientId,
+        title: 'Monthly Progress Summary',
+        period,
+        trend,
+      })
+      onSaved?.()
+      onClose()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const update = (i, key, value) =>
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, [key]: value } : row)))
@@ -41,8 +71,19 @@ function ProgressSummaryReportForm({ onClose }) {
     >
       {/* Reporting period + client information header */}
       <div className="mb-4 space-y-2">
-        <BlankField label="Reporting Period" hint="e.g. March – May 2026" labelClassName="w-40" />
-        <BlankField label="Full Name" labelClassName="w-40" />
+        <BlankField label="Reporting Period" hint="e.g. March – May 2026" labelClassName="w-40">
+          <input className={blankInput} value={period} onChange={(e) => setPeriod(e.target.value)} />
+        </BlankField>
+        <BlankField label="Student" labelClassName="w-40">
+          <select className={blankInput} value={patientId} onChange={(e) => setPatientId(e.target.value)}>
+            <option value="">Select a student…</option>
+            {patients.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </BlankField>
         <BlankField label="Age / Sex" labelClassName="w-40" />
         <BlankField label="Diagnosis" labelClassName="w-40" />
       </div>
@@ -175,6 +216,30 @@ function ProgressSummaryReportForm({ onClose }) {
           </div>
           <div className="text-slate-700">Executive Director</div>
           <div className="text-slate-700">License Number: 0002278</div>
+        </div>
+      </div>
+
+      <div className="mt-8 print:hidden">
+        {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-purple-800">
+              Trend (optional)
+            </label>
+            <input
+              className={blankInput}
+              value={trend}
+              onChange={(e) => setTrend(e.target.value)}
+              placeholder="e.g. Improving"
+            />
+          </div>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save Progress Report'}
+          </button>
         </div>
       </div>
     </FormShell>

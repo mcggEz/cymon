@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import FormShell from '../../../components/ui/FormShell'
+import { api } from '../../../lib/api'
 import { cellInput } from '../../../components/ui/formStyles'
 
 const labelCell =
@@ -9,10 +10,45 @@ const inputCell = 'border border-slate-500 p-0'
 const paperTextarea =
   'w-full resize-y bg-transparent px-2 py-1 text-sm text-slate-900 focus:bg-purple-50 focus:outline-none'
 
-function DailyActivityReportForm({ onClose }) {
-  const [rows, setRows] = useState(() => Array.from({ length: 6 }, () => ({ name: '', response: '' })))
+const blank = {
+  session_number: '',
+  patient_id: '',
+  activity_title: '',
+  target_domain: '',
+  objectives: '',
+  procedure: '',
+  session_date: '',
+}
 
+function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
+  const [f, setF] = useState(blank)
+  const [rows, setRows] = useState(() => Array.from({ length: 6 }, () => ({ name: '', response: '' })))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }))
   const addRow = () => setRows((r) => [...r, { name: '', response: '' }])
+
+  const save = async (status) => {
+    setError(null)
+    if (!f.patient_id || !f.activity_title.trim()) {
+      setError('Please choose a student and enter the title of the activity.')
+      return
+    }
+    setSaving(true)
+    try {
+      const observations = rows
+        .filter((r) => r.name.trim() || r.response.trim())
+        .map((r) => (r.name.trim() ? `${r.name.trim()}: ${r.response.trim()}` : r.response.trim()))
+        .join('\n')
+      await api.psychometrician.addActivityLog({ ...f, observations, status })
+      onSaved?.()
+      onClose()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <FormShell title="Daily Activity Report" code="CMPS:SE-FO-08 rev.0 03032026" onClose={onClose}>
@@ -27,43 +63,50 @@ function DailyActivityReportForm({ onClose }) {
             <tr>
               <td className={labelCell}>Session Number</td>
               <td className={inputCell}>
-                <input className={cellInput} />
+                <input type="number" className={cellInput} value={f.session_number} onChange={set('session_number')} />
               </td>
             </tr>
             <tr>
               <td className={labelCell}>Name of the Student/s</td>
               <td className={inputCell}>
-                <input className={cellInput} />
+                <select className={cellInput} value={f.patient_id} onChange={set('patient_id')}>
+                  <option value="">Select a student…</option>
+                  {patients.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
               </td>
             </tr>
             <tr>
               <td className={labelCell}>Title of the Activity/ies</td>
               <td className={inputCell}>
-                <input className={cellInput} />
+                <input className={cellInput} value={f.activity_title} onChange={set('activity_title')} />
               </td>
             </tr>
             <tr>
               <td className={labelCell}>Targeted Domain/s</td>
               <td className={inputCell}>
-                <input className={cellInput} />
+                <input className={cellInput} value={f.target_domain} onChange={set('target_domain')} />
               </td>
             </tr>
             <tr>
               <td className={labelCell}>Objectives</td>
               <td className={inputCell}>
-                <textarea rows={5} className={paperTextarea} />
+                <textarea rows={5} className={paperTextarea} value={f.objectives} onChange={set('objectives')} />
               </td>
             </tr>
             <tr>
               <td className={labelCell}>Activity Procedure</td>
               <td className={inputCell}>
-                <textarea rows={6} className={paperTextarea} />
+                <textarea rows={6} className={paperTextarea} value={f.procedure} onChange={set('procedure')} />
               </td>
             </tr>
             <tr>
               <td className={labelCell}>Date of the Activity</td>
               <td className={inputCell}>
-                <input className={cellInput} />
+                <input type="date" className={cellInput} value={f.session_date} onChange={set('session_date')} />
               </td>
             </tr>
           </tbody>
@@ -139,6 +182,27 @@ function DailyActivityReportForm({ onClose }) {
           <div className="mt-7 font-bold text-slate-900">CRISTINE LAE C. ERASGA, RPm, RPsy, CHRA</div>
           <div className="text-slate-700">Clinic Psychologist</div>
           <div className="text-slate-700">License Number:</div>
+        </div>
+      </div>
+
+      {/* Save controls (not printed) */}
+      <div className="mt-8 print:hidden">
+        {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button
+            onClick={() => save('draft')}
+            disabled={saving}
+            className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+          >
+            Save Draft
+          </button>
+          <button
+            onClick={() => save('pending')}
+            disabled={saving}
+            className="rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Submit Daily Activity Report'}
+          </button>
         </div>
       </div>
     </FormShell>

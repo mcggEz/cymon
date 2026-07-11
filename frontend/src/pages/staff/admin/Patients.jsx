@@ -8,7 +8,6 @@ import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
-import PhotoCapture from '../../../components/ui/PhotoCapture'
 import StudentAdmissionForm from './StudentAdmissionForm'
 
 const tone = {
@@ -25,175 +24,6 @@ const Section = ({ title, hint, children }) => (
     <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
   </section>
 )
-
-function RegisterPatientModal({ onClose, onCreated }) {
-  const [parent, setParent] = useState({ email: '', password: '' })
-  const [child, setChild] = useState({
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    nick_name: '',
-    date_of_birth: '',
-    sex: '',
-    home_address: '',
-    contact_number: '',
-    nationality: '',
-    preferred_language: '',
-    school: '',
-    grade_level: '',
-  })
-  const [clinical, setClinical] = useState({
-    primary_diagnosis: '',
-    iep_level: '',
-    secondary_diagnosis: '',
-    date_enrolled: '',
-    referral_source: '',
-  })
-  const [guardian, setGuardian] = useState({
-    full_name: '',
-    relationship: '',
-    contact_number: '',
-    email: '',
-    occupation: '',
-    employer: '',
-  })
-  const [emergency, setEmergency] = useState({
-    full_name: '',
-    relationship: '',
-    contact_number: '',
-    alt_contact_number: '',
-    address: '',
-  })
-  const [photo, setPhoto] = useState(null)
-  const [err, setErr] = useState(null)
-  const [busy, setBusy] = useState(false)
-
-  const setP = (k) => (e) => setParent((s) => ({ ...s, [k]: e.target.value }))
-  const setC = (k) => (e) => setChild((s) => ({ ...s, [k]: e.target.value }))
-  const setCl = (k) => (e) => setClinical((s) => ({ ...s, [k]: e.target.value }))
-  const setG = (k) => (e) => setGuardian((s) => ({ ...s, [k]: e.target.value }))
-  const setE = (k) => (e) => setEmergency((s) => ({ ...s, [k]: e.target.value }))
-
-  const submit = async (e) => {
-    e.preventDefault()
-    setErr(null)
-    if (!parent.email || !parent.password) {
-      setErr('Parent email and password are required.')
-      return
-    }
-    if (parent.password.length < 6) {
-      setErr('Password must be at least 6 characters.')
-      return
-    }
-    if (!child.first_name || !child.last_name || !child.date_of_birth || !child.sex) {
-      setErr('Child name, date of birth, and sex are required.')
-      return
-    }
-    setBusy(true)
-    try {
-      await api.admin.createPatient({
-        parent_email: parent.email,
-        parent_password: parent.password,
-        child: { ...child, photo },
-        clinical,
-        guardian: { ...guardian, email: guardian.email || parent.email },
-        emergency,
-      })
-      const mid = child.middle_name?.trim() ? `${child.middle_name.trim().charAt(0).toUpperCase()}.` : ''
-      onCreated([child.first_name, mid, child.last_name].filter(Boolean).join(' '))
-    } catch (e2) {
-      setErr(e2.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Modal
-      title="Register Patient"
-      subtitle="Create a parent account and enroll their child"
-      onClose={onClose}
-      footer={
-        <div className="flex items-center justify-end gap-3">
-          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
-            Cancel
-          </button>
-          <Button type="submit" form="register-patient-form" size="lg" disabled={busy}>
-            {busy ? 'Registering…' : 'Register Patient'}
-          </Button>
-        </div>
-      }
-    >
-      <form id="register-patient-form" onSubmit={submit} className="space-y-5">
-        <Section title="Parent Account" hint="The parent uses this to sign in">
-          <Input label="Parent Email" type="email" tone="purple" value={parent.email} onChange={setP('email')} />
-          <Input label="Temporary Password" type="password" tone="purple" value={parent.password} onChange={setP('password')} />
-        </Section>
-
-        <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="text-sm font-semibold text-purple-800">Patient Photo</div>
-          <div className="mt-4">
-            <PhotoCapture value={photo} onChange={setPhoto} />
-          </div>
-        </section>
-
-        <Section title="Child" hint="The enrolled student">
-          <Input label="First Name" tone="purple" value={child.first_name} onChange={setC('first_name')} />
-          <Input label="Middle Name (optional)" tone="purple" value={child.middle_name} onChange={setC('middle_name')} />
-          <Input label="Last Name" tone="purple" value={child.last_name} onChange={setC('last_name')} />
-          <Input label="Nick Name (optional)" tone="purple" value={child.nick_name} onChange={setC('nick_name')} />
-          <Input label="Date of Birth" type="date" tone="purple" value={child.date_of_birth} onChange={setC('date_of_birth')} />
-          <Select label="Sex" value={child.sex} onChange={setC('sex')}>
-            <option value="">Select…</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </Select>
-        </Section>
-
-        <Section title="Contact & Location" hint="The child's contact and schooling details">
-          <Input label="Home Address" tone="purple" value={child.home_address} onChange={setC('home_address')} />
-          <Input label="Contact Number" tone="purple" value={child.contact_number} onChange={setC('contact_number')} />
-          <Input label="Nationality" tone="purple" value={child.nationality} onChange={setC('nationality')} />
-          <Input label="Preferred Language" tone="purple" value={child.preferred_language} onChange={setC('preferred_language')} />
-          <Input label="School / Institution" tone="purple" value={child.school} onChange={setC('school')} />
-          <Input label="Grade / Year Level" tone="purple" value={child.grade_level} onChange={setC('grade_level')} />
-        </Section>
-
-        <Section title="Clinical Information (optional)" hint="Used only for intervention planning">
-          <Select label="Primary Diagnosis" value={clinical.primary_diagnosis} onChange={setCl('primary_diagnosis')}>
-            <option value="">Select…</option>
-            <option value="Autism Spectrum Disorder">Autism Spectrum Disorder</option>
-            <option value="ADHD">ADHD</option>
-            <option value="Other">Other</option>
-          </Select>
-          <Input label="IEP Level" tone="purple" value={clinical.iep_level} onChange={setCl('iep_level')} />
-          <Input label="Secondary Diagnosis" tone="purple" value={clinical.secondary_diagnosis} onChange={setCl('secondary_diagnosis')} />
-          <Input label="Date of Enrollment" type="date" tone="purple" value={clinical.date_enrolled} onChange={setCl('date_enrolled')} />
-          <Input label="Referral Source" tone="purple" value={clinical.referral_source} onChange={setCl('referral_source')} />
-        </Section>
-
-        <Section title="Primary Guardian (optional)" hint="Parent or guardian details">
-          <Input label="Full Name" tone="purple" value={guardian.full_name} onChange={setG('full_name')} />
-          <Input label="Relationship" tone="purple" value={guardian.relationship} onChange={setG('relationship')} />
-          <Input label="Contact Number" tone="purple" value={guardian.contact_number} onChange={setG('contact_number')} />
-          <Input label="Email" type="email" tone="purple" value={guardian.email} onChange={setG('email')} />
-          <Input label="Occupation" tone="purple" value={guardian.occupation} onChange={setG('occupation')} />
-          <Input label="Employer / Company" tone="purple" value={guardian.employer} onChange={setG('employer')} />
-        </Section>
-
-        <Section title="Emergency Contact (optional)" hint="Who to reach in an emergency">
-          <Input label="Full Name" tone="purple" value={emergency.full_name} onChange={setE('full_name')} />
-          <Input label="Relationship" tone="purple" value={emergency.relationship} onChange={setE('relationship')} />
-          <Input label="Contact Number" tone="purple" value={emergency.contact_number} onChange={setE('contact_number')} />
-          <Input label="Alternative Contact Number" tone="purple" value={emergency.alt_contact_number} onChange={setE('alt_contact_number')} />
-          <Input label="Address" tone="purple" value={emergency.address} onChange={setE('address')} />
-        </Section>
-
-        {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
-      </form>
-    </Modal>
-  )
-}
 
 const FORM_LABEL = { complete: 'Complete', pending: 'Pending', in_progress: 'In Progress' }
 
@@ -348,7 +178,6 @@ function Patients() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [showRegister, setShowRegister] = useState(false)
   const [openAdmissionForm, setOpenAdmissionForm] = useState(false)
   const [notice, setNotice] = useState(null)
 
@@ -380,23 +209,12 @@ function Patients() {
               Manage student records, statuses, and admission forms.
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setOpenAdmissionForm(true)}
-              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-            >
-              Open Student Admission Form
-            </button>
-            <Button
-              onClick={() => {
-                setError(null)
-                setNotice(null)
-                setShowRegister(true)
-              }}
-            >
-              + Register Patient
-            </Button>
-          </div>
+          <button
+            onClick={() => setOpenAdmissionForm(true)}
+            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
+          >
+            Open Student Admission Form
+          </button>
         </div>
         {notice ? (
           <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
@@ -506,18 +324,14 @@ function Patients() {
             }}
           />
         ) : null}
-        {showRegister ? (
-          <RegisterPatientModal
-            onClose={() => setShowRegister(false)}
-            onCreated={(name) => {
-              setShowRegister(false)
-              setNotice(`Registered ${name}. The parent can now sign in.`)
+        {openAdmissionForm ? (
+          <StudentAdmissionForm
+            onSaved={() => {
+              setNotice('Student registered. The parent can now sign in.')
               load()
             }}
+            onClose={() => setOpenAdmissionForm(false)}
           />
-        ) : null}
-        {openAdmissionForm ? (
-          <StudentAdmissionForm onClose={() => setOpenAdmissionForm(false)} />
         ) : null}
       </div>
     </>
