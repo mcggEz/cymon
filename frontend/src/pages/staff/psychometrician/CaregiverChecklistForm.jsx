@@ -228,7 +228,7 @@ function CaregiverChecklistForm({ onClose }) {
       </div>
 
       <FormHeading>Instruction (Panuto)</FormHeading>
-      <p className="text-sm text-slate-800">
+      <p className="text-[12.5px] text-slate-800">
         Please answer each statement with YES (OO) if the child is able to do the skill independently or
         age-appropriate.
       </p>
@@ -271,22 +271,22 @@ function CaregiverChecklistForm({ onClose }) {
       <RemarksTable title="PERCEPTUAL DISTURBANCES" items={PERCEPTUAL} />
       <RemarksTable title="STIMMING" items={STIMMING} />
 
-      <p className="mt-6 text-sm italic text-slate-800">
+      <p className="mt-6 text-[12.5px] italic text-slate-800">
         I understand that the information I provide during this interview is essential to the accuracy of
         my child&apos;s behavioral assessment. I commit to giving complete, and accurate responses to the
         best of my knowledge. I acknowledge that my responses will be considered as part of the evaluation
         process to help ensure that the results reflect my child&apos;s current functioning and needs.
       </p>
 
-      <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <div className="mt-8 border-t border-slate-700" />
+          <div className="mt-5 border-t border-slate-700" />
           <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
             Signature over Printed Name of Caregiver / Date
           </div>
         </div>
         <div>
-          <div className="mt-8 border-t border-slate-700" />
+          <div className="mt-5 border-t border-slate-700" />
           <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
             Signature over Printed Name of Evaluator / Date
           </div>

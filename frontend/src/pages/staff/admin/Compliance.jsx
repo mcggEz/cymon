@@ -155,20 +155,20 @@ function Compliance() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 text-left">Student</th>
-                  <th className="py-3 text-left">Parent / Guardian</th>
-                  <th className="py-3 text-left">Missing Document</th>
-                  <th className="py-3 text-left">Form Code</th>
-                  <th className="py-3 text-left">Due Date</th>
-                  <th className="py-3 text-left">Status</th>
-                  <th className="py-3 text-left">Actions</th>
+                  <th className="py-3 px-4 text-left">Student</th>
+                  <th className="py-3 px-4 text-left">Parent / Guardian</th>
+                  <th className="py-3 px-4 text-left">Missing Document</th>
+                  <th className="py-3 px-4 text-left">Form Code</th>
+                  <th className="py-3 px-4 text-left">Due Date</th>
+                  <th className="py-3 px-4 text-left">Status</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={`s${i}`}>
-                        <td colSpan={7} className="py-3">
+                        <td colSpan={7} className="py-3 px-4">
                           <Skeleton className="h-11 w-full" />
                         </td>
                       </tr>
@@ -176,49 +176,55 @@ function Compliance() {
                   : null}
                 {!loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan={7} className="py-6 px-4 text-center text-sm text-slate-500">
                       No compliance issues match your search.
                     </td>
                   </tr>
                 ) : null}
                 {!loading &&
-                  pageRows.map((r) => (
-                  <tr key={r.id}>
-                    <td className="py-3">
-                      <div className="font-medium text-slate-800">{r.student}</div>
-                      <div className="text-xs text-slate-500">ID: {r.sid}</div>
-                    </td>
-                    <td className="py-3">
-                      <div className="text-slate-700">{r.parent}</div>
-                      <div className="text-xs text-slate-500">{r.email}</div>
-                    </td>
-                    <td className="py-3 text-slate-700">{r.doc}</td>
-                    <td className="py-3 text-xs text-slate-500">{r.code}</td>
-                    <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>{r.due}</td>
-                    <td className={`py-3 text-xs font-semibold ${tone[r.tone]}`}>{r.label}</td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        <RowAction variant="view" onClick={() => setActive(r)}>
-                          View
-                        </RowAction>
-                        <button
-                          onClick={() => remind(r)}
-                          disabled={busyId === r.id}
-                          className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
-                        >
-                          Remind
-                        </button>
-                        <button
-                          onClick={() => markProcessed(r)}
-                          disabled={busyId === r.id}
-                          className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
-                        >
-                          {busyId === r.id ? '…' : 'Process'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                  pageRows.map((r) => {
+                    const isSelected = active && active.id === r.id
+                    return (
+                      <tr
+                        key={r.id}
+                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                      >
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-slate-800">{r.student}</div>
+                          <div className="text-xs text-slate-500">ID: {r.sid}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-slate-700">{r.parent}</div>
+                          <div className="text-xs text-slate-500">{r.email}</div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700">{r.doc}</td>
+                        <td className="py-3 px-4 text-xs text-slate-500">{r.code}</td>
+                        <td className={`py-3 px-4 text-xs font-semibold ${tone[r.tone]}`}>{r.due}</td>
+                        <td className={`py-3 px-4 text-xs font-semibold ${tone[r.tone]}`}>{r.label}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <RowAction variant="view" onClick={() => setActive(r)}>
+                              View
+                            </RowAction>
+                            <button
+                              onClick={() => remind(r)}
+                              disabled={busyId === r.id}
+                              className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
+                            >
+                              Remind
+                            </button>
+                            <button
+                              onClick={() => markProcessed(r)}
+                              disabled={busyId === r.id}
+                              className="rounded-md border border-purple-200 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
+                            >
+                              {busyId === r.id ? '…' : 'Process'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
               </tbody>
             </table>
           </div>

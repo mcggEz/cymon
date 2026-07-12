@@ -127,19 +127,19 @@ function DraftingReports() {
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 text-left">Report Type</th>
-                  <th className="py-3 text-left">Student</th>
-                  <th className="py-3 text-left">Title</th>
-                  <th className="py-3 text-left">Date</th>
-                  <th className="py-3 text-left">Status</th>
-                  <th className="py-3 text-left">Actions</th>
+                  <th className="py-3 px-4 text-left">Report Type</th>
+                  <th className="py-3 px-4 text-left">Student</th>
+                  <th className="py-3 px-4 text-left">Title</th>
+                  <th className="py-3 px-4 text-left">Date</th>
+                  <th className="py-3 px-4 text-left">Status</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={6} className="py-3">
+                        <td colSpan={6} className="py-3 px-4">
                           <Skeleton className="h-6 w-full" />
                         </td>
                       </tr>
@@ -147,7 +147,7 @@ function DraftingReports() {
                   : null}
                 {!loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan={6} className="py-6 px-4 text-center text-sm text-slate-500">
                       No reports match your filters.
                     </td>
                   </tr>
@@ -155,21 +155,25 @@ function DraftingReports() {
                 {!loading &&
                   pageRows.map((r) => {
                     const meta = STATUS_META[r.status] || STATUS_META.draft
+                    const isSelected = active && active.id === r.id && active.type === r.type
                     return (
-                      <tr key={`${r.type}-${r.id}`}>
-                        <td className="py-3 text-slate-700">{r.typeLabel}</td>
-                        <td className="py-3">
+                      <tr
+                        key={`${r.type}-${r.id}`}
+                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                      >
+                        <td className="py-3 px-4 text-slate-700">{r.typeLabel}</td>
+                        <td className="py-3 px-4">
                           <div className="font-medium text-purple-800">{r.name}</div>
                           <div className="text-xs text-slate-500">ID: {r.sid}</div>
                         </td>
-                        <td className="py-3 text-slate-700">{r.title}</td>
-                        <td className="py-3 text-slate-600">{fmtDate(r.date)}</td>
-                        <td className="py-3">
+                        <td className="py-3 px-4 text-slate-700">{r.title}</td>
+                        <td className="py-3 px-4 text-slate-600">{fmtDate(r.date)}</td>
+                        <td className="py-3 px-4">
                           <span className={`rounded-md px-2.5 py-1 text-[11px] font-semibold ${meta.tone}`}>
                             {meta.label}
                           </span>
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 px-4">
                           <RowAction variant="view" onClick={() => setActive(r)}>
                             View
                           </RowAction>

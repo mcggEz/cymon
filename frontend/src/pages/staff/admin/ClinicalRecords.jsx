@@ -133,17 +133,17 @@ function ClinicalRecords() {
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                <th className="py-3 text-left">Student Name</th>
-                <th className="py-3 text-left">Document Type</th>
-                <th className="py-3 text-left">Date Finalized</th>
-                <th className="py-3 text-left">Action</th>
+                <th className="py-3 px-4 text-left">Student Name</th>
+                <th className="py-3 px-4 text-left">Document Type</th>
+                <th className="py-3 px-4 text-left">Date Finalized</th>
+                <th className="py-3 px-4 text-left">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-purple-100">
               {loading
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <tr key={`s${i}`}>
-                      <td colSpan={4} className="py-3">
+                      <td colSpan={4} className="py-3 px-4">
                         <Skeleton className="h-11 w-full" />
                       </td>
                     </tr>
@@ -151,32 +151,38 @@ function ClinicalRecords() {
                 : null}
               {!loading && filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-sm text-slate-500">
+                  <td colSpan={4} className="py-6 px-4 text-center text-sm text-slate-500">
                     No documents match your search.
                   </td>
                 </tr>
               ) : null}
               {!loading &&
-                pageRows.map((r) => (
-                <tr key={r.id}>
-                  <td className="py-3 font-medium text-slate-800">{r.name}</td>
-                  <td className="py-3 text-slate-700">{r.type}</td>
-                  <td className="py-3 text-slate-600">{r.date}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => printReport(buildReport(r))}
-                        className="text-sm font-medium text-purple-700 hover:text-purple-900"
-                      >
-                        Download PDF
-                      </button>
-                      <RowAction variant="view" onClick={() => setActive(r)}>
-                        View
-                      </RowAction>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                pageRows.map((r) => {
+                  const isSelected = active && active.id === r.id
+                  return (
+                    <tr
+                      key={r.id}
+                      className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                    >
+                      <td className="py-3 px-4 font-medium text-slate-800">{r.name}</td>
+                      <td className="py-3 px-4 text-slate-700">{r.type}</td>
+                      <td className="py-3 px-4 text-slate-600">{r.date}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => printReport(buildReport(r))}
+                            className="text-sm font-medium text-purple-700 hover:text-purple-900"
+                          >
+                            Download PDF
+                          </button>
+                          <RowAction variant="view" onClick={() => setActive(r)}>
+                            View
+                          </RowAction>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
             </tbody>
           </table>
           </div>

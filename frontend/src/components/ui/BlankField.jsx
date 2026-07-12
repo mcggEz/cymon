@@ -8,7 +8,7 @@ function BlankField({ label, hint, labelClassName = 'w-52', className = '', chil
     <div className={`flex items-baseline gap-2 ${className}`}>
       {label || hint ? (
         <span className={`shrink-0 ${labelClassName}`}>
-          <span className="text-sm text-slate-800">{label}</span>
+          <span className="text-[12.5px] text-slate-800">{label}</span>
           {hint ? <span className="block text-[10px] italic leading-tight text-slate-500">{hint}</span> : null}
         </span>
       ) : null}

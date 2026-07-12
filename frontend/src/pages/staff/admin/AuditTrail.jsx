@@ -115,59 +115,60 @@ function AuditTrail() {
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 text-left">Timestamp</th>
-                  <th className="py-3 text-left">Actor</th>
-                  <th className="py-3 text-left">Action</th>
-                  <th className="py-3 text-left">Detail</th>
-                  <th className="py-3 text-left">Severity</th>
-                  <th className="py-3 text-left">Actions</th>
+                  <th className="py-3 px-4 text-left">Timestamp</th>
+                  <th className="py-3 px-4 text-left">Actor</th>
+                  <th className="py-3 px-4 text-left">Action</th>
+                  <th className="py-3 px-4 text-left">Detail</th>
+                  <th className="py-3 px-4 text-left">Severity</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={`s${i}`}>
-                      <td colSpan="6" className="py-3">
+                      <td colSpan="6" className="py-3 px-4">
                         <Skeleton className="h-6 w-full" />
                       </td>
                     </tr>
                   ))
                 ) : filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan="6" className="py-6 px-4 text-center text-sm text-slate-500">
                       {logs.length === 0 ? 'No audit activity recorded yet.' : 'No matching audit logs found.'}
                     </td>
                   </tr>
                 ) : (
                   pageRows.map((log) => {
                     const sev = SEVERITY_META[log.severity] || SEVERITY_META.info
+                    const isSelected = selectedLog && selectedLog.id === log.id
                     return (
                       <tr
                         key={log.id}
                         onClick={() => setSelectedLog(log)}
-                        className="group cursor-pointer transition-colors hover:bg-purple-50/40"
+                        className={`group cursor-pointer transition-colors ${isSelected ? 'bg-purple-100/70 font-medium' : 'hover:bg-purple-50/40'}`}
                       >
-                        <td className="py-3 text-xs font-mono text-slate-500 whitespace-nowrap">{fmtDateTime(log.created_at)}</td>
-                        <td className="py-3 text-sm font-semibold text-slate-800 whitespace-nowrap">
+                        <td className="py-3 px-4 text-xs font-mono text-slate-500 whitespace-nowrap">{fmtDateTime(log.created_at)}</td>
+                        <td className="py-3 px-4 text-sm font-semibold text-slate-800 whitespace-nowrap">
                           {log.actor}
                           {log.actor_role ? (
                             <span className="ml-1 text-[10px] font-normal text-slate-400">({titleCase(log.actor_role)})</span>
                           ) : null}
                         </td>
-                        <td className="py-3 text-xs whitespace-nowrap">
+                        <td className="py-3 px-4 text-xs whitespace-nowrap">
                           <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
                             {titleCase(log.action)}
                           </span>
                         </td>
-                        <td className="py-3 text-sm text-slate-600 font-light max-w-xs md:max-w-md truncate group-hover:text-slate-800 transition-colors">
+                        <td className="py-3 px-4 text-sm text-slate-600 font-light max-w-xs md:max-w-md truncate group-hover:text-slate-800 transition-colors">
                           {log.summary}
                         </td>
-                        <td className="py-3 text-center whitespace-nowrap">
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1 font-semibold px-2 py-1 rounded-full text-[10px] uppercase tracking-wider border ${sev.cls}`}>
                             {sev.label}
                           </span>
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 px-4">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()

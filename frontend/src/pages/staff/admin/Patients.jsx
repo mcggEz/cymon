@@ -231,18 +231,18 @@ function Patients() {
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                <th className="py-3 text-left">Name</th>
-                <th className="py-3 text-left">Age</th>
-                <th className="py-3 text-left">Status</th>
-                <th className="py-3 text-left">Admission Form</th>
-                <th className="py-3 text-left">Actions</th>
+                <th className="py-3 px-4 text-left">Name</th>
+                <th className="py-3 px-4 text-left">Age</th>
+                <th className="py-3 px-4 text-left">Status</th>
+                <th className="py-3 px-4 text-left">Admission Form</th>
+                <th className="py-3 px-4 text-left">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-purple-100">
               {loading
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i}>
-                      <td colSpan={5} className="py-3">
+                      <td colSpan={5} className="py-3 px-4">
                         <Skeleton className="h-11 w-full" />
                       </td>
                     </tr>
@@ -250,33 +250,39 @@ function Patients() {
                 : null}
               {!loading && filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
+                  <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
                     No patients match your search.
                   </td>
                 </tr>
               ) : null}
-              {!loading && pageRows.map((r) => (
-                <tr key={r.id}>
-                  <td className="py-3">
-                    <div className="font-semibold text-slate-800">{r.name}</div>
-                    <div className="text-xs text-slate-500">ID: {r.id}</div>
-                  </td>
-                  <td className="py-3">{r.age}</td>
-                  <td className="py-3">
-                    <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[r.tone]}`}>
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className={`py-3 font-medium ${r.formTone}`}>{r.form}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-2">
-                      <RowAction variant="view" onClick={() => openDetail(r)}>
-                        View
-                      </RowAction>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {!loading && pageRows.map((r) => {
+                const isSelected = active && active.id === r.id
+                return (
+                  <tr
+                    key={r.id}
+                    className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                  >
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-slate-800">{r.name}</div>
+                      <div className="text-xs text-slate-500">ID: {r.id}</div>
+                    </td>
+                    <td className="py-3 px-4">{r.age}</td>
+                    <td className="py-3 px-4">
+                      <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[r.tone]}`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className={`py-3 px-4 font-medium ${r.formTone}`}>{r.form}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <RowAction variant="view" onClick={() => openDetail(r)}>
+                          View
+                        </RowAction>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           </div>

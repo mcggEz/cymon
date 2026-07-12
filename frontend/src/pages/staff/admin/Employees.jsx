@@ -528,19 +528,19 @@ function Employees() {
             <table className="w-full min-w-[680px] text-sm">
               <thead>
                 <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 text-left">Employee</th>
-                  <th className="py-3 text-left">Role</th>
-                  <th className="py-3 text-left">License / ID</th>
-                  <th className="py-3 text-left">Title</th>
-                  <th className="py-3 text-left">Joined</th>
-                  <th className="py-3 text-left">Actions</th>
+                  <th className="py-3 px-4 text-left">Employee</th>
+                  <th className="py-3 px-4 text-left">Role</th>
+                  <th className="py-3 px-4 text-left">License / ID</th>
+                  <th className="py-3 px-4 text-left">Title</th>
+                  <th className="py-3 px-4 text-left">Joined</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loadingList
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={6} className="py-3">
+                        <td colSpan={6} className="py-3 px-4">
                           <Skeleton className="h-11 w-full" />
                         </td>
                       </tr>
@@ -548,7 +548,7 @@ function Employees() {
                   : null}
                 {!loadingList && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan={6} className="py-6 px-4 text-center text-sm text-slate-500">
                       {employees.length === 0
                         ? 'No employees registered yet.'
                         : 'No employees match your search.'}
@@ -557,9 +557,13 @@ function Employees() {
                 ) : null}
                 {!loadingList &&
                   pageRows.map((emp) => {
+                    const isSelected = viewing && viewing.id === emp.id
                     return (
-                      <tr key={emp.id}>
-                        <td className="py-3">
+                      <tr
+                        key={emp.id}
+                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                      >
+                        <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-xs font-bold text-purple-700">
                               {emp.avatar_url ? (
@@ -574,13 +578,13 @@ function Employees() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 px-4">
                           <RoleChips role={emp.role} extra={emp.extra_roles} />
                         </td>
-                        <td className="py-3 text-slate-700">{emp.credential || '—'}</td>
-                        <td className="py-3 text-slate-700">{emp.title || '—'}</td>
-                        <td className="py-3 text-slate-600">{fmtDate(emp.created_at)}</td>
-                        <td className="py-3">
+                        <td className="py-3 px-4 text-slate-700">{emp.credential || '—'}</td>
+                        <td className="py-3 px-4 text-slate-700">{emp.title || '—'}</td>
+                        <td className="py-3 px-4 text-slate-600">{fmtDate(emp.created_at)}</td>
+                        <td className="py-3 px-4">
                           <RowAction variant="view" onClick={() => setViewing(emp)}>
                             View
                           </RowAction>

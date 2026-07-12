@@ -263,7 +263,7 @@ function Landing() {
 
         <div className="relative z-20 mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="max-w-2xl">
-            <h1 className="font-sans text-4xl font-semibold leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
+            <h1 className="font-sans text-4xl font-normal leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
               Clarity of Mind, <span className="text-violet">Journey to Wellness.</span>
             </h1>
 

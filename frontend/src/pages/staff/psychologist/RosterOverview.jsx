@@ -223,18 +223,18 @@ function RosterOverview() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 text-left">Client Name</th>
-                  <th className="py-3 text-center">Support Level</th>
-                  <th className="py-3 text-left">Progress</th>
-                  <th className="py-3 text-left">Last Update</th>
-                  <th className="py-3 text-center">Actions</th>
+                  <th className="py-3 px-4 text-left">Client Name</th>
+                  <th className="py-3 px-4 text-center">Support Level</th>
+                  <th className="py-3 px-4 text-left">Progress</th>
+                  <th className="py-3 px-4 text-left">Last Update</th>
+                  <th className="py-3 px-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading
                   ? Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={5} className="py-3">
+                        <td colSpan={5} className="py-3 px-4">
                           <Skeleton className="h-11 w-full" />
                         </td>
                       </tr>
@@ -242,35 +242,42 @@ function RosterOverview() {
                   : null}
                 {!loading && visible.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                    <td colSpan={5} className="py-8 px-4 text-center text-sm text-slate-400">
                       {q ? 'No clients match your search.' : 'No assigned clients yet.'}
                     </td>
                   </tr>
                 ) : null}
-                {!loading && visible.map((c) => (
-                  <tr key={c.id}>
-                    <td className="py-3 font-medium text-slate-800">{c.name}</td>
-                    <td className="py-3 text-center">
-                      <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${levelTone[c.level] || 'bg-slate-100 text-slate-600'}`}>
-                        {c.level}
-                      </span>
-                    </td>
-                    <td className="py-3">
-                      <ProgressBar value={c.progress} />
-                    </td>
-                    <td className="py-3 text-slate-600">{fmtDate(c.updated)}</td>
-                    <td className="py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <RowAction variant="view" onClick={() => setViewing(c)} aria-label={`View ${c.name}`}>
-                          View
-                        </RowAction>
-                        <RowAction variant="edit" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`}>
-                          Edit
-                        </RowAction>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {!loading &&
+                  visible.map((c) => {
+                    const isSelected = (viewing && viewing.id === c.id) || (editing && editing.id === c.id)
+                    return (
+                      <tr
+                        key={c.id}
+                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                      >
+                        <td className="py-3 px-4 font-medium text-slate-800">{c.name}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${levelTone[c.level] || 'bg-slate-100 text-slate-600'}`}>
+                            {c.level}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <ProgressBar value={c.progress} />
+                        </td>
+                        <td className="py-3 px-4 text-slate-600">{fmtDate(c.updated)}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <RowAction variant="view" onClick={() => setViewing(c)} aria-label={`View ${c.name}`}>
+                              View
+                            </RowAction>
+                            <RowAction variant="edit" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`}>
+                              Edit
+                            </RowAction>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
               </tbody>
             </table>
           </div>

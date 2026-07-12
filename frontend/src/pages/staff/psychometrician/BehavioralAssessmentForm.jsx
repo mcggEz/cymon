@@ -90,16 +90,16 @@ function BehavioralAssessmentForm({ onClose }) {
 
       <FormHeading numeral="IV">Behavioral Observations</FormHeading>
 
-      <div className="mb-1 text-sm font-bold text-slate-800">A. Caregiver Behavioral Observation Checklist</div>
+      <div className="mb-1 text-[12.5px] font-bold text-slate-800">A. Caregiver Behavioral Observation Checklist</div>
       <ScoreTable
         headers={['Domain', 'Raw Score', 'Verbal Interpretation']}
         rows={['Practical Domain', 'Social Domain', 'Conceptual Domain', 'Motor Skills', 'Total']}
       />
 
-      <div className="mt-3 text-sm font-bold text-slate-800">B. Mini-Mental Status Examination (MMSE)</div>
-      <div className="mt-1 text-sm font-bold text-slate-800">C. Child Adaptive Functioning Assessment Tool</div>
+      <div className="mt-3 text-[12.5px] font-bold text-slate-800">B. Mini-Mental Status Examination (MMSE)</div>
+      <div className="mt-1 text-[12.5px] font-bold text-slate-800">C. Child Adaptive Functioning Assessment Tool</div>
 
-      <div className="mt-2 mb-1 text-sm font-bold text-slate-800">
+      <div className="mt-2 mb-1 text-[12.5px] font-bold text-slate-800">
         D. Comprehensive Test of Nonverbal Intelligence-2 (CTONI-2)
       </div>
       <ScoreTable
@@ -120,7 +120,7 @@ function BehavioralAssessmentForm({ onClose }) {
         />
       </div>
 
-      <div className="mt-3 mb-1 text-sm font-bold text-slate-800">E. Gilliam&rsquo;s Autism Rating Scale-3 (GARS-3)</div>
+      <div className="mt-3 mb-1 text-[12.5px] font-bold text-slate-800">E. Gilliam&rsquo;s Autism Rating Scale-3 (GARS-3)</div>
       <ScoreTable
         headers={['Subscales', 'Raw Score', 'Percentile Rank', 'Scaled Score']}
         rows={[
@@ -145,7 +145,7 @@ function BehavioralAssessmentForm({ onClose }) {
       <FormHeading numeral="VI">Recommendations</FormHeading>
       <textarea rows={4} className="w-full border border-slate-400 p-2 text-sm focus:border-purple-600 focus:outline-none" />
 
-      <div className="mt-8 space-y-6">
+      <div className="mt-5 space-y-4">
         <Signatory
           role="Prepared by:"
           name="MR. MARWIN A. GILBERO JR., RPm, CHRA"

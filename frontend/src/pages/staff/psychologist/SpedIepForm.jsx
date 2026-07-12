@@ -98,7 +98,7 @@ function Signatory({ role, name, title }) {
   return (
     <td className="border border-slate-500 p-2 align-top">
       <div className="text-xs text-slate-800">{role}</div>
-      <div className="mt-10">
+      <div className="mt-6">
         {name ? <div className="text-xs font-bold text-slate-900">{name}</div> : null}
         <div className="text-xs text-slate-700">{title}</div>
       </div>

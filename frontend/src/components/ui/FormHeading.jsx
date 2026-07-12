@@ -4,7 +4,7 @@
 function FormHeading({ numeral, children, className = '' }) {
   return (
     <h2
-      className={`mt-5 mb-2 flex items-baseline gap-2 text-sm font-bold uppercase tracking-wide text-purple-800 ${className}`}
+      className={`mt-2 mb-0.5 flex items-baseline gap-2 text-[13px] font-bold uppercase tracking-wide text-purple-800 ${className}`}
     >
       {numeral ? <span>{numeral}.</span> : null}
       <span>{children}</span>

@@ -205,14 +205,9 @@ function SummerScapeConsentForm({ onClose }) {
 
   const toggle = (i) => setChecked((prev) => ({ ...prev, [i]: !prev[i] }))
 
-  return (
-    <FormShell
-      title="CyMon SummerScape Program"
-      subtitle="Parent/Caregiver Consent and Waiver Form"
-      code="CMPS:SE-FO-12 rev.0 03122026"
-      confidential={false}
-      onClose={onClose}
-    >
+  const getPages = () => [
+    // Page 1
+    <div key="page-1" className="space-y-4">
       <FormSection eyebrow="Progress" title="Acknowledgment status">
         <div className="h-2 w-full overflow-hidden rounded-full bg-purple-100">
           <div className="h-full rounded-full bg-purple-700 transition-all" style={{ width: `${pct}%` }} />
@@ -231,21 +226,57 @@ function SummerScapeConsentForm({ onClose }) {
       </FormSection>
 
       <FormSection eyebrow="Terms" title="Read each section and confirm">
-        {CLAUSES.map((c, i) => (
-          <div key={i}>
-            {c.group ? (
-              <div className="mt-6 border-t-2 border-purple-100 pt-4 font-serif text-base font-semibold text-purple-900">
-                {c.group}
-              </div>
-            ) : null}
-            <div className="mb-4 border-b border-purple-100 pb-4 last:mb-0 last:border-none last:pb-0">
+        {CLAUSES.slice(0, 4).map((c, i) => (
+          <div key={i} className="mb-4 last:mb-0">
+            <div className="mb-2 flex items-baseline gap-2.5">
+              <span className="shrink-0 rounded-full bg-purple-50 px-2 py-0.5 font-mono text-[11px] text-purple-500">
+                Item {i + 1}
+              </span>
+              <span className="font-serif text-sm font-semibold text-purple-900">{c.title}</span>
+            </div>
+            <div className="mb-3 space-y-2 text-xs text-slate-600 leading-snug">
+              {c.body.map((block, j) =>
+                block.list ? (
+                  <ul key={j} className="ml-5 list-disc space-y-1">
+                    {block.list.map((li, k) => (
+                      <li key={k}>{li}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p key={j}>{block.p}</p>
+                )
+              )}
+            </div>
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-lg bg-purple-50 px-3 py-1.5">
+              <input
+                type="checkbox"
+                checked={!!checked[i]}
+                onChange={() => toggle(i)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-purple-700"
+              />
+              <span className="text-[11px] font-semibold text-purple-900">
+                I have read, understood, and agree to the terms as cited in item {i + 1}.
+              </span>
+            </label>
+          </div>
+        ))}
+      </FormSection>
+    </div>,
+
+    // Page 2
+    <div key="page-2" className="space-y-4">
+      <FormSection eyebrow="Terms" title="Read each section and confirm (cont.)">
+        {CLAUSES.slice(4, 9).map((c, idx) => {
+          const i = idx + 4
+          return (
+            <div key={i} className="mb-4 last:mb-0">
               <div className="mb-2 flex items-baseline gap-2.5">
                 <span className="shrink-0 rounded-full bg-purple-50 px-2 py-0.5 font-mono text-[11px] text-purple-500">
                   Item {i + 1}
                 </span>
                 <span className="font-serif text-sm font-semibold text-purple-900">{c.title}</span>
               </div>
-              <div className="mb-3 space-y-2 text-sm text-slate-600">
+              <div className="mb-3 space-y-2 text-xs text-slate-600 leading-snug">
                 {c.body.map((block, j) =>
                   block.list ? (
                     <ul key={j} className="ml-5 list-disc space-y-1">
@@ -258,24 +289,75 @@ function SummerScapeConsentForm({ onClose }) {
                   )
                 )}
               </div>
-              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg bg-purple-50 px-3 py-2.5">
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg bg-purple-50 px-3 py-1.5">
                 <input
                   type="checkbox"
                   checked={!!checked[i]}
                   onChange={() => toggle(i)}
                   className="mt-0.5 h-4 w-4 shrink-0 accent-purple-700"
                 />
-                <span className="text-xs font-semibold text-purple-900">
+                <span className="text-[11px] font-semibold text-purple-900">
                   I have read, understood, and agree to the terms as cited in item {i + 1}.
                 </span>
               </label>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </FormSection>
+    </div>,
 
+    // Page 3
+    <div key="page-3" className="space-y-4">
+      <FormSection eyebrow="Terms" title="Read each section and confirm (cont.)">
+        {CLAUSES.slice(9).map((c, idx) => {
+          const i = idx + 9
+          return (
+            <div key={i} className="mb-4 last:mb-0">
+              {c.group ? (
+                <div className="mt-2 border-t-2 border-purple-100 pt-2 mb-2 font-serif text-sm font-semibold text-purple-900 uppercase tracking-wider">
+                  {c.group}
+                </div>
+              ) : null}
+              <div className="mb-2 flex items-baseline gap-2.5">
+                <span className="shrink-0 rounded-full bg-purple-50 px-2 py-0.5 font-mono text-[11px] text-purple-500">
+                  Item {i + 1}
+                </span>
+                <span className="font-serif text-sm font-semibold text-purple-900">{c.title}</span>
+              </div>
+              <div className="mb-3 space-y-2 text-xs text-slate-600 leading-snug">
+                {c.body.map((block, j) =>
+                  block.list ? (
+                    <ul key={j} className="ml-5 list-disc space-y-1">
+                      {block.list.map((li, k) => (
+                        <li key={k}>{li}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p key={j}>{block.p}</p>
+                  )
+                )}
+              </div>
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg bg-purple-50 px-3 py-1.5">
+                <input
+                  type="checkbox"
+                  checked={!!checked[i]}
+                  onChange={() => toggle(i)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-purple-700"
+                />
+                <span className="text-[11px] font-semibold text-purple-900">
+                  I have read, understood, and agree to the terms as cited in item {i + 1}.
+                </span>
+              </label>
+            </div>
+          )
+        })}
+      </FormSection>
+    </div>,
+
+    // Page 4
+    <div key="page-4" className="space-y-4">
       <FormSection eyebrow="Final step" title="Parent/Caregiver Acknowledgement Form">
-        <p className="text-sm text-slate-600">
+        <p className="text-xs text-slate-600 leading-relaxed">
           I,{' '}
           <input className={inlineFill} placeholder="Parent/Legal Guardian full name" />, the
           parent/legal guardian of{' '}
@@ -283,40 +365,53 @@ function SummerScapeConsentForm({ onClose }) {
           my child in the <strong>CyMon SummerScape Program</strong> of{' '}
           <strong>CLEARMIND PSYCHOLOGICAL SERVICES</strong>.
         </p>
-        <p className="mt-3 text-sm text-slate-600">
+        <p className="mt-2 text-xs text-slate-600 leading-relaxed">
           By signing below, I affirm that I have read and understood the contents of this consent and
           waiver form and voluntarily agree to its terms.
         </p>
 
-        <div className="mt-5 grid gap-6 sm:grid-cols-2">
-          <div>
-            <div className="mb-3 font-serif text-sm font-semibold text-purple-900">Parent/Guardian</div>
-            <FormField label="Contact Number" className="mb-3">
+        <div className="mt-4 grid gap-6 sm:grid-cols-2 text-[11px]">
+          <div className="border border-purple-100 p-3 rounded-xl bg-purple-50/20">
+            <div className="mb-2 font-serif text-sm font-semibold text-purple-900">Parent/Guardian</div>
+            <FormField label="Contact Number" className="mb-2">
               <input className={fieldInput} type="tel" placeholder="09XX XXX XXXX" />
             </FormField>
             <SignaturePad label="Signature" value={parentSig} onChange={setParentSig} />
-            <FormField label="Date" className="mt-3">
+            <FormField label="Date" className="mt-2">
               <input className={fieldInput} type="date" />
             </FormField>
           </div>
 
-          <div>
-            <div className="mb-3 font-serif text-sm font-semibold text-purple-900">
+          <div className="border border-purple-100 p-3 rounded-xl bg-purple-50/20">
+            <div className="mb-2 font-serif text-sm font-semibold text-purple-900">
               CMPS Representative
             </div>
-            <FormField label="Representative Name" className="mb-3">
+            <FormField label="Representative Name" className="mb-2">
               <input className={fieldInput} type="text" />
             </FormField>
-            <FormField label="Contact Number" className="mb-3">
+            <FormField label="Contact Number" className="mb-2">
               <input className={fieldInput} type="tel" placeholder="09XX XXX XXXX" />
             </FormField>
             <SignaturePad label="Signature" value={repSig} onChange={setRepSig} />
-            <FormField label="Date" className="mt-3">
+            <FormField label="Date" className="mt-2">
               <input className={fieldInput} type="date" />
             </FormField>
           </div>
         </div>
       </FormSection>
+    </div>
+  ]
+
+  return (
+    <FormShell
+      title="CyMon SummerScape Program"
+      subtitle="Parent/Caregiver Consent and Waiver Form"
+      code="CMPS:SE-FO-12 rev.0 03122026"
+      confidential={false}
+      onClose={onClose}
+      multiPage={true}
+    >
+      {getPages()}
     </FormShell>
   )
 }

@@ -82,7 +82,7 @@ const WORD_RECOGNITION = [
 
 function Check({ label }) {
   return (
-    <label className="inline-flex items-center gap-1.5 text-sm text-slate-800">
+    <label className="inline-flex items-center gap-1.5 text-[12.5px] text-slate-800">
       <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
       <span>{label}</span>
     </label>
@@ -106,7 +106,7 @@ function AssessmentTable({ rows }) {
             <tr key={r.label}>
               <td className={`${rowLabelCell} font-bold uppercase`}>{r.label}</td>
               <td className={tokenCell}>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-800">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-slate-800">
                   {r.tokens.map((t, i) => (
                     <span key={`${t}-${i}`}>{t}</span>
                   ))}
@@ -165,7 +165,7 @@ function AdaptiveFunctioningForm({ onClose }) {
                 <div className="space-y-2 py-1">
                   {['Name Recognition', 'Write Name', 'Spell Name'].map((item) => (
                     <div key={item} className="flex items-center justify-between gap-4">
-                      <span className="text-sm text-slate-800">{item}</span>
+                      <span className="text-[12.5px] text-slate-800">{item}</span>
                       <span className="flex shrink-0 gap-4">
                         <Check label="YES" />
                         <Check label="NO" />
@@ -177,7 +177,7 @@ function AdaptiveFunctioningForm({ onClose }) {
               <td className={`${rowLabelCell} align-top`}>
                 <div className="space-y-3 py-1">
                   <div>
-                    <div className="mb-1 text-sm font-bold text-slate-800">Dominant Hand</div>
+                    <div className="mb-1 text-[12.5px] font-bold text-slate-800">Dominant Hand</div>
                     <div className="flex flex-wrap gap-x-5 gap-y-1">
                       <Check label="LEFT" />
                       <Check label="RIGHT" />
@@ -185,7 +185,7 @@ function AdaptiveFunctioningForm({ onClose }) {
                     </div>
                   </div>
                   <div>
-                    <div className="mb-1 text-sm font-bold text-slate-800">Pencil Grip</div>
+                    <div className="mb-1 text-[12.5px] font-bold text-slate-800">Pencil Grip</div>
                     <div className="flex flex-wrap gap-x-5 gap-y-1">
                       <Check label="FISTED" />
                       <Check label="4-FINGER" />
@@ -200,15 +200,15 @@ function AdaptiveFunctioningForm({ onClose }) {
         </table>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <div className="mt-8 border-t border-slate-700" />
+          <div className="mt-5 border-t border-slate-700" />
           <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
             Assessor&apos;s Signature Over Printed Name
           </div>
         </div>
         <div>
-          <div className="mt-8 border-t border-slate-700" />
+          <div className="mt-5 border-t border-slate-700" />
           <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
             Date
           </div>

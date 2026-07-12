@@ -231,7 +231,7 @@ function MmseForm({ onClose }) {
           label="Was the student previously diagnosed/assessed?"
           labelClassName="w-auto"
         >
-          <span className="flex items-center gap-6 text-sm text-slate-800">
+          <span className="flex items-center gap-6 text-[12.5px] text-slate-800">
             <label className="flex items-center gap-1.5">
               <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
               Yes
@@ -254,7 +254,7 @@ function MmseForm({ onClose }) {
         </div>
       ))}
 
-      <div className="mx-auto mt-10 max-w-md">
+      <div className="mx-auto mt-6 max-w-md">
         <input className={`${blankInput} text-center`} />
         <div className="mt-1 text-center text-[9px] font-bold uppercase tracking-wide text-slate-700">
           Signature over Printed Name of Evaluator / Date

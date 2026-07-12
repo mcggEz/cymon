@@ -60,7 +60,12 @@ function Progress() {
     <>
       <StaffHeader title="Monthly Summary Progress" />
       <div className="flex-1 overflow-y-auto p-6">
-        <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+        {notice ? (
+          <div className="mb-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
+        ) : null}
+
+        <div className="flex gap-6">
+        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-purple-800">Progress Tracking</h1>
@@ -75,9 +80,6 @@ function Progress() {
               Open Progress Summary Report
             </button>
           </div>
-          {notice ? (
-            <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-          ) : null}
           <div className="mt-4">
             <SearchBar
               value={query}
@@ -88,26 +90,23 @@ function Progress() {
               placeholder="Search reports by student or period…"
             />
           </div>
-        </section>
 
-        <div className="mt-5 flex gap-6">
-        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="overflow-x-auto">
+          <div className="mt-5 overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 text-left">Student</th>
-                  <th className="py-3 text-left">Period</th>
-                  <th className="py-3 text-left">Trend</th>
-                  <th className="py-3 text-left">Status</th>
-                  <th className="py-3 text-left">Actions</th>
+                  <th className="py-3 px-4 text-left">Student</th>
+                  <th className="py-3 px-4 text-left">Period</th>
+                  <th className="py-3 px-4 text-left">Trend</th>
+                  <th className="py-3 px-4 text-left">Status</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-purple-100">
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={5} className="py-3">
+                        <td colSpan={5} className="py-3 px-4">
                           <Skeleton className="h-8 w-full" />
                         </td>
                       </tr>
@@ -115,7 +114,7 @@ function Progress() {
                   : null}
                 {!loading && visible.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
+                    <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
                       {q ? 'No reports match your search.' : 'No progress reports yet.'}
                     </td>
                   </tr>
@@ -124,11 +123,15 @@ function Progress() {
                   paged.map((i) => {
                     const meta = STATUS_META[i.status] || STATUS_META.draft
                     const trendTone = i.trend && i.trend.toLowerCase().includes('improv') ? 'emerald' : 'amber'
+                    const isSelected = active && active.id === i.id
                     return (
-                      <tr key={i.id}>
-                        <td className="py-3 font-medium text-purple-800">{i.name}</td>
-                        <td className="py-3 text-slate-600">{i.period || '—'}</td>
-                        <td className="py-3">
+                      <tr
+                        key={i.id}
+                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                      >
+                        <td className="py-3 px-4 font-medium text-purple-800">{i.name}</td>
+                        <td className="py-3 px-4 text-slate-600">{i.period || '—'}</td>
+                        <td className="py-3 px-4">
                           {i.trend ? (
                             <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[trendTone]}`}>
                               {i.trend}
@@ -137,12 +140,12 @@ function Progress() {
                             <span className="text-slate-400">—</span>
                           )}
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 px-4">
                           <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${tone[meta.tone]}`}>
                             {meta.label}
                           </span>
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 px-4">
                           <RowAction variant="view" onClick={() => setActive(i)}>
                             View
                           </RowAction>

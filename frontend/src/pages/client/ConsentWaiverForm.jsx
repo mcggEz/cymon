@@ -104,15 +104,10 @@ const inlineBlank =
   'inline-block min-w-[240px] border-b border-slate-400 bg-transparent px-1 text-sm text-slate-900 focus:border-purple-600 focus:outline-none'
 
 function ConsentWaiverForm({ onClose }) {
-  return (
-    <FormShell
-      title="Special Education (SPED) Program"
-      subtitle="Parent/Caregiver Consent and Waiver Form"
-      code="CMPS:SE-FO-02 rev.0 02192026"
-      confidential={false}
-      onClose={onClose}
-    >
-      {CLAUSES.map((c) => (
+  const getPages = () => [
+    // Page 1: Nature and attendance clauses
+    <div key="page-1" className="space-y-4">
+      {CLAUSES.slice(0, 4).map((c) => (
         <section key={c.title}>
           <FormHeading numeral={c.numeral}>{c.title}</FormHeading>
           {c.body.map((p, j) => (
@@ -122,7 +117,24 @@ function ConsentWaiverForm({ onClose }) {
           ))}
         </section>
       ))}
+    </div>,
 
+    // Page 2: Safety & liability clauses
+    <div key="page-2" className="space-y-4">
+      {CLAUSES.slice(4).map((c) => (
+        <section key={c.title}>
+          <FormHeading numeral={c.numeral}>{c.title}</FormHeading>
+          {c.body.map((p, j) => (
+            <p key={j} className="mb-2 text-sm leading-snug text-slate-700">
+              {p}
+            </p>
+          ))}
+        </section>
+      ))}
+    </div>,
+
+    // Page 3: House rules & signatories
+    <div key="page-3" className="space-y-4">
       <FormHeading numeral="">Cymon&rsquo;s House Rules</FormHeading>
       <div className="space-y-2">
         {HOUSE_RULES.map((r) => (
@@ -135,13 +147,13 @@ function ConsentWaiverForm({ onClose }) {
         ))}
       </div>
 
-      <h2 className="mt-8 text-center text-base font-bold uppercase tracking-wide text-purple-800">
+      <h2 className="mt-6 text-center text-base font-bold uppercase tracking-wide text-purple-800">
         Parent/Caregiver
         <br />
         Acknowledgement Form
       </h2>
 
-      <p className="mt-4 text-sm leading-relaxed text-slate-700">
+      <p className="mt-3 text-sm leading-relaxed text-slate-700">
         I, <input className={inlineBlank} aria-label="Parent/legal guardian name" />, the
         parent/legal guardian of{' '}
         <input className={inlineBlank} aria-label="Child name" />, hereby voluntarily enroll my child
@@ -149,22 +161,36 @@ function ConsentWaiverForm({ onClose }) {
         <span className="font-bold underline">CLEARMIND PSYCHOLOGICAL SERVICES</span>.
       </p>
 
-      <p className="mt-3 text-sm leading-relaxed text-slate-700">
+      <p className="mt-2 text-sm leading-relaxed text-slate-700">
         By signing below, I affirm that I have read and understood the contents of this consent and
         waiver form and voluntarily agree to its terms.
       </p>
 
-      <div className="mt-6 space-y-2">
-        <BlankField label="Parent/Guardian Name:" labelClassName="w-48" />
-        <BlankField label="Signature/Date:" labelClassName="w-48" />
-        <BlankField label="Contact Number:" labelClassName="w-48" />
+      <div className="mt-5 grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <BlankField label="Parent/Guardian Name:" labelClassName="w-48 text-[11px]" />
+          <BlankField label="Signature/Date:" labelClassName="w-48 text-[11px]" />
+          <BlankField label="Contact Number:" labelClassName="w-48 text-[11px]" />
+        </div>
+        <div className="space-y-2">
+          <BlankField label="CMPS Representative:" labelClassName="w-48 text-[11px]" />
+          <BlankField label="Signature/Date:" labelClassName="w-48 text-[11px]" />
+          <BlankField label="Contact Number:" labelClassName="w-48 text-[11px]" />
+        </div>
       </div>
+    </div>,
+  ]
 
-      <div className="mt-6 space-y-2">
-        <BlankField label="CMPS Representative:" labelClassName="w-48" />
-        <BlankField label="Signature/Date:" labelClassName="w-48" />
-        <BlankField label="Contact Number:" labelClassName="w-48" />
-      </div>
+  return (
+    <FormShell
+      title="Special Education (SPED) Program"
+      subtitle="Parent/Caregiver Consent and Waiver Form"
+      code="CMPS:SE-FO-02 rev.0 02192026"
+      confidential={false}
+      onClose={onClose}
+      multiPage={true}
+    >
+      {getPages()}
     </FormShell>
   )
 }

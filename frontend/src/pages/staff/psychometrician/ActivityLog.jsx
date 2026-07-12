@@ -4,6 +4,8 @@ import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
 import Pagination from '../../../components/ui/Pagination'
 import DailyActivityReportForm from './DailyActivityReportForm'
+import SearchBar from '../../../components/ui/SearchBar'
+import RowAction from '../../../components/ui/RowAction'
 
 const PAGE_SIZE = 20
 
@@ -22,8 +24,8 @@ function ActivityLog() {
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
-
-  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const load = () =>
     api.psychometrician
@@ -43,6 +45,14 @@ function ActivityLog() {
       on = false
     }
   }, [])
+
+  const q = query.trim().toLowerCase()
+  const filtered = rows.filter((r) => {
+    const mq = !q || r.name.toLowerCase().includes(q) || (r.detail || '').toLowerCase().includes(q)
+    const ms = statusFilter === 'all' || r.status === statusFilter
+    return mq && ms
+  })
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -65,55 +75,100 @@ function ActivityLog() {
             </button>
           </div>
 
-          <div className="mt-4 flex items-center gap-3">
-            <div className="flex flex-1 items-center rounded-md border border-purple-200 bg-purple-50 px-3 py-1.5 text-sm text-slate-500">
-              <input placeholder="Search by student name or activity…" className="flex-1 bg-transparent outline-none" />
-            </div>
-            <select className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm">
-              <option>All Statuses</option>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <SearchBar
+              value={query}
+              onChange={(v) => {
+                setQuery(v)
+                setPage(1)
+              }}
+              placeholder="Search by student name or activity…"
+              className="flex-1"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
+              className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm focus:border-purple-500 focus:outline-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
             </select>
           </div>
 
-          <ul className="mt-4 divide-y divide-purple-100">
-            {loading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <li key={i} className="py-4">
-                  <Skeleton className="h-12 w-full" />
-                </li>
-              ))
-            ) : (
-              <>
-            {rows.length === 0 ? (
-              <li className="py-4 text-sm text-slate-500">No session logs yet.</li>
-            ) : null}
-            {pageRows.map((r) => {
-              const meta = STATUS_META[r.status] || STATUS_META.draft
-              return (
-              <li
-                key={r.id}
-                onClick={() => setActive({ ...r, day: dayOf(r.date), mon: monOf(r.date) })}
-                className="flex cursor-pointer items-center gap-4 py-4 hover:bg-purple-50/40"
-              >
-                <div className="flex h-12 w-12 flex-col items-center justify-center rounded-md bg-purple-100 text-purple-800">
-                  <div className="text-base font-bold leading-none">{dayOf(r.date)}</div>
-                  <div className="text-[9px] font-semibold tracking-wider">{monOf(r.date)}</div>
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-purple-800">{r.name}</div>
-                  <div className="text-xs text-slate-500">
-                    {r.session_number ? `Session ${r.session_number} · ` : ''}{r.detail}
-                  </div>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
-                  {meta.label}
-                </span>
-              </li>
-              )
-            })}
-              </>
-            )}
-          </ul>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="text-xs font-semibold tracking-wider text-purple-700">
+                  <th className="py-3 px-4 text-left">Student</th>
+                  <th className="py-3 px-4 text-left">Date</th>
+                  <th className="py-3 px-4 text-left">Activity</th>
+                  <th className="py-3 px-4 text-left">Status</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-purple-100">
+                {loading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={5} className="py-3 px-4">
+                          <Skeleton className="h-8 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : null}
+                {!loading && filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
+                      {q ? 'No session logs match your search.' : 'No session logs yet.'}
+                    </td>
+                  </tr>
+                ) : null}
+                {!loading &&
+                  pageRows.map((r) => {
+                    const meta = STATUS_META[r.status] || STATUS_META.draft
+                    const isSelected = active && active.id === r.id
+                    const formattedDate = r.date
+                      ? new Date(r.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '—'
+                    return (
+                      <tr
+                        key={r.id}
+                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
+                      >
+                        <td className="py-3 px-4 font-medium text-purple-800">{r.name}</td>
+                        <td className="py-3 px-4 text-slate-600">{formattedDate}</td>
+                        <td className="py-3 px-4 text-slate-600">
+                          {r.session_number ? `Session ${r.session_number} · ` : ''}{r.detail}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${meta.tone}`}>
+                            {meta.label}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <RowAction
+                            variant="view"
+                            onClick={() => setActive({ ...r, day: dayOf(r.date), mon: monOf(r.date) })}
+                          >
+                            View
+                          </RowAction>
+                        </td>
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
         </section>
 
         {active ? (
