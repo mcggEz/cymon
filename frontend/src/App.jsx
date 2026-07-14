@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -38,6 +39,13 @@ import PmActivityLog from './pages/staff/psychometrician/ActivityLog'
 import DraftingReports from './pages/staff/psychometrician/DraftingReports'
 
 function App() {
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash && hash.includes('type=recovery') && hash.includes('access_token=')) {
+      window.location.href = `/reset-password${hash}`
+    }
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>
