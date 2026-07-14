@@ -1003,4 +1003,38 @@ router.patch('/assessment-requests/:id', async (req, res, next) => {
   }
 });
 
+// admin manually changes the password of any user in their clinic
+router.post('/users/:id/change-password', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { password } = req.body || {};
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    // Validate target user belongs to the same clinic as the admin
+    const { data: userProfile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('id, clinic_id')
+      .eq('id', req.params.id)
+      .maybeSingle();
+      
+    if (profileErr) return next(profileErr);
+    if (!userProfile || userProfile.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'User profile not found in your clinic' });
+    }
+    
+    // Override user password
+    const { error: updateErr } = await supabase.auth.admin.updateUserById(req.params.id, { password });
+    if (updateErr) {
+      return res.status(400).json({ error: updateErr.message });
+    }
+    
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
+

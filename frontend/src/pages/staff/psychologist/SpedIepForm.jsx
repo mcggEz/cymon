@@ -147,7 +147,7 @@ function SpedIepForm({ onClose }) {
       </table>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse">
+        <table className="w-full border-collapse">
           <colgroup>
             <col className="w-10" />
             <col className="w-40" />
@@ -175,7 +175,7 @@ function SpedIepForm({ onClose }) {
       </div>
 
       <div className="mt-6 overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse">
+        <table className="w-full border-collapse">
           <tbody>
             <tr>
               <Signatory role="Prepared by:" title="Behavioral Technician" />

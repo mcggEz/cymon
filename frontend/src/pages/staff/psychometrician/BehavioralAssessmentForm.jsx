@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import FormShell from '../../../components/ui/FormShell'
 import FormHeading from '../../../components/ui/FormHeading'
 import BlankField from '../../../components/ui/BlankField'
@@ -40,22 +41,37 @@ function ScoreTable({ headers, rows }) {
 }
 
 function Signatory({ role, name, title, license }) {
+  const [sName] = useState(name)
+  const [sTitle, setSTitle] = useState(title)
+  const [sLicense, setSLicense] = useState(license)
+
   return (
     <div>
       <div className="text-slate-800">{role}</div>
       <div className="mt-3">
-        <SignatureField label={name} />
+        <SignatureField label={sName} />
       </div>
-      <div className="text-slate-700">{title}</div>
-      <div className="text-slate-700">
-        License Number:{' '}
-        {license ? license : <span className="inline-block w-40 border-b border-slate-400 align-bottom" />}
+      <input
+        type="text"
+        value={sTitle}
+        onChange={(e) => setSTitle(e.target.value)}
+        className="w-full bg-transparent text-sm text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+      />
+      <div className="text-slate-700 text-sm flex items-center gap-1 mt-1">
+        <span>License Number:</span>
+        <input
+          type="text"
+          value={sLicense || ''}
+          onChange={(e) => setSLicense(e.target.value)}
+          placeholder="Enter license..."
+          className="bg-transparent border-b border-slate-300 hover:border-slate-400 focus:border-purple-600 focus:outline-none w-32 px-1 text-slate-700 print:border-none"
+        />
       </div>
     </div>
   )
 }
 
-function BehavioralAssessmentForm({ onClose }) {
+function BehavioralAssessmentForm({ onClose, readOnly = false }) {
   return (
     <FormShell
       title="BEHAVIORAL ASSESSMENT REPORT"
@@ -63,6 +79,7 @@ function BehavioralAssessmentForm({ onClose }) {
       code="CMPS:SE-FO-06 rev.0 03032026"
       onClose={onClose}
     >
+      <fieldset disabled={readOnly} className="contents">
       <FormHeading numeral="I">Personal Information</FormHeading>
       <div className="space-y-1.5">
         <BlankField label="Full Name (LN, FN MI):" labelClassName="w-48" />
@@ -158,7 +175,8 @@ function BehavioralAssessmentForm({ onClose }) {
           title="Chief Psychologist"
         />
       </div>
-    </FormShell>
+    </fieldset>
+  </FormShell>
   )
 }
 

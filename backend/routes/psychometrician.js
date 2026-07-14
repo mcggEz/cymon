@@ -501,7 +501,7 @@ const PROGRESS_STATUS = {
 router.get('/drafting-reports', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const [{ data: daily, error: e1 }, { data: progress, error: e2 }] = await Promise.all([
+    const [{ data: daily, error: e1 }, { data: progress, error: e2 }, { data: pts, error: e3 }] = await Promise.all([
       supabase
         .from('session_logs')
         .select('id, session_date, activity_title, status, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
@@ -511,9 +511,15 @@ router.get('/drafting-reports', async (req, res, next) => {
         .select('id, title, status, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
         .eq('report_type', 'progress_summary')
         .order('updated_at', { ascending: false }),
+      supabase
+        .from('patients')
+        .select('id, first_name, middle_name, last_name, clinic_id')
+        .eq('clinic_id', req.profile.clinic_id)
+        .order('first_name'),
     ]);
     if (e1) return next(e1);
     if (e2) return next(e2);
+    if (e3) return next(e3);
     const rows = [
       ...inClinic(daily, req.profile.clinic_id).map((r) => ({
         id: r.id,
@@ -543,6 +549,10 @@ router.get('/drafting-reports', async (req, res, next) => {
         approved: rows.filter((r) => r.status === 'approved').length,
       },
       rows,
+      patients: (pts || []).map((p) => ({
+        id: p.id,
+        name: name(p),
+      })),
     });
   } catch (err) {
     next(err);

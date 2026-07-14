@@ -126,4 +126,54 @@ router.post('/change-password', requireAuth, async (req, res, next) => {
   }
 });
 
+router.post('/forgot-password', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { email } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    const origin = req.headers.origin || 'http://localhost:5173';
+    const redirectTo = `${origin}/reset-password`;
+    
+    const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/reset-password', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { accessToken, password } = req.body || {};
+    if (!accessToken || !password) {
+      return res.status(400).json({ error: 'Access token and password are required' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    // Verify accessToken using the auth client
+    const { data: { user }, error: userErr } = await authClient.auth.getUser(accessToken);
+    if (userErr || !user) {
+      return res.status(401).json({ error: userErr ? userErr.message : 'Invalid or expired access token' });
+    }
+    
+    // Perform admin password override
+    const { error } = await supabase.auth.admin.updateUserById(user.id, { password });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    return res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
+

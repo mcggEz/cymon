@@ -103,7 +103,7 @@ function AttendanceSessionForm({ onClose }) {
 
       <FormSection eyebrow="02" title="Attendance Record">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-purple-100 text-left text-[11px] font-semibold uppercase tracking-wide text-purple-800">
                 <th className="border border-purple-200 px-2 py-2">Date</th>
@@ -182,7 +182,7 @@ function AttendanceSessionForm({ onClose }) {
 
       <FormSection eyebrow="03" title="Session Log">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-sm">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-purple-100 text-left text-[11px] font-semibold uppercase tracking-wide text-purple-800">
                 <th className="border border-purple-200 px-2 py-2">No.</th>
@@ -262,7 +262,7 @@ function AttendanceSessionForm({ onClose }) {
 
       <FormSection eyebrow="Reference" title="Support Level Guide">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-[12px]">
+          <table className="w-full border-collapse text-[12px]">
             <thead>
               <tr className="bg-purple-100 text-left font-semibold text-purple-800">
                 <th className="border border-purple-200 px-2 py-2">Category</th>

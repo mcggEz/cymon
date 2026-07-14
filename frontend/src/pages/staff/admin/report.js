@@ -65,10 +65,10 @@ function reportToHtml(report) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>${esc(report.title)} — ${esc(report.meta[0]?.value || '')}</title>
 <style>
-  @page { size: A4; margin: 18mm 16mm; }
+  @page { size: A4; margin: 0 !important; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  body { font-family: Georgia, 'Times New Roman', Times, serif; color: #1f2937; font-size: 12px; line-height: 1.55; }
+  body { font-family: Georgia, 'Times New Roman', Times, serif; color: #1f2937; font-size: 12px; line-height: 1.55; padding: 18mm 16mm; }
   .letterhead { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 14px; }
   .clinic-name { font-size: 20px; font-weight: 700; letter-spacing: .03em; color: #0f172a; }
   .clinic-unit { font-size: 13px; color: #475569; }

@@ -182,24 +182,36 @@ function Progress() {
                   <div className="text-[10px] uppercase tracking-wider text-slate-500">Trend</div>
                   <div className="font-medium text-purple-800">{active.trend || '—'}</div>
                 </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
-                  <div className="font-medium text-purple-800">{(STATUS_META[active.status] || STATUS_META.draft).label}</div>
-                </div>
               </dl>
+              <div className="mt-6 border-t border-slate-100 pt-4 flex gap-2">
+                <button
+                  onClick={() => setOpenForm('viewProgress')}
+                  className="w-full rounded-md border border-purple-300 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+                >
+                  View as Form
+                </button>
+              </div>
             </aside>
           </>
         ) : null}
         </div>
       </div>
 
-      {openForm ? (
+      {openForm === true ? (
         <ProgressSummaryReportForm
           patients={patients}
           onSaved={() => {
             setNotice('Progress report draft saved.')
             load()
           }}
+          onClose={() => setOpenForm(false)}
+        />
+      ) : null}
+      {openForm === 'viewProgress' ? (
+        <ProgressSummaryReportForm
+          patients={patients}
+          detail={active}
+          readOnly={true}
           onClose={() => setOpenForm(false)}
         />
       ) : null}

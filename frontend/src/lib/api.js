@@ -54,6 +54,8 @@ export const api = {
   login: (payload) => request('/api/auth/login', { method: 'POST', body: payload }),
   me: () => request('/api/auth/me', { auth: true }),
   changePassword: (payload) => request('/api/auth/change-password', { method: 'POST', body: payload, auth: true }),
+  forgotPassword: (email) => request('/api/auth/forgot-password', { method: 'POST', body: { email } }),
+  resetPassword: (accessToken, password) => request('/api/auth/reset-password', { method: 'POST', body: { accessToken, password } }),
   health: () => request('/api/health'),
   // Per-recipient notifications — same endpoint for client and staff.
   notifications: () => request('/api/notifications', { auth: true }),
@@ -113,6 +115,8 @@ export const api = {
       request(`/api/admin/employees/${id}`, { method: 'PATCH', body: { active }, auth: true }),
     setEmployeeRoles: (id, payload) =>
       request(`/api/admin/employees/${id}`, { method: 'PATCH', body: payload, auth: true }),
+    changeUserPassword: (id, password) =>
+      request(`/api/admin/users/${id}/change-password`, { method: 'POST', body: { password }, auth: true }),
   },
   psychologist: {
     approvals: () => request('/api/psychologist/approvals', { auth: true }),

@@ -83,7 +83,7 @@ function StudentAdmissionForm({ onSaved, onClose }) {
     setSaving(true)
     const password = genPassword()
     try {
-      await api.admin.createPatient({
+      const data = await api.admin.createPatient({
         parent_email: email,
         parent_password: password,
         child: {
@@ -127,7 +127,7 @@ function StudentAdmissionForm({ onSaved, onClose }) {
           contact_number: f.emergencyContact,
         },
       })
-      setCreated({ name: `${f.firstName} ${f.lastName}`, email, password })
+      setCreated({ name: `${f.firstName} ${f.lastName}`, email, password, patientId: data?.patient?.patient_id })
       onSaved?.()
     } catch (e) {
       setError(e.message)
@@ -139,13 +139,16 @@ function StudentAdmissionForm({ onSaved, onClose }) {
   const actions = created ? (
     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-[12.5px]">
       <div className="font-semibold text-emerald-800">Student registered — {created.name}</div>
-      <div className="mt-1 text-slate-700">
+      <div className="mt-2 text-slate-700">
+        Student User ID: <span className="font-mono font-bold text-purple-750 select-all">{created.patientId}</span>
+      </div>
+      <div className="text-slate-700">
         Parent login email: <span className="font-mono">{created.email}</span>
       </div>
       <div className="text-slate-700">
         Temporary password: <span className="font-mono">{created.password}</span>
       </div>
-      <p className="mt-1 text-xs text-slate-500">Share these with the parent so they can sign in.</p>
+      <p className="mt-2 text-xs text-slate-500">Share these with the parent so they can sign in.</p>
       <Button className="mt-3" onClick={onClose}>
         Done
       </Button>

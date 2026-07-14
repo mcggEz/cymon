@@ -110,141 +110,155 @@ function AuditTrail() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead>
-                <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 px-4 text-left">Timestamp</th>
-                  <th className="py-3 px-4 text-left">Actor</th>
-                  <th className="py-3 px-4 text-left">Action</th>
-                  <th className="py-3 px-4 text-left">Detail</th>
-                  <th className="py-3 px-4 text-left">Severity</th>
-                  <th className="py-3 px-4 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-purple-100">
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={`s${i}`}>
-                      <td colSpan="6" className="py-3 px-4">
-                        <Skeleton className="h-6 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                ) : filteredLogs.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="py-6 px-4 text-center text-sm text-slate-500">
-                      {logs.length === 0 ? 'No audit activity recorded yet.' : 'No matching audit logs found.'}
-                    </td>
+        <div className="mt-5 flex gap-6">
+          <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="text-xs font-semibold tracking-wider text-purple-700">
+                    <th className="py-3 px-4 text-left">Timestamp</th>
+                    <th className="py-3 px-4 text-left">Actor</th>
+                    <th className="py-3 px-4 text-left">Action</th>
+                    <th className="py-3 px-4 text-left">Detail</th>
+                    <th className="py-3 px-4 text-left">Severity</th>
+                    <th className="py-3 px-4 text-left">Actions</th>
                   </tr>
-                ) : (
-                  pageRows.map((log) => {
-                    const sev = SEVERITY_META[log.severity] || SEVERITY_META.info
-                    const isSelected = selectedLog && selectedLog.id === log.id
-                    return (
-                      <tr
-                        key={log.id}
-                        onClick={() => setSelectedLog(log)}
-                        className={`group cursor-pointer transition-colors ${isSelected ? 'bg-purple-100/70 font-medium' : 'hover:bg-purple-50/40'}`}
-                      >
-                        <td className="py-3 px-4 text-xs font-mono text-slate-500 whitespace-nowrap">{fmtDateTime(log.created_at)}</td>
-                        <td className="py-3 px-4 text-sm font-semibold text-slate-800 whitespace-nowrap">
-                          {log.actor}
-                          {log.actor_role ? (
-                            <span className="ml-1 text-[10px] font-normal text-slate-400">({titleCase(log.actor_role)})</span>
-                          ) : null}
-                        </td>
-                        <td className="py-3 px-4 text-xs whitespace-nowrap">
-                          <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
-                            {titleCase(log.action)}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600 font-light max-w-xs md:max-w-md truncate group-hover:text-slate-800 transition-colors">
-                          {log.summary}
-                        </td>
-                        <td className="py-3 px-4 text-center whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1 font-semibold px-2 py-1 rounded-full text-[10px] uppercase tracking-wider border ${sev.cls}`}>
-                            {sev.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedLog(log)
-                            }}
-                            className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
-                          >
-                            View
-                          </button>
+                </thead>
+                <tbody className="divide-y divide-purple-100">
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={`s${i}`}>
+                        <td colSpan="6" className="py-3 px-4">
+                          <Skeleton className="h-6 w-full" />
                         </td>
                       </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={filteredLogs.length} onPage={setPage} />
-        </div>
-
-        {selectedLog && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedLog(null)}>
-            <div className="bg-white rounded-2xl border border-purple-200 shadow-2xl max-w-xl w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
-              <div className="bg-slate-50 border-b border-purple-100 px-6 py-4 flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-slate-800">Audit Log Details</h3>
-                  <p className="text-[10px] font-mono text-slate-400 mt-0.5">ID: {selectedLog.id}</p>
-                </div>
-                <button
-                  onClick={() => setSelectedLog(null)}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4 border-b border-slate-50 pb-3">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">Timestamp</span>
-                    <span className="text-sm font-semibold text-slate-800">{fmtDateTime(selectedLog.created_at)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">Severity</span>
-                    <span className="text-sm font-semibold text-slate-800">{(SEVERITY_META[selectedLog.severity] || SEVERITY_META.info).label}</span>
-                  </div>
-                </div>
-
-                <div className="border-b border-slate-50 pb-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">Actor</span>
-                  <span className="text-sm font-semibold text-slate-800">
-                    {selectedLog.actor}
-                    {selectedLog.actor_role ? ` (${titleCase(selectedLog.actor_role)})` : ''}
-                  </span>
-                </div>
-
-                <div className="border-b border-slate-50 pb-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">Action</span>
-                  <span className="text-xs inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded uppercase mt-0.5 tracking-wider">
-                    {titleCase(selectedLog.action)}
-                  </span>
-                  {selectedLog.entity_type ? (
-                    <span className="ml-2 text-xs text-slate-500">on {titleCase(selectedLog.entity_type)}</span>
-                  ) : null}
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">Event Summary</span>
-                  <p className="text-sm text-slate-700 mt-1 leading-relaxed font-light">{selectedLog.summary}</p>
-                </div>
-              </div>
+                    ))
+                  ) : filteredLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="py-6 px-4 text-center text-sm text-slate-500">
+                        {logs.length === 0 ? 'No audit activity recorded yet.' : 'No matching audit logs found.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    pageRows.map((log) => {
+                      const sev = SEVERITY_META[log.severity] || SEVERITY_META.info
+                      const isSelected = selectedLog && selectedLog.id === log.id
+                      return (
+                        <tr
+                          key={log.id}
+                          onClick={() => setSelectedLog(log)}
+                          className={`group cursor-pointer transition-colors ${isSelected ? 'bg-purple-100/70 font-medium' : 'hover:bg-purple-50/40'}`}
+                        >
+                          <td className="py-3 px-4 text-xs font-mono text-slate-500 whitespace-nowrap">{fmtDateTime(log.created_at)}</td>
+                          <td className="py-3 px-4 text-sm font-semibold text-slate-800 whitespace-nowrap">
+                            {log.actor}
+                            {log.actor_role ? (
+                              <span className="ml-1 text-[10px] font-normal text-slate-400">({titleCase(log.actor_role)})</span>
+                            ) : null}
+                          </td>
+                          <td className="py-3 px-4 text-xs whitespace-nowrap">
+                            <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
+                              {titleCase(log.action)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-slate-600 font-light max-w-xs md:max-w-md truncate group-hover:text-slate-800 transition-colors">
+                            {log.summary}
+                          </td>
+                          <td className="py-3 px-4 text-center whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1 font-semibold px-2 py-1 rounded-full text-[10px] uppercase tracking-wider border ${sev.cls}`}>
+                              {sev.label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedLog(log)
+                              }}
+                              className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
+            <Pagination page={page} pageSize={PAGE_SIZE} total={filteredLogs.length} onPage={setPage} />
+          </section>
+
+          {selectedLog ? (
+            <>
+              <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setSelectedLog(null)} aria-hidden="true" />
+              <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="text-lg font-semibold text-purple-800">Log Details</div>
+                  <button onClick={() => setSelectedLog(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer">
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-500 mb-4 font-mono">ID: {selectedLog.id}</div>
+
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase font-mono block">Timestamp</span>
+                    <span className="font-medium text-purple-800">{fmtDateTime(selectedLog.created_at)}</span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase font-mono block">Severity</span>
+                    <div>
+                      <span className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider border ${(SEVERITY_META[selectedLog.severity] || SEVERITY_META.info).cls}`}>
+                        {(SEVERITY_META[selectedLog.severity] || SEVERITY_META.info).label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase font-mono block">Actor</span>
+                    <span className="font-medium text-purple-800">
+                      {selectedLog.actor}
+                      {selectedLog.actor_role ? (
+                        <span className="text-slate-500 font-normal"> ({titleCase(selectedLog.actor_role)})</span>
+                      ) : null}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase font-mono block">Action</span>
+                    <div className="mt-0.5">
+                      <span className="inline-block bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
+                        {titleCase(selectedLog.action)}
+                      </span>
+                      {selectedLog.entity_type ? (
+                        <span className="ml-2 text-xs text-slate-500">on {titleCase(selectedLog.entity_type)}</span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase font-mono block">Event Summary</span>
+                    <p className="mt-1 leading-relaxed text-slate-700 font-light whitespace-pre-wrap">{selectedLog.summary}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 border-t border-slate-100 pt-4">
+                  <button
+                    onClick={() => setSelectedLog(null)}
+                    className="w-full rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </aside>
+            </>
+          ) : null}
+        </div>
       </div>
     </>
   )

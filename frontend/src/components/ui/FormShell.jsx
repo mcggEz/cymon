@@ -69,9 +69,21 @@ function FormShell({
           #root { display: none !important; }
           #form-portal { position: static !important; background: #fff !important; }
           #form-portal * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          @page { size: 8.5in 11in; margin: 0; }
+          @page { margin: 0 !important; }
           .print-page-break { page-break-after: always; break-after: page; }
           .print-page-break:last-child { page-break-after: avoid; break-after: avoid; }
+          
+          /* Hide scrollbars on print */
+          ::-webkit-scrollbar { display: none !important; }
+          * { scrollbar-width: none !important; }
+          .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
+          
+          /* Force tables to fit printable sheet width without horizontal overflow */
+          #form-portal table {
+            min-width: 0 !important;
+            width: 100% !important;
+            table-layout: auto !important;
+          }
         }
       `}</style>
 
@@ -119,7 +131,7 @@ function FormShell({
                 className="print-page-break relative aspect-[17/22] w-full max-w-[816px] bg-white px-[9.5%] pb-[8.5%] pt-[13%] text-[12px] sm:text-[11.5px] leading-snug text-slate-900 shadow-xl ring-1 ring-black/5 print:max-w-none print:shadow-none print:ring-0"
                 style={{
                   backgroundImage: 'url(/cmps-letterhead.png)',
-                  backgroundSize: '100% auto',
+                  backgroundSize: '100% 100%',
                   backgroundRepeat: 'no-repeat',
                   backgroundPosition: 'top center',
                 }}
@@ -153,7 +165,7 @@ function FormShell({
             className="relative aspect-[17/22] w-full max-w-[816px] bg-white px-[9.5%] pb-[8.5%] pt-[13%] text-[12px] sm:text-[11.5px] leading-snug text-slate-900 shadow-xl ring-1 ring-black/5 print:max-w-none print:shadow-none print:ring-0"
             style={{
               backgroundImage: 'url(/cmps-letterhead.png)',
-              backgroundSize: '100% auto',
+              backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat',
               backgroundPosition: 'top center',
             }}

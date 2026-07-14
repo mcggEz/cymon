@@ -21,9 +21,33 @@ const blank = {
   session_date: '',
 }
 
-function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
-  const [f, setF] = useState(blank)
-  const [rows, setRows] = useState(() => Array.from({ length: 6 }, () => ({ name: '', response: '' })))
+function DailyActivityReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false }) {
+  const [f, setF] = useState(() => {
+    if (detail) {
+      return {
+        session_number: detail.session_number || '',
+        patient_id: detail.patient_id || '',
+        activity_title: detail.detail || '',
+        target_domain: detail.target_domain || '',
+        objectives: detail.objectives || '',
+        procedure: detail.procedure || '',
+        session_date: detail.date ? new Date(detail.date).toISOString().split('T')[0] : '',
+      }
+    }
+    return blank
+  })
+  const [rows, setRows] = useState(() => {
+    if (detail && detail.observations) {
+      return detail.observations.split('\n').map((line) => {
+        const parts = line.split(':')
+        if (parts.length > 1) {
+          return { name: parts[0].trim(), response: parts.slice(1).join(':').trim() }
+        }
+        return { name: '', response: line.trim() }
+      })
+    }
+    return Array.from({ length: 6 }, () => ({ name: '', response: '' }))
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }))
@@ -90,13 +114,13 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
               <tr>
                 <td className={labelCell}>Session Number</td>
                 <td className={inputCell}>
-                  <input type="number" className={cellInput} value={f.session_number} onChange={set('session_number')} />
+                  <input type="number" className={cellInput} value={f.session_number} onChange={set('session_number')} disabled={readOnly} />
                 </td>
               </tr>
               <tr>
                 <td className={labelCell}>Name of the Student/s</td>
                 <td className={inputCell}>
-                  <select className={cellInput} value={f.patient_id} onChange={set('patient_id')}>
+                  <select className={cellInput} value={f.patient_id} onChange={set('patient_id')} disabled={readOnly}>
                     <option value="">Select a student…</option>
                     {patients.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -109,31 +133,31 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
               <tr>
                 <td className={labelCell}>Title of the Activity/ies</td>
                 <td className={inputCell}>
-                  <input className={cellInput} value={f.activity_title} onChange={set('activity_title')} />
+                  <input className={cellInput} value={f.activity_title} onChange={set('activity_title')} disabled={readOnly} />
                 </td>
               </tr>
               <tr>
                 <td className={labelCell}>Targeted Domain/s</td>
                 <td className={inputCell}>
-                  <input className={cellInput} value={f.target_domain} onChange={set('target_domain')} />
+                  <input className={cellInput} value={f.target_domain} onChange={set('target_domain')} disabled={readOnly} />
                 </td>
               </tr>
               <tr>
                 <td className={labelCell}>Objectives</td>
                 <td className={inputCell}>
-                  <textarea rows={5} className={paperTextarea} value={f.objectives} onChange={set('objectives')} />
+                  <textarea rows={5} className={paperTextarea} value={f.objectives} onChange={set('objectives')} disabled={readOnly} />
                 </td>
               </tr>
               <tr>
                 <td className={labelCell}>Activity Procedure</td>
                 <td className={inputCell}>
-                  <textarea rows={6} className={paperTextarea} value={f.procedure} onChange={set('procedure')} />
+                  <textarea rows={6} className={paperTextarea} value={f.procedure} onChange={set('procedure')} disabled={readOnly} />
                 </td>
               </tr>
               <tr>
                 <td className={labelCell}>Date of the Activity</td>
                 <td className={inputCell}>
-                  <input type="date" className={cellInput} value={f.session_date} onChange={set('session_date')} />
+                  <input type="date" className={cellInput} value={f.session_date} onChange={set('session_date')} disabled={readOnly} />
                 </td>
               </tr>
             </tbody>
@@ -168,7 +192,7 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
         <div key={`page-${pageIdx}`} className="space-y-4">
           {/* Per-student responses table */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse">
+            <table className="w-full border-collapse">
               <thead>
                 <tr>
                   <th className={`${th} w-12`}>No.</th>
@@ -192,6 +216,7 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
                           onChange={(e) =>
                             setRows((r) => r.map((x, j) => (j === globalIdx ? { ...x, name: e.target.value } : x)))
                           }
+                          disabled={readOnly}
                         />
                       </td>
                       <td className={inputCell}>
@@ -202,14 +227,16 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
                           onChange={(e) =>
                             setRows((r) => r.map((x, j) => (j === globalIdx ? { ...x, response: e.target.value } : x)))
                           }
+                          disabled={readOnly}
                         />
                       </td>
-                      <td className="border border-slate-500 p-0 text-center align-middle print:hidden">
+                      <td className={`border border-slate-500 p-0 text-center align-middle print:hidden ${readOnly ? 'hidden' : ''}`}>
                         <button
                           type="button"
                           onClick={() => removeRow(globalIdx)}
                           className="px-2 py-1 text-xs font-medium text-rose-600 hover:text-rose-800"
                           title="Remove row"
+                          disabled={readOnly}
                         >
                           ×
                         </button>
@@ -221,13 +248,14 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
             </table>
           </div>
 
-          {isLastPage ? (
+          {isLastPage && !readOnly ? (
             <>
               <div className="mt-2 print:hidden">
                 <button
                   type="button"
                   onClick={addRow}
                   className="rounded-md border border-purple-300 px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-50"
+                  disabled={readOnly}
                 >
                   Add row
                 </button>
@@ -240,14 +268,22 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
                   <div className="mt-3">
                     <SignatureField label="MARWIN A. GILBERO JR., RPm, CHRA" />
                   </div>
-                  <div className="text-slate-700">Clinic Intern · License Number: 0039850</div>
+                  <input
+                    type="text"
+                    defaultValue="Clinic Intern · License Number: 0039850"
+                    className="w-full bg-transparent text-[11px] text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+                  />
                 </div>
                 <div>
                   <div className="text-slate-800">Noted by:</div>
                   <div className="mt-3">
                     <SignatureField label="CRISTINE LAE C. ERASGA, RPm, RPsy, CHRA" />
                   </div>
-                  <div className="text-slate-700">Clinic Psychologist</div>
+                  <input
+                    type="text"
+                    defaultValue="Clinic Psychologist"
+                    className="w-full bg-transparent text-[11px] text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+                  />
                 </div>
               </div>
             </>
@@ -278,14 +314,22 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
               <div className="mt-3">
                 <SignatureField label="MARWIN A. GILBERO JR., RPm, CHRA" />
               </div>
-              <div className="text-slate-700">Clinic Intern · License Number: 0039850</div>
+              <input
+                type="text"
+                defaultValue="Clinic Intern · License Number: 0039850"
+                className="w-full bg-transparent text-[11px] text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+              />
             </div>
             <div>
               <div className="text-slate-800">Noted by:</div>
               <div className="mt-3">
                 <SignatureField label="CRISTINE LAE C. ERASGA, RPm, RPsy, CHRA" />
               </div>
-              <div className="text-slate-700">Clinic Psychologist</div>
+              <input
+                type="text"
+                defaultValue="Clinic Psychologist"
+                className="w-full bg-transparent text-[11px] text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+              />
             </div>
           </div>
         </div>
@@ -299,7 +343,7 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose }) {
     <FormShell
       title="Daily Activity Report"
       code="CMPS:SE-FO-08 rev.0 03032026"
-      actions={actions}
+      actions={readOnly ? null : actions}
       onClose={onClose}
       multiPage={true}
     >

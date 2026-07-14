@@ -5,6 +5,7 @@ import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
 import LoadingScreen from '../components/ui/LoadingScreen'
 import { useAuth } from '../auth/useAuth'
+import { api } from '../lib/api'
 
 const ArrowLeft = ({ className = '' }) => (
   <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
@@ -53,6 +54,9 @@ function Login() {
   const [remember, setRemember] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [isForgot, setIsForgot] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotSuccess, setForgotSuccess] = useState(false)
 
   const destinationFor = (r) => {
     if (r === 'admin') return '/admin'
@@ -81,6 +85,24 @@ function Login() {
       setSubmitting(false)
     }
   }
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault()
+    if (submitting) return
+    setError(null)
+    setForgotSuccess(false)
+    setSubmitting(true)
+    try {
+      await api.forgotPassword(forgotEmail)
+      setForgotSuccess(true)
+      setForgotEmail('')
+    } catch (err) {
+      setError(err.message || 'Failed to send recovery link.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
 
   return (
     <>
@@ -118,95 +140,173 @@ function Login() {
         </aside>
 
         {/* Form Column */}
-        <form
-          onSubmit={handleSubmit}
-          className="p-8 md:p-12 md:col-span-7 flex flex-col gap-5 justify-center"
-        >
-          {/* Mobile-only logo */}
-          <div className="md:hidden flex items-center gap-2 mb-2">
-            <img src="/logo-cymon.png" alt="CyMon" className="h-8 w-8 rounded-lg object-cover" />
-            <div className="leading-tight text-left">
-              <div className="text-sm font-bold text-charcoal">CyMon</div>
-              <div className="font-mono text-[7px] tracking-[0.2em] text-slate-400">CLEARMIND · PSYCHOLOGICAL SERVICES</div>
+        {isForgot ? (
+          <form
+            onSubmit={handleForgotSubmit}
+            className="p-8 md:p-12 md:col-span-7 flex flex-col gap-5 justify-center"
+          >
+            {/* Mobile-only logo */}
+            <div className="md:hidden flex items-center gap-2 mb-2">
+              <img src="/logo-cymon.png" alt="CyMon" className="h-8 w-8 rounded-lg object-cover" />
+              <div className="leading-tight text-left">
+                <div className="text-sm font-bold text-charcoal">CyMon</div>
+                <div className="font-mono text-[7px] tracking-[0.2em] text-slate-400">CLEARMIND · PSYCHOLOGICAL SERVICES</div>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-charcoal">Welcome back</h1>
-            <p className="mt-1 text-sm text-slate-500 leading-relaxed">
-              Sign in to access assessments, intervention plans, and specialist summaries.
-            </p>
-          </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-charcoal">Forgot password?</h1>
+              <p className="mt-1 text-sm text-slate-500 leading-relaxed">
+                Enter your email address and we&apos;ll send you a recovery link to reset your password.
+              </p>
+            </div>
 
-          <Input
-            label="Email address"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <div className="relative">
             <Input
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              placeholder="••••••••"
-              className="pr-10"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              label="Email address"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
               required
             />
+
+            {error ? (
+              <div
+                role="alert"
+                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 font-medium"
+              >
+                {error}
+              </div>
+            ) : null}
+
+            {forgotSuccess ? (
+              <div
+                role="alert"
+                className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800 font-medium leading-normal"
+              >
+                We&apos;ve sent a recovery link to your email. Please check your inbox.
+              </div>
+            ) : null}
+
+            <Button
+              type="submit"
+              fullWidth
+              size="lg"
+              disabled={submitting}
+              className="bg-violet hover:bg-violet-dark text-white font-sans tracking-wide text-base py-3.5 rounded-full mt-2 font-bold shadow-sm cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5"
+            >
+              {submitting ? 'Sending link…' : 'Send Recovery Link'}
+            </Button>
+
             <button
               type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-2 bottom-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-violet/10 hover:text-violet"
+              onClick={() => {
+                setIsForgot(false)
+                setError(null)
+                setForgotSuccess(false)
+              }}
+              className="text-center text-sm font-bold text-violet hover:text-violet-dark mt-2 cursor-pointer bg-transparent border-0"
             >
-              <EyeIcon open={showPassword} className="h-4 w-4" />
+              Back to Log In
             </button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Checkbox
-              label="Remember me"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="text-slate-700 font-medium"
-            />
-            <a
-              href="#forgot"
-              className="text-xs font-bold text-violet hover:text-violet-dark"
-            >
-              Forgot password?
-            </a>
-          </div>
-
-          {error ? (
-            <div
-              role="alert"
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 font-medium"
-            >
-              {error}
-            </div>
-          ) : null}
-
-          <Button
-            type="submit"
-            fullWidth
-            size="lg"
-            disabled={submitting}
-            className="bg-violet hover:bg-violet-dark text-white font-sans tracking-wide text-base py-3.5 rounded-full mt-2 font-bold shadow-sm cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5"
+          </form>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="p-8 md:p-12 md:col-span-7 flex flex-col gap-5 justify-center"
           >
-            {submitting ? 'Signing in…' : 'Log in'}
-          </Button>
+            {/* Mobile-only logo */}
+            <div className="md:hidden flex items-center gap-2 mb-2">
+              <img src="/logo-cymon.png" alt="CyMon" className="h-8 w-8 rounded-lg object-cover" />
+              <div className="leading-tight text-left">
+                <div className="text-sm font-bold text-charcoal">CyMon</div>
+                <div className="font-mono text-[7px] tracking-[0.2em] text-slate-400">CLEARMIND · PSYCHOLOGICAL SERVICES</div>
+              </div>
+            </div>
 
-          <p className="text-center text-sm text-slate-500 mt-2 font-medium">
-            Need an account? Please contact the ClearMind admin office to be registered.
-          </p>
-        </form>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-charcoal">Welcome back</h1>
+              <p className="mt-1 text-sm text-slate-500 leading-relaxed">
+                Sign in to access assessments, intervention plans, and specialist summaries.
+              </p>
+            </div>
+
+            <Input
+              label="Email address"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+
+            <div className="relative">
+              <Input
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className="pr-10"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-2 bottom-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-violet/10 hover:text-violet"
+              >
+                <EyeIcon open={showPassword} className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Checkbox
+                label="Remember me"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="text-slate-700 font-medium"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgot(true)
+                  setError(null)
+                  setForgotSuccess(false)
+                }}
+                className="text-xs font-bold text-violet hover:text-violet-dark cursor-pointer bg-transparent border-0 p-0"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {error ? (
+              <div
+                role="alert"
+                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 font-medium"
+              >
+                {error}
+              </div>
+            ) : null}
+
+            <Button
+              type="submit"
+              fullWidth
+              size="lg"
+              disabled={submitting}
+              className="bg-violet hover:bg-violet-dark text-white font-sans tracking-wide text-base py-3.5 rounded-full mt-2 font-bold shadow-sm cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5"
+            >
+              {submitting ? 'Signing in…' : 'Log in'}
+            </Button>
+
+            <p className="text-center text-sm text-slate-500 mt-2 font-medium">
+              Need an account? Please contact the ClearMind admin office to be registered.
+            </p>
+          </form>
+        )}
       </section>
       </main>
     </>

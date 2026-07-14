@@ -6,6 +6,7 @@ import SearchBar from '../../../components/ui/SearchBar'
 import Pagination from '../../../components/ui/Pagination'
 import RowAction from '../../../components/ui/RowAction'
 import BehavioralAssessmentForm from './BehavioralAssessmentForm'
+import ProgressSummaryReportForm from '../psychologist/ProgressSummaryReportForm'
 
 const PAGE_SIZE = 20
 
@@ -33,6 +34,7 @@ function DraftingReports() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
+  const [patients, setPatients] = useState([])
 
   useEffect(() => {
     let on = true
@@ -42,6 +44,7 @@ function DraftingReports() {
         if (!on) return
         setRows(d.rows)
         setSummary(d.summary)
+        setPatients(d.patients || [])
       })
       .catch(() => {})
       .finally(() => on && setLoading(false))
@@ -223,12 +226,32 @@ function DraftingReports() {
                   <div className="font-medium text-purple-800">{(STATUS_META[active.status] || STATUS_META.draft).label}</div>
                 </div>
               </dl>
+              <div className="mt-6 border-t border-slate-100 pt-4 flex gap-2">
+                <button
+                  onClick={() => {
+                    if (active.type === 'progress_summary') {
+                      setOpenForm('viewProgress')
+                    } else {
+                      setOpenForm('viewBehavioral')
+                    }
+                  }}
+                  className="w-full rounded-md border border-purple-300 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+                >
+                  View as Form
+                </button>
+              </div>
             </aside>
           </>
         ) : null}
         </div>
 
         {openForm === 'behavioral' ? <BehavioralAssessmentForm onClose={() => setOpenForm(null)} /> : null}
+        {openForm === 'viewProgress' ? (
+          <ProgressSummaryReportForm patients={patients} detail={active} readOnly={true} onClose={() => setOpenForm(null)} />
+        ) : null}
+        {openForm === 'viewBehavioral' ? (
+          <BehavioralAssessmentForm detail={active} readOnly={true} onClose={() => setOpenForm(null)} />
+        ) : null}
       </div>
     </>
   )

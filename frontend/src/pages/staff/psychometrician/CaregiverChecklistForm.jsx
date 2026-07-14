@@ -176,7 +176,7 @@ function RemarksTable({ title, items }) {
 
 const respondentBox = 'flex items-center gap-1.5 text-sm text-slate-800'
 
-function CaregiverChecklistForm({ onClose }) {
+function CaregiverChecklistForm({ onClose, readOnly = false }) {
   return (
     <FormShell
       title="Caregiver Behavioral Observation Checklist"
@@ -184,6 +184,7 @@ function CaregiverChecklistForm({ onClose }) {
       confidential={false}
       onClose={onClose}
     >
+      <fieldset disabled={readOnly} className="contents">
       <BlankField label="Date" labelClassName="w-32" className="mt-1 max-w-md" />
 
       <FormHeading>Personal Information of Student</FormHeading>
@@ -278,20 +279,29 @@ function CaregiverChecklistForm({ onClose }) {
         process to help ensure that the results reflect my child&apos;s current functioning and needs.
       </p>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div>
-          <div className="mt-5 border-t border-slate-700" />
+      <div className="mt-6 flex flex-col gap-6 text-sm sm:flex-row sm:justify-between sm:gap-4">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Type Caregiver Name..."
+            className="w-full bg-transparent text-sm text-slate-800 border-b border-slate-300 hover:border-slate-400 focus:border-purple-600 focus:outline-none print:border-none"
+          />
           <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
             Signature over Printed Name of Caregiver / Date
           </div>
         </div>
-        <div>
-          <div className="mt-5 border-t border-slate-700" />
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Type Evaluator Name..."
+            className="w-full bg-transparent text-sm text-slate-800 border-b border-slate-300 hover:border-slate-400 focus:border-purple-600 focus:outline-none print:border-none"
+          />
           <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
             Signature over Printed Name of Evaluator / Date
           </div>
         </div>
       </div>
+      </fieldset>
     </FormShell>
   )
 }

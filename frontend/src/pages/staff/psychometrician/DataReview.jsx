@@ -6,6 +6,7 @@ import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
 import Pagination from '../../../components/ui/Pagination'
 import { useAuth } from '../../../auth/useAuth'
+import CaregiverChecklistForm from './CaregiverChecklistForm'
 
 const PAGE_SIZE = 20
 
@@ -42,6 +43,7 @@ function DataReview() {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
+  const [openForm, setOpenForm] = useState(false)
 
   const load = () =>
     api.psychometrician
@@ -260,6 +262,12 @@ function DataReview() {
                 </div>
 
                 <div className="mt-6 border-t border-slate-100 pt-4 flex flex-col gap-2">
+                  <button
+                    onClick={() => setOpenForm(true)}
+                    className="w-full rounded-md border border-purple-300 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+                  >
+                    View as Form
+                  </button>
                   {!processed ? (
                     <button
                       onClick={() => markProcessed(active.id)}
@@ -288,6 +296,9 @@ function DataReview() {
             </>
           ) : null}
         </div>
+        {openForm ? (
+          <CaregiverChecklistForm detail={active} readOnly={true} onClose={() => setOpenForm(false)} />
+        ) : null}
       </div>
     </>
   )

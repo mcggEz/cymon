@@ -27,11 +27,11 @@ const emptyRow = () => ({
   outcome: '',
 })
 
-function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
+function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false }) {
   const [rows, setRows] = useState(() => [emptyRow(), emptyRow(), emptyRow()])
-  const [patientId, setPatientId] = useState('')
-  const [period, setPeriod] = useState('')
-  const [trend, setTrend] = useState('')
+  const [patientId, setPatientId] = useState(() => detail?.patient_id || '')
+  const [period, setPeriod] = useState(() => detail?.period || '')
+  const [trend, setTrend] = useState(() => detail?.trend || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -102,10 +102,10 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
         {/* Reporting period + client information header */}
         <div className="mb-4 space-y-2">
           <BlankField label="Reporting Period" hint="e.g. March – May 2026" labelClassName="w-40">
-            <input className={blankInput} value={period} onChange={(e) => setPeriod(e.target.value)} />
+            <input className={blankInput} value={period} onChange={(e) => setPeriod(e.target.value)} disabled={readOnly} />
           </BlankField>
           <BlankField label="Student" labelClassName="w-40">
-            <select className={blankInput} value={patientId} onChange={(e) => setPatientId(e.target.value)}>
+            <select className={blankInput} value={patientId} onChange={(e) => setPatientId(e.target.value)} disabled={readOnly}>
               <option value="">Select a student…</option>
               {patients.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -132,6 +132,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
           rows={4}
           className="w-full border border-slate-400 p-2 text-sm focus:border-purple-600 focus:outline-none"
           placeholder="Describe the group activities conducted and the domains they measured during this reporting period."
+          disabled={readOnly}
         />
 
         <FormHeading numeral="">Assessment</FormHeading>
@@ -139,6 +140,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
           rows={16}
           className="w-full border border-slate-400 p-2 text-sm focus:border-purple-600 focus:outline-none"
           placeholder="Summarize the client's overall demeanor and engagement, then describe observations per domain (Conceptual, Social, Practical, Bodily Kinesthetics): independence level, assistance required, and specific behaviors observed across attempts."
+          disabled={readOnly}
         />
       </div>
 
@@ -148,7 +150,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
           These are the following Activity Plan to be implemented:
         </p>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse">
+          <table className="w-full border-collapse">
             <thead>
               <tr>
                 <th className={th}>Objective</th>
@@ -168,6 +170,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
                       className={planCellInput}
                       value={row.objective}
                       onChange={(e) => update(i, 'objective', e.target.value)}
+                      disabled={readOnly}
                     />
                   </td>
                   <td className={inputCell}>
@@ -176,6 +179,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
                       className={planCellInput}
                       value={row.activities}
                       onChange={(e) => update(i, 'activities', e.target.value)}
+                      disabled={readOnly}
                     />
                   </td>
                   <td className={inputCell}>
@@ -184,6 +188,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
                       className={planCellInput}
                       value={row.timeFrame}
                       onChange={(e) => update(i, 'timeFrame', e.target.value)}
+                      disabled={readOnly}
                     />
                   </td>
                   <td className={inputCell}>
@@ -192,6 +197,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
                       className={planCellInput}
                       value={row.responsible}
                       onChange={(e) => update(i, 'responsible', e.target.value)}
+                      disabled={readOnly}
                     />
                   </td>
                   <td className={inputCell}>
@@ -200,14 +206,16 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
                       className={planCellInput}
                       value={row.outcome}
                       onChange={(e) => update(i, 'outcome', e.target.value)}
+                      disabled={readOnly}
                     />
                   </td>
-                  <td className="border border-slate-500 p-0 text-center align-middle print:hidden">
+                  <td className={`border border-slate-500 p-0 text-center align-middle print:hidden ${readOnly ? 'hidden' : ''}`}>
                     <button
                       type="button"
                       onClick={() => removeRow(i)}
                       className="px-2 py-1 text-xs font-medium text-rose-600 hover:text-rose-800"
                       title="Remove row"
+                      disabled={readOnly}
                     >
                       ×
                     </button>
@@ -217,13 +225,15 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
             </tbody>
           </table>
         </div>
-        <button
-          type="button"
-          onClick={addRow}
-          className="mt-2 border border-dashed border-purple-400 px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-50 print:hidden"
-        >
-          Add row
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={addRow}
+            className="mt-2 border border-dashed border-purple-400 px-3 py-1 text-sm font-medium text-purple-700 hover:bg-purple-50 print:hidden"
+          >
+            Add row
+          </button>
+        )}
 
         {/* Sign-off */}
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -232,21 +242,36 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose }) {
             <div className="mt-3">
               <SignatureField label="MARWIN A. GILBERO JR." />
             </div>
-            <div className="text-slate-700">Clinic Intern – Pamantasan ng Cabuyao</div>
+            <input
+              type="text"
+              defaultValue="Clinic Intern – Pamantasan ng Cabuyao"
+              className="w-full bg-transparent text-xs text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+              disabled={readOnly}
+            />
           </div>
           <div>
             <div className="text-slate-800">Reviewed by:</div>
             <div className="mt-3">
               <SignatureField label="MS. CRISTINE LAE C. ERASGA, RPsy, RPm, CHRA" />
             </div>
-            <div className="text-slate-700">Supervising Psychologist · License Number: 0001942</div>
+            <input
+              type="text"
+              defaultValue="Supervising Psychologist · License Number: 0001942"
+              className="w-full bg-transparent text-xs text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+              disabled={readOnly}
+            />
           </div>
           <div>
             <div className="text-slate-800">Noted by:</div>
             <div className="mt-3">
               <SignatureField label="DR. JINKY C. MALABANAN, RPm, RPsy, LPT, CHRA" />
             </div>
-            <div className="text-slate-700">Executive Director · License Number: 0002278</div>
+            <input
+              type="text"
+              defaultValue="Executive Director · License Number: 0002278"
+              className="w-full bg-transparent text-xs text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-purple-600 focus:outline-none print:border-none"
+              disabled={readOnly}
+            />
           </div>
         </div>
       </div>

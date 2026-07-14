@@ -84,7 +84,7 @@ const Info = ({ label, value }) => (
   </div>
 )
 
-function EmployeeDetail({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
+function EmployeeDetail({ emp, onClose, onDeactivate, onSaveRoles, onOverridePassword, busy }) {
   const [confirm, setConfirm] = useState(false)
   const [editingRoles, setEditingRoles] = useState(false)
   const [role, setRole] = useState(emp.role)
@@ -218,12 +218,22 @@ function EmployeeDetail({ emp, onClose, onDeactivate, onSaveRoles, busy }) {
               <button onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
                 Close
               </button>
-              <button
-                onClick={() => setConfirm(true)}
-                className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
-              >
-                Deactivate
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onOverridePassword(emp)}
+                  className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50 cursor-pointer"
+                >
+                  Change Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirm(true)}
+                  className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 cursor-pointer"
+                >
+                  Deactivate
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -239,6 +249,7 @@ function Employees() {
   const [form, setForm] = useState(empty)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [passwordResetUserId, setPasswordResetUserId] = useState(null)
   const [avatar, setAvatar] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [viewing, setViewing] = useState(null)
@@ -613,14 +624,93 @@ function Employees() {
                 onClose={() => setViewing(null)}
                 onDeactivate={deactivate}
                 onSaveRoles={saveRoles}
+                onOverridePassword={(emp) => setPasswordResetUserId({ id: emp.id, name: emp.name })}
                 busy={busy}
               />
             </aside>
           </>
         ) : null}
+        {passwordResetUserId ? (
+          <AdminChangePasswordModal
+            userId={passwordResetUserId.id}
+            userName={passwordResetUserId.name}
+            onClose={() => setPasswordResetUserId(null)}
+            onSaved={() => {
+              setPasswordResetUserId(null)
+              setNotice(`Password updated for ${passwordResetUserId.name}.`)
+            }}
+          />
+        ) : null}
         </div>
       </div>
     </>
+  )
+}
+
+function AdminChangePasswordModal({ userId, userName, onClose, onSaved }) {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setErr(null)
+    if (password.length < 6) {
+      setErr('Password must be at least 6 characters.')
+      return
+    }
+    if (password !== confirm) {
+      setErr('Passwords do not match.')
+      return
+    }
+    setBusy(true)
+    try {
+      await api.admin.changeUserPassword(userId, password)
+      onSaved()
+    } catch (e2) {
+      setErr(e2.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal
+      title="Override Password"
+      subtitle={`Set a new temporary password for ${userName}`}
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <button type="button" onClick={onClose} className="text-sm font-medium text-slate-500 hover:text-slate-700">
+            Cancel
+          </button>
+          <Button type="submit" form="change-user-pw-form" size="lg" disabled={busy}>
+            {busy ? 'Updating…' : 'Update Password'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="change-user-pw-form" onSubmit={submit} className="space-y-4">
+        <Input
+          label="New Temporary Password"
+          type="password"
+          tone="purple"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Input
+          label="Confirm Password"
+          type="password"
+          tone="purple"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          required
+        />
+        {err ? <div className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{err}</div> : null}
+      </form>
+    </Modal>
   )
 }
 

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 import NotFound from './pages/NotFound'
 import ClientLayout from './pages/client/ClientLayout'
 import HomeProgress from './pages/client/HomeProgress'
@@ -42,6 +43,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/client"

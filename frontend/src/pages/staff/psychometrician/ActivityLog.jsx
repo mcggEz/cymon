@@ -223,6 +223,15 @@ function ActivityLog() {
                 BEHAVIORAL OBSERVATIONS
               </div>
               <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{active.observations || '—'}</p>
+
+              <div className="mt-6 border-t border-slate-100 pt-4 flex gap-2">
+                <button
+                  onClick={() => setOpenForm('viewActivity')}
+                  className="w-full rounded-md border border-purple-300 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+                >
+                  View as Form
+                </button>
+              </div>
             </aside>
           </>
         ) : null}
@@ -230,6 +239,9 @@ function ActivityLog() {
 
         {openForm === 'dailyActivity' ? (
           <DailyActivityReportForm patients={patients} onSaved={load} onClose={() => setOpenForm(null)} />
+        ) : null}
+        {openForm === 'viewActivity' ? (
+          <DailyActivityReportForm patients={patients} detail={active} readOnly={true} onClose={() => setOpenForm(null)} />
         ) : null}
       </div>
     </>

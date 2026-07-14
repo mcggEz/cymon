@@ -1,8 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // A draw-your-signature line for the paper forms: draw with mouse/finger, and
 // the ink prints as part of the document. The caption sits below the line.
 function SignatureField({ label }) {
+  const [name, setName] = useState(label)
+  const [prevLabel, setPrevLabel] = useState(label)
+
+  if (label !== prevLabel) {
+    setPrevLabel(label)
+    setName(label)
+  }
   const ref = useRef(null)
 
   useEffect(() => {
@@ -13,10 +20,12 @@ function SignatureField({ label }) {
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect()
-      const ratio = window.devicePixelRatio || 1
-      canvas.width = rect.width * ratio
-      canvas.height = rect.height * ratio
-      ctx.scale(ratio, ratio)
+      const w = Math.round(rect.width)
+      const h = Math.round(rect.height)
+      if (canvas.width === w && canvas.height === h) return
+
+      canvas.width = w
+      canvas.height = h
       ctx.strokeStyle = '#1e1b4b'
       ctx.lineWidth = 2
       ctx.lineCap = 'round'
@@ -27,13 +36,15 @@ function SignatureField({ label }) {
 
     const pos = (e) => {
       const rect = canvas.getBoundingClientRect()
-      const src = e.touches ? e.touches[0] : e
+      const src = e.touches && e.touches.length > 0 ? e.touches[0] : e
       return { x: src.clientX - rect.left, y: src.clientY - rect.top }
     }
     const start = (e) => {
       drawing = true
       last = pos(e)
-      e.preventDefault()
+      if (e.touches) {
+        e.preventDefault()
+      }
     }
     const move = (e) => {
       if (!drawing) return
@@ -43,7 +54,9 @@ function SignatureField({ label }) {
       ctx.lineTo(p.x, p.y)
       ctx.stroke()
       last = p
-      e.preventDefault()
+      if (e.touches) {
+        e.preventDefault()
+      }
     }
     const end = () => {
       drawing = false
@@ -59,6 +72,11 @@ function SignatureField({ label }) {
     return () => {
       window.removeEventListener('resize', resize)
       window.removeEventListener('mouseup', end)
+      canvas.removeEventListener('mousedown', start)
+      canvas.removeEventListener('mousemove', move)
+      canvas.removeEventListener('touchstart', start)
+      canvas.removeEventListener('touchmove', move)
+      canvas.removeEventListener('touchend', end)
     }
   }, [])
 
@@ -74,7 +92,18 @@ function SignatureField({ label }) {
         className="h-20 w-full cursor-crosshair touch-none rounded-md border border-dashed border-slate-400 bg-white"
       />
       <div className="mt-1 flex items-center justify-between gap-2">
-        <div className="text-[9px] font-bold uppercase tracking-wide text-slate-700">{label}</div>
+        <div className="flex-1 print:hidden">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-700 focus:bg-purple-50 focus:border-purple-600 focus:outline-none"
+            placeholder="Type Name..."
+          />
+        </div>
+        <div className="hidden print:block text-[9px] font-bold uppercase tracking-wide text-slate-700">
+          {name}
+        </div>
         <button
           type="button"
           onClick={clear}
