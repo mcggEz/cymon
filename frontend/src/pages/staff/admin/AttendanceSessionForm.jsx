@@ -80,8 +80,10 @@ function AttendanceSessionForm({ onClose }) {
       subtitle="Special Education Program"
       code="CMPS:SE-FO-11 rev.0 03092026"
       onClose={onClose}
+      multiPage={true}
     >
-      <FormSection eyebrow="01" title="Student Information">
+      <div>
+        <FormSection eyebrow="01" title="Student Information">
         <div className="grid gap-4 sm:grid-cols-3">
           <FormField label="Name of Student" className="sm:col-span-1">
             <input className={fieldInput} placeholder="Full name" />
@@ -179,8 +181,10 @@ function AttendanceSessionForm({ onClose }) {
           </div>
         </div>
       </FormSection>
+      </div>
 
-      <FormSection eyebrow="03" title="Session Log">
+      <div>
+        <FormSection eyebrow="03" title="Session Log">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -259,8 +263,10 @@ function AttendanceSessionForm({ onClose }) {
           </button>
         </div>
       </FormSection>
+      </div>
 
-      <FormSection eyebrow="Reference" title="Support Level Guide">
+      <div>
+        <FormSection eyebrow="Reference" title="Support Level Guide">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[12px]">
             <thead>
@@ -303,6 +309,7 @@ function AttendanceSessionForm({ onClose }) {
           </FormField>
         </div>
       </FormSection>
+      </div>
     </FormShell>
   )
 }
