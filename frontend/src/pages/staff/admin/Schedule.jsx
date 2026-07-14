@@ -41,7 +41,6 @@ const shortName = (name) => {
   return parts.length > 1 ? `${parts[0][0]}. ${parts.slice(1).join(' ')}` : name
 }
 const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-const monOf = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
 
 function BookModal({ patients, practitioners, onClose, onBooked }) {
   const [f, setF] = useState({
@@ -191,6 +190,7 @@ function Schedule() {
     return { y: n.getFullYear(), m: n.getMonth() }
   })
   const [query, setQuery] = useState('')
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate())
   const [practFilter, setPractFilter] = useState('all')
   const [patients, setPatients] = useState([])
   const [staffList, setStaffList] = useState([])
@@ -262,25 +262,30 @@ function Schedule() {
   }, {})
 
   const list = filtered
-    .slice()
+    .filter((a) => {
+      const date = new Date(a.starts_at)
+      return date.getFullYear() === cursor.y && date.getMonth() === cursor.m && date.getDate() === selectedDay
+    })
     .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
-    .slice(0, 10)
     .map((a) => ({
       id: a.id,
-      day: String(new Date(a.starts_at).getDate()),
-      mon: monOf(a.starts_at),
+      time: timeOf(a.starts_at),
       name: a.patient,
-      detail: `${timeOf(a.starts_at)} · ${a.practitioner} (${SESSION_LABEL[a.session_type] || a.session_type})`,
+      detail: `${a.practitioner} · ${SESSION_LABEL[a.session_type] || a.session_type}`,
+      location: a.location,
+      notes: a.notes,
     }))
 
   const shiftMonth = (delta) =>
     setCursor((c) => {
       const d = new Date(c.y, c.m + delta, 1)
+      setSelectedDay(1)
       return { y: d.getFullYear(), m: d.getMonth() }
     })
   const goToday = () => {
     const n = new Date()
     setCursor({ y: n.getFullYear(), m: n.getMonth() })
+    setSelectedDay(n.getDate())
   }
 
   return (
@@ -371,54 +376,83 @@ function Schedule() {
                   {Array.from({ length: offset }).map((_, i) => (
                     <div key={`o${i}`} />
                   ))}
-                  {days.map((d) => (
-                    <div key={d} className="min-h-[78px] rounded-md border border-purple-100 p-1 text-[10px]">
-                      <div
-                        className={`mb-1 ${
-                          d === todayDay
-                            ? 'inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-700 text-white'
-                            : 'text-slate-500'
+                  {days.map((d) => {
+                    const isSelected = selectedDay === d
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => setSelectedDay(d)}
+                        className={`min-h-[78px] w-full text-left flex flex-col justify-start items-stretch rounded-md border p-1.5 text-[10px] transition-all hover:bg-purple-50/50 cursor-pointer ${
+                          isSelected
+                            ? 'border-purple-600 bg-purple-50/40 shadow-sm ring-1 ring-purple-600'
+                            : 'border-purple-100 bg-white'
                         }`}
                       >
-                        {d}
-                      </div>
-                      {(eventsByDay[d] || []).map((e) => (
-                        <div key={e.id} className={`mt-1 rounded px-1 py-0.5 ${e.tone}`}>
-                          <div className="truncate text-[9px] font-semibold">{e.title}</div>
-                          <div className="truncate text-[9px] opacity-80">{e.sub}</div>
+                        <div
+                          className={`mb-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                            d === todayDay
+                              ? 'bg-purple-700 text-white'
+                              : isSelected
+                              ? 'text-purple-700'
+                              : 'text-slate-500'
+                          }`}
+                        >
+                          {d}
                         </div>
-                      ))}
-                    </div>
-                  ))}
+                        {(eventsByDay[d] || []).map((e) => (
+                          <div key={e.id} className={`mt-1 rounded px-1 py-0.5 ${e.tone}`}>
+                            <div className="truncate text-[9px] font-semibold">{e.title}</div>
+                            <div className="truncate text-[9px] opacity-80">{e.sub}</div>
+                          </div>
+                        ))}
+                      </button>
+                    )
+                  })}
                 </div>
               </>
             )}
           </section>
 
           <aside className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold text-purple-800">Appointments</div>
+            <div className="text-sm font-semibold text-purple-800">
+              Schedule: {monthLabel.split(' ')[0]} {selectedDay}
+            </div>
             {loading ? (
               <div className="mt-3">
                 <SkeletonText lines={5} />
               </div>
             ) : (
-              <ul className="mt-3 space-y-3">
+              <div className="mt-4">
                 {list.length === 0 ? (
-                  <li className="text-sm text-slate-500">No appointments match your search.</li>
-                ) : null}
-                {list.map((u) => (
-                  <li key={u.id} className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 flex-col items-center justify-center rounded-md bg-purple-100 text-purple-800">
-                      <div className="text-sm font-bold leading-none">{u.day}</div>
-                      <div className="text-[9px] font-semibold tracking-wider">{u.mon}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-purple-800">{u.name}</div>
-                      <div className="text-xs text-slate-500">{u.detail}</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                  <div className="text-center py-10 text-slate-400 text-xs">
+                    <p className="text-3xl mb-2">📅</p>
+                    <p className="font-medium">No sessions scheduled</p>
+                    <p className="text-[10px] mt-0.5">for this day</p>
+                  </div>
+                ) : (
+                  <div className="relative border-l border-purple-100 pl-4 space-y-5">
+                    {list.map((u) => (
+                      <div key={u.id} className="relative">
+                        <span className="absolute -left-[21px] top-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-purple-500 ring-4 ring-white" />
+                        <div className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">
+                          {u.time}
+                        </div>
+                        <div className="text-sm font-bold text-slate-800 mt-0.5">
+                          {u.name}
+                        </div>
+                        <div className="text-xs text-slate-500 leading-normal">
+                          {u.detail}
+                        </div>
+                        {u.location ? (
+                          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                            📍 {u.location}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </aside>
         </div>
