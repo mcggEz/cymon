@@ -41,6 +41,88 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/api/cron/reminders', async (req, res, next) => {
+  try {
+    const { sendMail } = require('./lib/email');
+    const now = new Date();
+    const twentyThreeHoursLater = new Date(now.getTime() + 23 * 60 * 60 * 1000);
+    const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    let appts = [];
+    let useFallback = false;
+
+    // Defensive check: Query with reminder_sent
+    const { data, error } = await supabase
+      .from('appointments')
+      .select('id, starts_at, session_type, location, notes, reminder_sent, patients(first_name, last_name, caregiver_id)')
+      .gte('starts_at', now.toISOString())
+      .lte('starts_at', twentyFourHoursLater.toISOString())
+      .eq('status', 'scheduled');
+
+    if (error && error.message.includes('reminder_sent')) {
+      // Fallback: If database column does not exist yet, use time-window fallback [23h, 24h]
+      useFallback = true;
+      const { data: fbData, error: fbErr } = await supabase
+        .from('appointments')
+        .select('id, starts_at, session_type, location, notes, patients(first_name, last_name, caregiver_id)')
+        .gte('starts_at', twentyThreeHoursLater.toISOString())
+        .lte('starts_at', twentyFourHoursLater.toISOString())
+        .eq('status', 'scheduled');
+
+      if (fbErr) return res.status(400).json({ error: fbErr.message });
+      appts = fbData || [];
+    } else if (error) {
+      return res.status(400).json({ error: error.message });
+    } else {
+      appts = (data || []).filter((a) => !a.reminder_sent);
+    }
+
+    let sentCount = 0;
+    for (const appt of appts) {
+      const pt = appt.patients;
+      if (!pt || !pt.caregiver_id) continue;
+
+      const { data: parent } = await supabase
+        .from('profiles')
+        .select('email, display_name')
+        .eq('id', pt.caregiver_id)
+        .maybeSingle();
+
+      if (parent && parent.email) {
+        const starts = new Date(appt.starts_at);
+        const when = starts.toLocaleString('en-PH', {
+          timeZone: 'Asia/Manila',
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+
+        const studentName = `${pt.first_name} ${pt.last_name}`;
+        await sendMail({
+          to: parent.email,
+          subject: `Reminder: Appointment Tomorrow for ${studentName} - ClearMind Clinic`,
+          text: `Dear ${parent.display_name},\n\nThis is a friendly reminder that ${studentName} has a scheduled session tomorrow.\n\nSession Details:\nDate & Time: ${when}\nLocation: ${appt.location || 'ClearMind Clinic'}\nSession Type: ${appt.session_type}\nNotes: ${appt.notes || 'None'}\n\nIf you have any questions or need to reschedule, please contact the clinic.\n\nBest regards,\nClearMind Psychological Services`,
+        }).catch((e) => console.error(`[cron-email] failed to send reminder to ${parent.email}:`, e.message));
+
+        if (!useFallback) {
+          await supabase
+            .from('appointments')
+            .update({ reminder_sent: true })
+            .eq('id', appt.id)
+            .catch(() => {});
+        }
+        sentCount++;
+      }
+    }
+
+    res.json({ ok: true, reminders_sent: sentCount, mode: useFallback ? 'fallback' : 'standard' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/admin', adminRoutes);

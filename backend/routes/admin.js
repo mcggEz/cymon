@@ -2,6 +2,7 @@ const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
 const { createNotification } = require('../lib/notify');
 const { patientName } = require('../lib/names');
+const { sendMail } = require('../lib/email');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -380,6 +381,31 @@ router.post('/announcements', async (req, res, next) => {
       .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url')
       .single();
     if (error) return res.status(400).json({ error: error.message });
+
+    // Send email notification to parents in the background
+    const savedAudience = data.audience || ['all'];
+    if (savedAudience.includes('all') || savedAudience.includes('client')) {
+      supabase
+        .from('profiles')
+        .select('email, display_name')
+        .eq('role', 'client')
+        .eq('clinic_id', req.profile.clinic_id)
+        .is('deleted_at', null)
+        .then(({ data: clients }) => {
+          if (clients && clients.length) {
+            clients.forEach((c) => {
+              if (!c.email) return;
+              sendMail({
+                to: c.email,
+                subject: `New Announcement: ${title} - ClearMind Clinic`,
+                text: `Dear ${c.display_name},\n\nA new announcement has been posted on the ClearMind Clinic portal:\n\n${title}\n\n${body}\n\nTo read the announcement or access student services, please visit: https://cymon-clinic.vercel.app/\n\nBest regards,\nClearMind Psychological Services`,
+              }).catch((e) => console.error(`[email] failed to send announcement email to ${c.email}:`, e.message));
+            });
+          }
+        })
+        .catch((e) => console.error('[email] failed to fetch client emails for announcement:', e.message));
+    }
+
     res.status(201).json({ announcement: data });
   } catch (err) {
     next(err);
@@ -729,7 +755,7 @@ router.post('/schedule', async (req, res, next) => {
     }
     const { data: pt } = await supabase
       .from('patients')
-      .select('id, clinic_id, caregiver_id, first_name')
+      .select('id, clinic_id, caregiver_id, first_name, last_name')
       .eq('id', patient_id)
       .maybeSingle();
     if (!pt || pt.clinic_id !== req.profile.clinic_id) {
@@ -773,6 +799,22 @@ router.post('/schedule', async (req, res, next) => {
       body: `${pt.first_name} has a session on ${when}.`,
       link: '/client/appointments',
     });
+
+    // Send email notification to parent
+    const { data: parent } = await supabase
+      .from('profiles')
+      .select('email, display_name')
+      .eq('id', pt.caregiver_id)
+      .maybeSingle();
+
+    if (parent && parent.email) {
+      const studentName = `${pt.first_name} ${pt.last_name}`;
+      sendMail({
+        to: parent.email,
+        subject: `Appointment Scheduled: ${studentName} - ClearMind Clinic`,
+        text: `Dear ${parent.display_name},\n\nAn appointment has been scheduled for ${studentName}.\n\nSession Details:\nDate & Time: ${when}\nLocation: ${location || 'ClearMind Clinic'}\nSession Type: ${session_type}\nNotes: ${notes || 'None'}\n\nIf you have any questions or need to reschedule, please contact the clinic.\n\nBest regards,\nClearMind Psychological Services`,
+      }).catch((e) => console.error('[email] failed to send schedule email:', e.message));
+    }
 
     res.status(201).json({ appointment: appt });
   } catch (err) {
