@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import Input from '../../../components/ui/Input'
 import Button from '../../../components/ui/Button'
@@ -248,7 +249,6 @@ function Employees() {
 
   const [form, setForm] = useState(empty)
   const [error, setError] = useState(null)
-  const [notice, setNotice] = useState(null)
   const [passwordResetUserId, setPasswordResetUserId] = useState(null)
   const [avatar, setAvatar] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -311,7 +311,6 @@ function Employees() {
   const submit = async (e) => {
     e.preventDefault()
     setError(null)
-    setNotice(null)
     if (!form.email || !form.password || !form.display_name) {
       setError('Email, password, and full name are required.')
       return
@@ -349,7 +348,7 @@ function Employees() {
         avatar,
       })
       const roleLabel = ROLES.find((r) => r.value === primaryRole)?.label || primaryRole
-      setNotice(`Registered ${form.display_name} as ${roleLabel}.`)
+      toast.success(`Registered ${form.display_name} as ${roleLabel}.`)
       setForm(empty)
       setAvatar(null)
       setShowForm(false)
@@ -391,9 +390,7 @@ function Employees() {
           </Button>
         </div>
 
-        {notice && !showForm ? (
-          <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-        ) : null}
+
         {listError ? (
           <div className="mt-4 rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800">
             Couldn&apos;t load employees: {listError}
@@ -637,7 +634,7 @@ function Employees() {
             onClose={() => setPasswordResetUserId(null)}
             onSaved={() => {
               setPasswordResetUserId(null)
-              setNotice(`Password updated for ${passwordResetUserId.name}.`)
+              toast.success(`Password updated for ${passwordResetUserId.name}.`)
             }}
           />
         ) : null}

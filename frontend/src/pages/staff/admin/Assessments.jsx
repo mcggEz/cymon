@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import Button from '../../../components/ui/Button'
@@ -12,7 +13,6 @@ function Assessments() {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
-  const [notice, setNotice] = useState(null)
   const [error, setError] = useState(null)
 
   const load = () =>
@@ -36,11 +36,10 @@ function Assessments() {
 
   const toggle = async (t) => {
     setBusyId(t.id)
-    setNotice(null)
     setError(null)
     try {
       await api.admin.setAssessmentActive(t.id, !t.active)
-      setNotice(`${t.title} is now ${t.active ? 'unavailable' : 'available'}.`)
+      toast.success(`${t.title} is now ${t.active ? 'unavailable' : 'available'}.`)
       await load()
     } catch (e) {
       setError(e.message)
@@ -51,11 +50,10 @@ function Assessments() {
 
   const resolve = async (r, status) => {
     setBusyId(r.id)
-    setNotice(null)
     setError(null)
     try {
       await api.admin.resolveAssessmentRequest(r.id, status)
-      setNotice(
+      toast.success(
         status === 'approved'
           ? `${r.templateTitle} activated — the professional can now assign it.`
           : `Request for ${r.templateTitle} declined.`,
@@ -72,9 +70,6 @@ function Assessments() {
     <>
       <StaffHeader title="Assessment Services" />
       <div className="flex-1 overflow-y-auto p-6">
-        {notice ? (
-          <div className="mb-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-        ) : null}
         {error ? (
           <div className="mb-4 rounded-md bg-rose-50 px-4 py-2 text-sm text-rose-700">{error}</div>
         ) : null}

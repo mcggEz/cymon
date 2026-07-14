@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
@@ -29,7 +30,6 @@ function Progress() {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const [openForm, setOpenForm] = useState(false)
-  const [notice, setNotice] = useState(null)
 
   const load = () =>
     api.psychologist
@@ -60,9 +60,6 @@ function Progress() {
     <>
       <StaffHeader title="Monthly Summary Progress" />
       <div className="flex-1 overflow-y-auto p-6">
-        {notice ? (
-          <div className="mb-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-        ) : null}
 
         <div className="flex gap-6">
         <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -201,7 +198,7 @@ function Progress() {
         <ProgressSummaryReportForm
           patients={patients}
           onSaved={() => {
-            setNotice('Progress report draft saved.')
+            toast.success('Progress report draft saved.')
             load()
           }}
           onClose={() => setOpenForm(false)}

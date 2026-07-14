@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
@@ -47,7 +48,9 @@ function App() {
   }, [])
 
   return (
-    <BrowserRouter>
+    <>
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+      <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -131,6 +134,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
+    </>
   )
 }
 

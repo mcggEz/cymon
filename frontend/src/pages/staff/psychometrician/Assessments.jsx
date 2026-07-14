@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
@@ -149,7 +150,6 @@ function Assessments() {
   const [loading, setLoading] = useState(true)
   const [assigning, setAssigning] = useState(false)
   const [requesting, setRequesting] = useState(false)
-  const [notice, setNotice] = useState(null)
   const [query, setQuery] = useState('')
   const [openForm, setOpenForm] = useState(null)
   const [answerOpen, setAnswerOpen] = useState(false)
@@ -178,10 +178,10 @@ function Assessments() {
     try {
       await api.psychometrician.assignAssessment({ patient_id: patientId, template_id: active.id })
       const pname = patients.find((p) => p.id === patientId)?.name || 'the patient'
-      setNotice(`Assigned “${active.title}” to ${pname} — it now appears in their Assessment Services.`)
+      toast.success(`Assigned “${active.title}” to ${pname} — it now appears in their Assessment Services.`)
       setActive(null)
     } catch (e) {
-      setNotice(`Could not assign: ${e.message}`)
+      toast.error(`Could not assign: ${e.message}`)
     } finally {
       setAssigning(false)
     }
@@ -192,10 +192,10 @@ function Assessments() {
     try {
       await api.psychometrician.requestAssessment({ template_id: requestTarget.id, note })
       setRequested((ids) => [...ids, requestTarget.id])
-      setNotice(`Requested “${requestTarget.title}” — Admin will review and activate it.`)
+      toast.success(`Requested “${requestTarget.title}” — Admin will review and activate it.`)
       setRequestTarget(null)
     } catch (e) {
-      setNotice(`Could not request: ${e.message}`)
+      toast.error(`Could not request: ${e.message}`)
     } finally {
       setRequesting(false)
     }
@@ -251,9 +251,6 @@ function Assessments() {
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Select a tool from the library to assign and launch for a patient.
         </div>
-        {notice ? (
-          <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-        ) : null}
 
         <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
           STANDARDIZED TESTS

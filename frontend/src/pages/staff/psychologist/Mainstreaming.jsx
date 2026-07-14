@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
@@ -14,7 +15,7 @@ const STATUS_META = {
   ready: { label: 'Ready for Transition', tone: 'bg-emerald-100 text-emerald-700', bar: 'bg-emerald-500' },
 }
 
-function AssessmentModal({ patients, preset, onClose, onCreated }) {
+function AssessmentModal({ patients, preset, onClose, onSaved }) {
   const [f, setF] = useState({ patient_id: preset?.patient_id || '', readiness_score: '', status: 'not_ready', notes: '' })
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -30,7 +31,7 @@ function AssessmentModal({ patients, preset, onClose, onCreated }) {
     setBusy(true)
     try {
       await api.psychologist.addMainstreaming(f)
-      onCreated()
+      onSaved()
     } catch (e2) {
       setErr(e2.message)
     } finally {
@@ -90,7 +91,6 @@ function Mainstreaming() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [modal, setModal] = useState(null)
-  const [notice, setNotice] = useState(null)
 
   const load = () =>
     api.psychologist
@@ -131,9 +131,7 @@ function Mainstreaming() {
           <Button onClick={() => setModal('new')}>+ New Assessment</Button>
         </div>
 
-        {notice ? (
-          <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-        ) : null}
+
 
         <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
           <SearchBar
@@ -193,9 +191,9 @@ function Mainstreaming() {
           patients={patients}
           preset={modal === 'new' ? null : modal}
           onClose={() => setModal(null)}
-          onCreated={() => {
+          onSaved={() => {
             setModal(null)
-            setNotice('Mainstreaming assessment saved.')
+            toast.success('Mainstreaming assessment saved.')
             load()
           }}
         />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
@@ -42,7 +43,6 @@ function Compliance() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
-  const [notice, setNotice] = useState(null)
   const [active, setActive] = useState(null)
 
   const load = () => api.admin.compliance().then(setData).catch(() => {})
@@ -53,12 +53,11 @@ function Compliance() {
 
   const remind = async (r) => {
     setBusyId(r.id)
-    setNotice(null)
     try {
       await api.admin.remindCompliance(r.id)
-      setNotice(`Reminder sent to ${r.parent} about ${r.student}'s ${r.doc}.`)
+      toast.success(`Reminder sent to ${r.parent} about ${r.student}'s ${r.doc}.`)
     } catch (e) {
-      setNotice(`Could not send reminder: ${e.message}`)
+      toast.error(`Could not send reminder: ${e.message}`)
     } finally {
       setBusyId(null)
     }
@@ -66,13 +65,12 @@ function Compliance() {
 
   const markProcessed = async (r) => {
     setBusyId(r.id)
-    setNotice(null)
     try {
       await api.admin.processCompliance(r.id)
-      setNotice(`Marked ${r.student}'s ${r.doc} as received.`)
+      toast.success(`Marked ${r.student}'s ${r.doc} as received.`)
       await load()
     } catch (e) {
-      setNotice(`Could not process: ${e.message}`)
+      toast.error(`Could not process: ${e.message}`)
     } finally {
       setBusyId(null)
     }
@@ -111,9 +109,6 @@ function Compliance() {
         <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
           Monitor missing documents, overdue forms, and pending signatures
         </div>
-        {notice ? (
-          <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-        ) : null}
 
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.overdue ?? '—'} label="Overdue" color="text-rose-600" />

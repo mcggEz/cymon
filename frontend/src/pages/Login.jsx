@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Checkbox from '../components/ui/Checkbox'
@@ -53,10 +54,8 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState(null)
   const [isForgot, setIsForgot] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
-  const [forgotSuccess, setForgotSuccess] = useState(false)
 
   const destinationFor = (r) => {
     if (r === 'admin') return '/admin'
@@ -67,20 +66,23 @@ function Login() {
     return '/client/home'
   }
 
+  const [showSuccessLoader, setShowSuccessLoader] = useState(false)
+
   // Already signed in? Don't show the login form — send them to their dashboard.
-  if (loading) return <LoadingScreen />
+  if (loading && session) return <LoadingScreen label="Resuming session..." />
   if (session && profile) return <Navigate to={destinationFor(profile.role)} replace />
+  if (showSuccessLoader) return <LoadingScreen label="Preparing dashboard..." />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (submitting) return
-    setError(null)
     setSubmitting(true)
     try {
       const { profile } = await signIn(email, password)
+      setShowSuccessLoader(true)
       navigate(destinationFor(profile.role))
     } catch (err) {
-      setError(err.message)
+      toast.error(err.message || 'Invalid email or password.')
     } finally {
       setSubmitting(false)
     }
@@ -89,15 +91,13 @@ function Login() {
   const handleForgotSubmit = async (e) => {
     e.preventDefault()
     if (submitting) return
-    setError(null)
-    setForgotSuccess(false)
     setSubmitting(true)
     try {
       await api.forgotPassword(forgotEmail)
-      setForgotSuccess(true)
       setForgotEmail('')
+      toast.success("We've sent a recovery link to your email. Please check your inbox.")
     } catch (err) {
-      setError(err.message || 'Failed to send recovery link.')
+      toast.error(err.message || 'Failed to send recovery link.')
     } finally {
       setSubmitting(false)
     }
@@ -106,7 +106,6 @@ function Login() {
 
   return (
     <>
-      {submitting ? <LoadingScreen label="Signing in…" /> : null}
       <main
         className="relative min-h-screen overflow-hidden text-charcoal flex flex-col items-center justify-center p-4"
         style={{ background: 'radial-gradient(circle at 50% 20%, #ede9fe 0%, #d8ccf7 45%, #c4b5fd 100%)' }}
@@ -171,23 +170,9 @@ function Login() {
               required
             />
 
-            {error ? (
-              <div
-                role="alert"
-                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 font-medium"
-              >
-                {error}
-              </div>
-            ) : null}
 
-            {forgotSuccess ? (
-              <div
-                role="alert"
-                className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800 font-medium leading-normal"
-              >
-                We&apos;ve sent a recovery link to your email. Please check your inbox.
-              </div>
-            ) : null}
+
+
 
             <Button
               type="submit"
@@ -203,8 +188,6 @@ function Login() {
               type="button"
               onClick={() => {
                 setIsForgot(false)
-                setError(null)
-                setForgotSuccess(false)
               }}
               className="text-center text-sm font-bold text-violet hover:text-violet-dark mt-2 cursor-pointer bg-transparent border-0"
             >
@@ -274,8 +257,6 @@ function Login() {
                 type="button"
                 onClick={() => {
                   setIsForgot(true)
-                  setError(null)
-                  setForgotSuccess(false)
                 }}
                 className="text-xs font-bold text-violet hover:text-violet-dark cursor-pointer bg-transparent border-0 p-0"
               >
@@ -283,14 +264,7 @@ function Login() {
               </button>
             </div>
 
-            {error ? (
-              <div
-                role="alert"
-                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 font-medium"
-              >
-                {error}
-              </div>
-            ) : null}
+
 
             <Button
               type="submit"

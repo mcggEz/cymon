@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
@@ -98,7 +99,6 @@ function Interventions() {
   const [shown, setShown] = useState(PAGE_SIZE)
   const [showForm, setShowForm] = useState(false)
   const [openForm, setOpenForm] = useState(false)
-  const [notice, setNotice] = useState(null)
 
   const load = () =>
     api.psychologist
@@ -152,9 +152,7 @@ function Interventions() {
               </button>
             </div>
           </div>
-          {notice ? (
-            <div className="mt-3 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-          ) : null}
+
           <div className="mt-4">
             <SearchBar
               value={query}
@@ -221,8 +219,8 @@ function Interventions() {
           patients={patients}
           onClose={() => setShowForm(false)}
           onCreated={() => {
+            toast.success('Intervention plan created.')
             setShowForm(false)
-            setNotice('Intervention plan created.')
             load()
           }}
         />

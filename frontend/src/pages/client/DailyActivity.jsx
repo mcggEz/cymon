@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import PageHeader from './PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
@@ -64,7 +65,6 @@ function DailyActivity() {
   const [appetite, setAppetite] = useState('')
   const [observations, setObservations] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [notice, setNotice] = useState(null)
   const [logs, setLogs] = useState([])
   const [series, setSeries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -87,7 +87,6 @@ function DailyActivity() {
   }, [])
 
   const handleSubmit = async () => {
-    setNotice(null)
     setSubmitting(true)
     try {
       await api.client.addActivityLog({
@@ -99,10 +98,10 @@ function DailyActivity() {
         observations: observations || null,
       })
       setObservations('')
-      setNotice('Report sent to the clinic.')
+      toast.success('Report sent to the clinic.')
       await load()
     } catch (err) {
-      setNotice(err.message)
+      toast.error(err.message || 'Failed to send report.')
     } finally {
       setSubmitting(false)
     }
@@ -181,10 +180,6 @@ function DailyActivity() {
               onChange={(e) => setObservations(e.target.value)}
             />
             <p className="mt-1 text-xs text-slate-500">Required — please complete today&apos;s journal entry.</p>
-
-            {notice ? (
-              <div className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</div>
-            ) : null}
 
             <Button className="mt-4" size="md" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Sending…' : 'Send Report to Clinic'}

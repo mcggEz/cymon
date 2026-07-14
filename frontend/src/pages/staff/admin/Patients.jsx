@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
 import Skeleton from '../../../components/ui/Skeleton'
@@ -140,7 +141,6 @@ function Patients() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [openAdmissionForm, setOpenAdmissionForm] = useState(false)
-  const [notice, setNotice] = useState(null)
   const [passwordResetUserId, setPasswordResetUserId] = useState(null)
 
   const load = () =>
@@ -190,9 +190,7 @@ function Patients() {
             Open Student Admission Form
           </button>
         </div>
-        {notice ? (
-          <div className="mt-4 rounded-md bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>
-        ) : null}
+
         {error ? (
           <div className="mt-3 rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800">{error}</div>
         ) : null}
@@ -402,7 +400,7 @@ function Patients() {
             onClose={() => setEditing(null)}
             onSaved={() => {
               setEditing(null)
-              setNotice('Patient updated.')
+              toast.success('Patient updated.')
               load()
             }}
           />
@@ -410,7 +408,7 @@ function Patients() {
         {openAdmissionForm ? (
           <StudentAdmissionForm
             onSaved={() => {
-              setNotice('Student registered. The parent can now sign in.')
+              toast.success('Student registered. The parent can now sign in.')
               load()
             }}
             onClose={() => setOpenAdmissionForm(false)}
@@ -426,7 +424,7 @@ function Patients() {
             onClose={() => setPasswordResetUserId(null)}
             onSaved={() => {
               setPasswordResetUserId(null)
-              setNotice('Password updated successfully.')
+              toast.success('Password updated successfully.')
             }}
           />
         ) : null}
