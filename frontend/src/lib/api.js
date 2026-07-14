@@ -85,6 +85,8 @@ export const api = {
       request('/api/admin/patients', { method: 'POST', body: payload, auth: true }),
     updatePatient: (id, payload) =>
       request(`/api/admin/patients/${id}`, { method: 'PATCH', body: payload, auth: true }),
+    deletePatient: (id) =>
+      request(`/api/admin/patients/${id}`, { method: 'DELETE', auth: true }),
     compliance: () => request('/api/admin/compliance', { auth: true }),
     remindCompliance: (id) =>
       request(`/api/admin/compliance/${id}/remind`, { method: 'POST', auth: true }),

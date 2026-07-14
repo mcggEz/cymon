@@ -147,6 +147,47 @@ router.patch('/patients/:id', async (req, res, next) => {
   }
 });
 
+router.delete('/patients/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: patient, error: getErr } = await supabase
+      .from('patients')
+      .select('id, patient_id, first_name, last_name')
+      .eq('id', req.params.id)
+      .eq('clinic_id', req.profile.clinic_id)
+      .maybeSingle();
+
+    if (getErr) return res.status(400).json({ error: getErr.message });
+    if (!patient) return res.status(404).json({ error: 'Student not found' });
+
+    const { error: delErr } = await supabase
+      .from('patients')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('clinic_id', req.profile.clinic_id);
+
+    if (delErr) return res.status(400).json({ error: delErr.message });
+
+    // Log this high severity event in the audit trail
+    await supabase
+      .from('audit_log')
+      .insert({
+        clinic_id: req.profile.clinic_id,
+        actor_id: req.user.id,
+        action: 'delete_patient',
+        entity_type: 'patient',
+        entity_id: patient.id,
+        summary: `Permanently deleted student record for ${patient.first_name} ${patient.last_name} (ID: ${patient.patient_id})`,
+        severity: 'high',
+      })
+      .catch(() => {});
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/compliance', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {

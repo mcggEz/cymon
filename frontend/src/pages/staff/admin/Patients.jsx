@@ -142,6 +142,8 @@ function Patients() {
   const [page, setPage] = useState(1)
   const [openAdmissionForm, setOpenAdmissionForm] = useState(false)
   const [passwordResetUserId, setPasswordResetUserId] = useState(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const load = () =>
     api.admin
@@ -152,12 +154,30 @@ function Patients() {
   const openDetail = (r) => {
     setActive(r)
     setDetail(null)
+    setShowDeleteConfirm(false)
     api.admin.patient(r.uuid).then(setDetail).catch(() => {})
   }
   const closeDetail = () => {
     setActive(null)
     setDetail(null)
     setViewDoc(false)
+    setShowDeleteConfirm(false)
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await api.admin.deletePatient(active.uuid)
+      toast.success('Student record deleted permanently.')
+      setActive(null)
+      setDetail(null)
+      setShowDeleteConfirm(false)
+      load()
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete student.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   useEffect(() => {
@@ -374,20 +394,54 @@ function Patients() {
                 <Field label="Admission Form" value={active.form} />
               </dl>
 
-              <div className="mt-5 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setViewDoc(true)}
-                  disabled={!detail}
-                  className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
-                >
-                  View as Form
-                </button>
-                <button
-                  onClick={() => setEditing(active)}
-                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-                >
-                  Edit
-                </button>
+              <div className="mt-5 border-t border-slate-100 pt-4">
+                {showDeleteConfirm ? (
+                  <div className="space-y-2 rounded-xl bg-red-50 p-3 border border-red-200">
+                    <p className="text-xs font-bold text-red-850">Permanently delete student record?</p>
+                    <p className="text-[10px] text-red-700 leading-normal">
+                      This action is irreversible. It will permanently remove all logs, reports, and details associated with this student.
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="rounded-md bg-red-650 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
+                      >
+                        {deleting ? 'Deleting…' : 'Confirm Delete'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setViewDoc(true)}
+                        disabled={!detail}
+                        className="flex-1 rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50 cursor-pointer text-center"
+                      >
+                        View as Form
+                      </button>
+                      <button
+                        onClick={() => setEditing(active)}
+                        className="flex-1 rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="w-full rounded-md border border-red-200 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 cursor-pointer"
+                    >
+                      Delete Student Record
+                    </button>
+                  </div>
+                )}
               </div>
             </aside>
           </>
