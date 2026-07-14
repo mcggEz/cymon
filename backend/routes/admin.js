@@ -259,6 +259,22 @@ router.post('/compliance/:id/remind', async (req, res, next) => {
       body: `${docTitle} for ${w.patients.first_name} is ${w.status === 'overdue' ? 'overdue' : 'awaiting your signature'}. Please complete it under Consents & Waivers.`,
       link: '/client/waivers',
     });
+
+    // Send email notification to parent
+    const { data: parent } = await supabase
+      .from('profiles')
+      .select('email, display_name')
+      .eq('id', w.patients.caregiver_id)
+      .maybeSingle();
+
+    if (parent && parent.email) {
+      await sendMail({
+        to: parent.email,
+        subject: `Reminder: Action Required for ${w.patients.first_name}'s Document - ClearMind Clinic`,
+        text: `Dear ${parent.display_name},\n\nThis is a friendly reminder that the document "${docTitle}" for ${w.patients.first_name} is ${w.status === 'overdue' ? 'overdue' : 'awaiting your signature'}.\n\nPlease log in to the ClearMind Clinic portal to sign and submit this form under "Consents & Waivers": https://cymon-clinic.vercel.app/client/waivers\n\nIf you have already submitted this document, please disregard this email.\n\nBest regards,\nClearMind Psychological Services`,
+      }).catch((e) => console.error('[email] failed to send compliance reminder:', e.message));
+    }
+
     res.json({ ok: true });
   } catch (err) {
     next(err);
