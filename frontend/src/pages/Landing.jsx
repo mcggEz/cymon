@@ -22,41 +22,7 @@ const RoleItem = ({ title, body }) => (
 // Photos are professional therapy-session stock (Unsplash, free for commercial
 // use) served from the Unsplash CDN; a grey gradient shows through if a tile's
 // image fails to load.
-const CLINIC_PHOTOS = [
-  'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=800&q=70&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1551847677-dc82d764e1eb?w=800&q=70&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1604881991720-f91add269bed?w=800&q=70&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1488901512066-cd403111aeb2?w=800&q=70&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1541533260371-b8fc9b596d84?w=800&q=70&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1573495804664-b1c0849525af?w=800&q=70&auto=format&fit=crop',
-]
 
-function HeroCollage() {
-  // 4x4 lattice. 'p' = purple accent diamond; a number indexes CLINIC_PHOTOS.
-  const tiles = ['p', 0, 1, 'p', 2, 3, 4, 5, 5, 4, 3, 2, 'p', 1, 0, 'p']
-  return (
-    <div className="relative aspect-square w-full overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-br from-violet/50 to-purple-900/70"
-      />
-      <div className="absolute left-1/2 top-1/2 grid w-[142%] -translate-x-1/2 -translate-y-1/2 rotate-45 grid-cols-4 gap-1.5">
-        {tiles.map((t, i) => (
-          <div key={i} className="aspect-square overflow-hidden rounded-[3px] ring-1 ring-white/10">
-            {t === 'p' ? (
-              <div className="h-full w-full bg-gradient-to-br from-violet to-purple-800" />
-            ) : (
-              <div
-                className="h-full w-full -rotate-45 scale-150 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 bg-cover bg-center"
-                style={{ backgroundImage: `url(${CLINIC_PHOTOS[t]})` }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 function Landing() {
   const navigate = useNavigate()
@@ -70,6 +36,19 @@ function Landing() {
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    const el = carouselRef.current
+    if (!el) return
+    const intervalId = setInterval(() => {
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 10) {
+        el.scrollTo({ left: 0, behavior: 'smooth' })
+      } else {
+        el.scrollBy({ left: 320, behavior: 'smooth' })
+      }
+    }, 4000)
+    return () => clearInterval(intervalId)
   }, [])
 
   const scrollPrev = () => {
@@ -136,14 +115,7 @@ function Landing() {
             }`}
           >
             <img src="/logo-cymon.png" alt="ClearMind" className="h-10 w-10 rounded-lg object-cover" />
-            <div className="leading-tight">
-              <div className="font-sans text-2xl font-bold tracking-tight">ClearMind</div>
-              <div className={`font-mono text-[9px] tracking-[0.22em] uppercase transition-colors duration-300 ${
-                scrolled ? 'text-charcoal/80' : 'text-slate-200/80'
-              }`}>
-                // Psychological Services
-              </div>
-            </div>
+            <span className="text-xl font-bold tracking-wider">ClearMind</span>
           </a>
 
           {/* Desktop Nav in Capsule */}
@@ -153,20 +125,12 @@ function Landing() {
               : 'bg-white/5 border-white/10 text-slate-200 backdrop-blur-md shadow-sm'
           }`}>
             <a
-              href="#platform"
+              href="#about"
               className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
                 scrolled ? 'text-charcoal' : 'text-slate-200'
               }`}
             >
-              Platform
-            </a>
-            <a
-              href="#portals"
-              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
-                scrolled ? 'text-charcoal' : 'text-slate-200'
-              }`}
-            >
-              Portals
+              About Us
             </a>
             <a
               href="#news"
@@ -175,6 +139,14 @@ function Landing() {
               }`}
             >
               Announcements
+            </a>
+            <a
+              href="#appointments"
+              className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
+                scrolled ? 'text-charcoal' : 'text-slate-200'
+              }`}
+            >
+              Appointments
             </a>
           </nav>
 
@@ -214,18 +186,11 @@ function Landing() {
           }`}
         >
           <a
-            href="#platform"
+            href="#about"
             onClick={() => setMobileMenuOpen(false)}
             className="text-white text-xl font-semibold tracking-wide hover:text-violet"
           >
-            Platform
-          </a>
-          <a
-            href="#portals"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-white text-xl font-semibold tracking-wide hover:text-violet"
-          >
-            Portals
+            About Us
           </a>
           <a
             href="#news"
@@ -233,6 +198,13 @@ function Landing() {
             className="text-white text-xl font-semibold tracking-wide hover:text-violet"
           >
             Announcements
+          </a>
+          <a
+            href="#appointments"
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-white text-xl font-semibold tracking-wide hover:text-violet"
+          >
+            Appointments
           </a>
           <button
             onClick={() => {
@@ -251,6 +223,7 @@ function Landing() {
         className="relative flex min-h-screen items-center overflow-hidden px-6 pt-32 pb-20 lg:px-16"
         style={{ background: 'linear-gradient(155deg, #17141f 0%, #221a37 55%, #2b1c44 100%)' }}
       >
+
         {/* Two restrained ambient glows — depth without noise */}
         <div
           className="pointer-events-none absolute -right-40 -top-24 h-[520px] w-[520px] rounded-full"
@@ -285,7 +258,14 @@ function Landing() {
             </div>
           </div>
           <div className="hidden lg:block">
-            <HeroCollage />
+            <div className="flex items-center justify-center h-full">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-10 backdrop-blur-md shadow-2xl text-center max-w-sm">
+                <img src="/logo-cymon.png" alt="ClearMind Logo" className="h-28 w-28 mx-auto rounded-2xl object-cover shadow-lg border border-white/20" />
+                <div className="mt-6 text-3xl font-extrabold text-white tracking-wider">ClearMind</div>
+                <div className="mt-2 text-[10px] font-mono tracking-[0.2em] text-slate-300 uppercase">// PSYCHOLOGICAL SERVICES</div>
+                <p className="mt-4 text-xs text-slate-400 leading-relaxed font-light">Your journey to emotional well-being starts here. Empowering minds and restoring wellness.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -306,22 +286,38 @@ function Landing() {
             </p>
           </div>
 
-          {/* Image Montage (Solid shapes as placeholders + purple circle bg) */}
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-stretch">
-            {/* Placeholder 1 */}
-            <div className="bg-[#393842] min-h-[300px] md:min-h-[420px] rounded-2xl relative overflow-hidden flex items-center justify-center group">
-              <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-transparent" />
-              {/* Purple Circle Background */}
-              <div className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-gradient-to-tr from-violet to-pink shadow-[0_0_50px_rgba(165,122,255,0.45)] transition-transform duration-500 group-hover:scale-110" />
-              <span className="absolute bottom-4 left-6 text-white/50 font-mono text-xs">// Caregiver Intake Flow</span>
+          {/* Image Montage (Interactive 3D Flipping Photo Cards) */}
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-stretch pb-12">
+            {/* Flip Card 1 */}
+            <div className="group [perspective:1000px] min-h-[350px] md:min-h-[450px]">
+              <div className="relative h-full w-full rounded-2xl shadow-md transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] cursor-pointer">
+                {/* Front Side */}
+                <div className="absolute inset-0 h-full w-full rounded-2xl [backface-visibility:hidden] overflow-hidden">
+                  <img src="/front.jpg" alt="Caregiver Intake Flow - Front" className="h-full w-full object-cover rounded-2xl" />
+                  <div className="absolute inset-0 bg-black/20" />
+                </div>
+                {/* Back Side */}
+                <div className="absolute inset-0 h-full w-full rounded-2xl [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden">
+                  <img src="/back.jpg" alt="Caregiver Intake Flow - Back" className="h-full w-full object-cover rounded-2xl" />
+                  <div className="absolute inset-0 bg-black/25" />
+                </div>
+              </div>
             </div>
 
-            {/* Placeholder 2 */}
-            <div className="bg-[#393842] min-h-[350px] md:min-h-[470px] rounded-2xl relative overflow-hidden flex items-center justify-center group md:translate-y-8">
-              <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-transparent" />
-              {/* Purple Circle Background */}
-              <div className="w-36 h-36 md:w-56 md:h-56 rounded-full bg-gradient-to-tr from-violet to-pink shadow-[0_0_60px_rgba(165,122,255,0.45)] transition-transform duration-500 group-hover:scale-110" />
-              <span className="absolute bottom-4 left-6 text-white/50 font-mono text-xs">// Clinical Progress Records</span>
+            {/* Flip Card 2 */}
+            <div className="group [perspective:1000px] min-h-[350px] md:min-h-[450px] md:translate-y-8">
+              <div className="relative h-full w-full rounded-2xl shadow-md transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] cursor-pointer">
+                {/* Front Side */}
+                <div className="absolute inset-0 h-full w-full rounded-2xl [backface-visibility:hidden] overflow-hidden">
+                  <img src="/front2.png" alt="Clinical Progress Records - Front" className="h-full w-full object-cover rounded-2xl" />
+                  <div className="absolute inset-0 bg-black/20" />
+                </div>
+                {/* Back Side */}
+                <div className="absolute inset-0 h-full w-full rounded-2xl [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden">
+                  <img src="/back2.jpg" alt="Clinical Progress Records - Back" className="h-full w-full object-cover rounded-2xl" />
+                  <div className="absolute inset-0 bg-black/25" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -332,14 +328,10 @@ function Landing() {
         <div className="max-w-7xl mx-auto space-y-16">
           {/* Section Header */}
           <div className="space-y-4">
-            <span className="text-violet font-mono tracking-widest text-xs uppercase block">// CLINIC PROFILE</span>
             <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4">
               <h2 className="text-3xl md:text-5xl font-bold text-charcoal tracking-tight">
                 Our Foundation, Mission & Values
               </h2>
-              <span className="font-mono text-sm text-slate-500 italic">
-                &quot;Clarity of Mind. Journey to Wellness.&quot;
-              </span>
             </div>
           </div>
 
@@ -504,11 +496,11 @@ function Landing() {
               </div>
             </section>
 
-            {/* ROW 2: Care Team Portals */}
-            <section id="portals" className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* ROW 2: About Us */}
+            <section id="about" className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               {/* Left content */}
               <div className="space-y-6 lg:order-1">
-                <span className="text-violet font-mono tracking-widest text-xs uppercase block">// Access Roles</span>
+                <span className="text-violet font-mono tracking-widest text-xs uppercase block">// About Us</span>
                 <h2 className="text-3xl md:text-4xl font-bold leading-tight">One record, many hands.</h2>
                 <p className="text-slate-200 leading-relaxed text-base md:text-lg">
                   Unique workspace layouts tailored to every clinical and home user role. Ensure secure coordination without compromising security.
@@ -540,15 +532,13 @@ function Landing() {
       </div>
 
       {/* Announcements Section (Newsroom style) */}
-      <section id="news" class="bg-cream py-20 lg:py-32 px-6 lg:px-16">
-        <div className="max-w-7xl mx-auto">
+      <section id="news" className="bg-cream py-20 lg:py-32 w-full">
+        <div className="w-full">
           {/* Top Bar */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 px-6 lg:px-16">
             <div className="space-y-3">
-              <span className="text-violet font-mono tracking-widest text-xs uppercase block">// The latest updates</span>
               <div className="flex items-baseline space-x-3">
                 <h2 className="text-3xl md:text-5xl font-bold">Announcements</h2>
-                <span className="text-slate-400 font-mono text-lg">(05)</span>
               </div>
             </div>
 
@@ -578,7 +568,7 @@ function Landing() {
           {/* Horizontal snaps */}
           <div
             ref={carouselRef}
-            className="flex space-x-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-8"
+            className="flex space-x-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-8 px-6 lg:px-16"
           >
             {announcements.map((item, index) => (
               <div
@@ -586,7 +576,7 @@ function Landing() {
                 className="min-w-[85%] sm:min-w-[45%] lg:min-w-[31%] bg-white rounded-2xl p-8 flex flex-col justify-between h-[380px] border border-charcoal/5 shadow-sm snap-start group hover:shadow-md transition-shadow duration-300"
               >
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                  <div className="flex justify-between items-center text-xs text-slate-400">
                     <span>// {item.category}</span>
                     <span>{item.date}</span>
                   </div>
@@ -597,7 +587,7 @@ function Landing() {
                     {item.body}
                   </p>
                 </div>
-                <div className="text-violet font-mono text-xs uppercase tracking-widest flex items-center space-x-1 cursor-pointer hover:underline">
+                <div className="text-violet text-xs uppercase tracking-widest flex items-center space-x-1 cursor-pointer hover:underline">
                   <span>View Details</span>
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
@@ -609,24 +599,31 @@ function Landing() {
         </div>
       </section>
 
-      {/* Careers style CTA */}
-      <section className="bg-charcoal text-white py-16 lg:py-24 px-6 lg:px-16 border-b border-white/10 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-80 h-80 rounded-full bg-gradient-to-tr from-violet to-pink opacity-10 blur-3xl pointer-events-none" />
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0 relative z-10">
-          <div className="space-y-2">
-            <span className="text-violet font-mono tracking-widest text-xs uppercase block">// Start Your Journey</span>
-            <h2 className="text-3xl md:text-5xl font-bold leading-tight">Ready to begin your journey to wellness?</h2>
+      {/* Appointments Section */}
+      <section id="appointments" className="bg-[#17141f] text-white py-20 lg:py-32 px-6 lg:px-16 relative overflow-hidden">
+        {/* Background gradient rings */}
+        <div className="absolute left-0 bottom-0 w-96 h-96 rounded-full bg-gradient-to-tr from-violet/25 to-pink/10 blur-3xl pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto text-center space-y-6 relative z-10">
+          <span className="text-violet font-mono tracking-widest text-xs uppercase block">// Book a Session</span>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Schedule Your Consultation</h2>
+          <p className="text-slate-300 max-w-xl mx-auto leading-relaxed text-sm md:text-base font-light">
+            We provide structured therapy sessions, parent consultations, and developmental assessments. Log in to your client account or contact the administration to reserve an appointment.
+          </p>
+          <div className="pt-4">
+            <button
+              onClick={() => navigate('/login')}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-violet px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-violet/25 hover:bg-violet-dark transition-colors"
+            >
+              Book an Appointment
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={() => navigate('/login')}
-            className="w-16 h-16 rounded-full bg-violet hover:bg-white text-white hover:text-charcoal flex items-center justify-center transition-colors duration-300 shadow-lg group focus:outline-none"
-          >
-            <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </button>
         </div>
       </section>
+
 
       {/* Footer */}
       <footer id="contact" className="bg-cream text-charcoal py-16 lg:py-24 px-6 lg:px-16 border-t border-charcoal/5">
@@ -668,8 +665,7 @@ function Landing() {
             <span className="text-slate-400 font-mono text-xs uppercase tracking-widest block">// Navigation</span>
             <div className="grid grid-cols-2 gap-2 text-sm font-mono tracking-wider">
               <a href="#top" className="hover:text-violet transition-colors">Home</a>
-              <a href="#platform" className="hover:text-violet transition-colors">Platform</a>
-              <a href="#portals" className="hover:text-violet transition-colors">Portals</a>
+              <a href="#about" className="hover:text-violet transition-colors">About Us</a>
               <a href="#news" className="hover:text-violet transition-colors">Announcements</a>
             </div>
           </div>

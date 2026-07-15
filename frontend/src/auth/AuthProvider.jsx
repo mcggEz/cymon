@@ -55,6 +55,15 @@ export function AuthProvider({ children }) {
     setProfile(null)
   }, [])
 
+  const reloadProfile = useCallback(async () => {
+    try {
+      const data = await api.me()
+      setProfile(data.profile)
+    } catch {
+      // ignore
+    }
+  }, [])
+
   return (
     <AuthContext.Provider
       value={{
@@ -65,6 +74,7 @@ export function AuthProvider({ children }) {
         signIn,
         signUp,
         signOut,
+        reloadProfile,
       }}
     >
       {children}

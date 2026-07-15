@@ -559,4 +559,51 @@ router.get('/drafting-reports', async (req, res, next) => {
   }
 });
 
+// Get patients list for dropdown
+router.get('/patients', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: list, error } = await supabase
+      .from('patients')
+      .select('id, first_name, middle_name, last_name, patient_id')
+      .eq('clinic_id', req.profile.clinic_id)
+      .is('deleted_at', null)
+      .order('first_name', { ascending: true });
+    if (error) return next(error);
+    res.json({ patients: (list || []).map(p => ({ id: p.id, name: name(p), patient_id: p.patient_id })) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get student journal logs for a patient
+router.get('/student-journal/:patientId', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patientId } = req.params;
+    
+    // Verify patient belongs to the same clinic
+    const { data: patient, error: pError } = await supabase
+      .from('patients')
+      .select('id, clinic_id, first_name, last_name')
+      .eq('id', patientId)
+      .single();
+      
+    if (pError || !patient) return res.status(404).json({ error: 'Patient not found' });
+    if (patient.clinic_id !== req.profile.clinic_id) return res.status(403).json({ error: 'Forbidden' });
+    
+    const { data: logs, error: lError } = await supabase
+      .from('daily_activity_logs')
+      .select('id, log_date, mood, task_completion, behavioral_episodes, sleep_quality, appetite, observations')
+      .eq('patient_id', patientId)
+      .order('log_date', { ascending: false });
+      
+    if (lError) return next(lError);
+    
+    res.json({ logs: logs || [], patientName: `${patient.first_name} ${patient.last_name}` });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

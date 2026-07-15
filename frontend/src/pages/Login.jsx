@@ -129,12 +129,9 @@ function Login() {
       <section className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-white/60 bg-white shadow-[0_30px_80px_-25px_rgba(124,58,237,0.35)] ring-1 ring-violet/10 grid grid-cols-1 md:grid-cols-12">
         {/* Sidebar Brand Column (Visible on md+) */}
         <aside className="relative hidden md:flex md:col-span-5 bg-gradient-to-br from-purple-50 via-white to-purple-50 border-r border-purple-100/70 p-12 min-h-[32rem] flex-col justify-center overflow-hidden">
-          <div className="relative z-10">
-            <img src="/logo-cymon.png" alt="CyMon" className="mb-5 block h-16 w-16 rounded-2xl object-cover shadow-sm" />
+          <div className="relative z-10 flex items-center gap-4">
+            <img src="/logo-cymon.png" alt="CyMon" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
             <span className="font-serif italic text-6xl font-bold text-charcoal">CyMon</span>
-            <p className="mt-4 max-w-xs text-sm text-slate-600 leading-relaxed">
-              Clarity of Mind, Journey to Wellness. A digital home for the SPED program at ClearMind Psychological Services.
-            </p>
           </div>
         </aside>
 

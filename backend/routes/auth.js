@@ -98,6 +98,26 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user, profile: req.profile });
 });
 
+router.put('/profile', requireAuth, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { displayName, phone } = req.body || {};
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        display_name: displayName !== undefined ? displayName : req.profile.display_name,
+        phone: phone !== undefined ? phone : req.profile.phone,
+      })
+      .eq('id', req.user.id)
+      .select()
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json({ profile: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/change-password', requireAuth, async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {

@@ -37,6 +37,8 @@ import PmAssessments from './pages/staff/psychometrician/Assessments'
 import DataReview from './pages/staff/psychometrician/DataReview'
 import PmActivityLog from './pages/staff/psychometrician/ActivityLog'
 import DraftingReports from './pages/staff/psychometrician/DraftingReports'
+import StudentJournal from './pages/staff/StudentJournal'
+import StaffProfile from './pages/staff/MyProfile'
 
 function App() {
   useEffect(() => {
@@ -85,6 +87,8 @@ function App() {
           <Route index element={<Approvals />} />
           <Route path="data-review" element={<DataReview />} />
           <Route path="activity" element={<PmActivityLog />} />
+          <Route path="student-journal" element={<StudentJournal />} />
+          <Route path="profile" element={<StaffProfile />} />
           <Route path="progress" element={<Progress />} />
           <Route path="reports" element={<DraftingReports />} />
         </Route>
@@ -101,6 +105,8 @@ function App() {
           <Route path="assessments" element={<PmAssessments />} />
           <Route path="data-review" element={<DataReview />} />
           <Route path="activity" element={<PmActivityLog />} />
+          <Route path="student-journal" element={<StudentJournal />} />
+          <Route path="profile" element={<StaffProfile />} />
           <Route path="progress" element={<Progress />} />
           <Route path="reports" element={<DraftingReports />} />
         </Route>
@@ -122,6 +128,8 @@ function App() {
           <Route path="scoring" element={<AdminScoring />} />
           <Route path="assessments" element={<AdminAssessments />} />
           <Route path="activity" element={<PmActivityLog />} />
+          <Route path="student-journal" element={<StudentJournal />} />
+          <Route path="profile" element={<StaffProfile />} />
           <Route path="progress" element={<Progress />} />
           <Route path="reports" element={<DraftingReports />} />
           <Route path="records" element={<AdminClinicalRecords />} />

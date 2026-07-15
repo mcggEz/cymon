@@ -53,6 +53,7 @@ export const api = {
   signup: (payload) => request('/api/auth/signup', { method: 'POST', body: payload }),
   login: (payload) => request('/api/auth/login', { method: 'POST', body: payload }),
   me: () => request('/api/auth/me', { auth: true }),
+  updateProfile: (payload) => request('/api/auth/profile', { method: 'PUT', body: payload, auth: true }),
   changePassword: (payload) => request('/api/auth/change-password', { method: 'POST', body: payload, auth: true }),
   forgotPassword: (email) => request('/api/auth/forgot-password', { method: 'POST', body: { email } }),
   resetPassword: (accessToken, password) => request('/api/auth/reset-password', { method: 'POST', body: { accessToken, password } }),
@@ -157,5 +158,7 @@ export const api = {
       request(`/api/psychometrician/submissions/${id}`, { method: 'PATCH', body: payload, auth: true }),
     updateReport: (id, payload) =>
       request(`/api/psychometrician/reports/${id}`, { method: 'PATCH', body: payload, auth: true }),
+    patients: () => request('/api/psychometrician/patients', { auth: true }),
+    studentJournal: (patientId) => request(`/api/psychometrician/student-journal/${patientId}`, { auth: true }),
   },
 }

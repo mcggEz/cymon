@@ -1,3 +1,13 @@
+@font-face {
+  font-family: 'Against';
+  src: url('/Against.woff2') format('woff2'),
+       url('/Against.woff') format('woff'),
+       url('/Against.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 
 @theme {
@@ -9,6 +19,7 @@
   
   --font-mono: "Chakra Petch", monospace;
   --font-sans: "Outfit", sans-serif;
+  --font-against: "Against", sans-serif;
 
   --animate-float-slow: floatSlow 15s ease-in-out infinite;
   --animate-float-slower: floatSlower 20s ease-in-out infinite;
@@ -55,4 +66,8 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }

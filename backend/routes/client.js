@@ -222,7 +222,7 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
           .select('log_date, mood')
           .eq('patient_id', patient.id)
           .order('log_date', { ascending: false })
-          .limit(7),
+          .limit(30),
         supabase.from('daily_activity_logs').select('*', { count: 'exact', head: true }).eq('patient_id', patient.id),
         supabase.from('interventions').select('*', { count: 'exact', head: true }).eq('patient_id', patient.id).eq('status', 'completed'),
         supabase
@@ -243,7 +243,7 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
           .maybeSingle(),
         supabase
           .from('announcements')
-          .select('id, title, publish_date')
+          .select('id, title, body, publish_date')
           .eq('clinic_id', patient.clinic_id)
           .is('deleted_at', null)
           .order('publish_date', { ascending: false })
@@ -255,9 +255,13 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
           .in('status', ['assigned', 'in_progress']),
       ]);
 
-    const moodSeries = (logs || []).slice().reverse().map((l) => MOOD_SCORE[l.mood] || 0);
-    const avgMood = moodSeries.length
-      ? Number((moodSeries.reduce((a, b) => a + b, 0) / moodSeries.length).toFixed(1))
+    const moodSeries = (logs || []).slice().reverse().map((l) => ({
+      date: l.log_date,
+      value: MOOD_SCORE[l.mood] || 0,
+    }));
+    const last7Moods = moodSeries.slice(-7);
+    const avgMood = last7Moods.length
+      ? Number((last7Moods.reduce((a, b) => a + b.value, 0) / last7Moods.length).toFixed(1))
       : null;
     const [practitionerName, lastPractitionerName] = await Promise.all([
       nextAppt ? staffName(nextAppt.practitioner_id) : null,
@@ -271,7 +275,6 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
         ? {
             iep_level: clinical.iep_level,
             support_level: clinical.support_level,
-            milestone_progress: clinical.milestone_progress,
             next_review_at: clinical.next_review_at,
             notes: clinical.notes,
             clinician_name: clinicianName,

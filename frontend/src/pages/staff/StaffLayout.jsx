@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { SidebarContext } from '../../components/sidebarContext'
 import { useAuth } from '../../auth/useAuth'
 import { roleOptions } from '../../lib/roleNav'
+import { api } from '../../lib/api'
 
 const Icon = ({ d, className = '' }) => (
   <svg viewBox="0 0 24 24" className={`h-5 w-5 ${className}`} fill="none" aria-hidden="true">
@@ -10,8 +11,27 @@ const Icon = ({ d, className = '' }) => (
   </svg>
 )
 
-function StaffLayout({ user, nav, outletContext }) {
+function StaffLayout({ user, nav, profileTo, outletContext }) {
   const [open, setOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  
+  useEffect(() => {
+    let on = true
+    const load = () => {
+      api.notifications()
+        .then((data) => {
+          if (on) setNotifications(data.notifications || [])
+        })
+        .catch(() => {})
+    }
+    load()
+    const id = setInterval(load, 60000)
+    return () => {
+      on = false
+      clearInterval(id)
+    }
+  }, [])
+
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('cymon.sidebarCollapsed') === '1'
@@ -115,14 +135,17 @@ function StaffLayout({ user, nav, outletContext }) {
 
           {/* Profile row. The role chip under the name (in `identity`) is the
               switch trigger when the employee holds more than one role. */}
-          <div
+          <Link
+            to={profileTo}
+            onClick={close}
+            title="My Profile Settings"
             className={[
-              'flex items-center gap-3 py-4',
+              'flex items-center gap-3 py-4 hover:bg-white/5 cursor-pointer',
               collapsed ? 'px-5 lg:justify-center lg:px-2' : 'px-5',
             ].join(' ')}
           >
             {identity}
-          </div>
+          </Link>
 
           {multiRole && roleOpen ? (
             <div className={['px-3 pb-2', collapsed ? 'lg:hidden' : ''].join(' ')}>
@@ -154,25 +177,41 @@ function StaffLayout({ user, nav, outletContext }) {
           ) : null}
 
           <nav className={['flex-1', collapsed ? 'px-3 lg:px-2' : 'px-3'].join(' ')}>
-            {nav.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                onClick={close}
-                title={item.label}
-                className={({ isActive }) =>
-                  [
-                    'mt-1 flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors',
-                    collapsed ? 'px-3 lg:justify-center lg:px-0' : 'px-3',
-                    isActive ? 'bg-white/15 text-white' : 'text-purple-100/90 hover:bg-white/10',
-                  ].join(' ')
-                }
-              >
-                <Icon d={item.d} className="shrink-0" />
-                <span className={collapsed ? 'lg:hidden' : ''}>{item.label}</span>
-              </NavLink>
-            ))}
+            {nav.map((item) => {
+              const unread = notifications.filter(
+                (n) => !n.read_at && n.link && (n.link === item.to || n.link.startsWith(item.to + '/'))
+              ).length
+
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  onClick={close}
+                  title={item.label}
+                  className={({ isActive }) =>
+                    [
+                      'mt-1 flex items-center justify-between rounded-md py-2 text-sm font-medium transition-colors w-full relative',
+                      collapsed ? 'px-3 lg:justify-center lg:px-0' : 'px-3',
+                      isActive ? 'bg-white/15 text-white' : 'text-purple-100/90 hover:bg-white/10',
+                    ].join(' ')
+                  }
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon d={item.d} className="shrink-0" />
+                    <span className={collapsed ? 'lg:hidden' : 'truncate'}>{item.label}</span>
+                  </div>
+                  {unread > 0 && !collapsed && (
+                    <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white shrink-0">
+                      {unread}
+                    </span>
+                  )}
+                  {unread > 0 && collapsed && (
+                    <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-red-500 border border-purple-800 shrink-0" />
+                  )}
+                </NavLink>
+              )
+            })}
           </nav>
 
           <div className={['flex items-center justify-center gap-2.5 pb-5 pt-4', collapsed ? 'px-5 lg:px-2' : 'px-5'].join(' ')}>

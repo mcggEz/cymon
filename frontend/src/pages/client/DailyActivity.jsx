@@ -58,6 +58,7 @@ function MoodChart({ series }) {
 }
 
 function DailyActivity() {
+  const [activeDate, setActiveDate] = useState(() => todayKey())
   const [mood, setMood] = useState('okay')
   const [taskCompletion, setTaskCompletion] = useState('')
   const [behavioral, setBehavioral] = useState('')
@@ -69,14 +70,33 @@ function DailyActivity() {
   const [series, setSeries] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const load = () =>
+  const load = (targetDate = activeDate) =>
     api.client.activityLogs().then((d) => {
       setLogs(d.logs)
       setSeries(d.moodSeries)
+      
+      // Sync form fields with selected date
+      const found = (d.logs || []).find((l) => l.log_date === targetDate)
+      if (found) {
+        setMood(found.mood)
+        setTaskCompletion(found.task_completion || '')
+        setBehavioral(found.behavioral_episodes || '')
+        setSleep(found.sleep_quality || '')
+        setAppetite(found.appetite || '')
+        setObservations(found.observations || '')
+      } else {
+        setMood('okay')
+        setTaskCompletion('')
+        setBehavioral('')
+        setSleep('')
+        setAppetite('')
+        setObservations('')
+      }
     })
+
   useEffect(() => {
     let on = true
-    load()
+    load(todayKey())
       .catch(() => {})
       .finally(() => {
         if (on) setLoading(false)
@@ -84,7 +104,38 @@ function DailyActivity() {
     return () => {
       on = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const handleSelectLog = (s) => {
+    setActiveDate(s.log_date)
+    setMood(s.mood)
+    setTaskCompletion(s.task_completion || '')
+    setBehavioral(s.behavioral_episodes || '')
+    setSleep(s.sleep_quality || '')
+    setAppetite(s.appetite || '')
+    setObservations(s.observations || '')
+  }
+
+  const handleBackToToday = () => {
+    setActiveDate(todayKey())
+    const found = logs.find((l) => l.log_date === todayKey())
+    if (found) {
+      setMood(found.mood)
+      setTaskCompletion(found.task_completion || '')
+      setBehavioral(found.behavioral_episodes || '')
+      setSleep(found.sleep_quality || '')
+      setAppetite(found.appetite || '')
+      setObservations(found.observations || '')
+    } else {
+      setMood('okay')
+      setTaskCompletion('')
+      setBehavioral('')
+      setSleep('')
+      setAppetite('')
+      setObservations('')
+    }
+  }
 
   const handleSubmit = async () => {
     setSubmitting(true)
@@ -96,94 +147,123 @@ function DailyActivity() {
         sleep_quality: sleep || null,
         appetite: appetite || null,
         observations: observations || null,
+        log_date: activeDate,
       })
-      setObservations('')
-      toast.success('Report sent to the clinic.')
-      await load()
+      toast.success(activeDate === todayKey() ? 'Journal entry submitted.' : 'Journal entry updated.')
+      await load(activeDate)
     } catch (err) {
-      toast.error(err.message || 'Failed to send report.')
+      toast.error(err.message || 'Failed to save entry.')
     } finally {
       setSubmitting(false)
     }
   }
 
   const submittedToday = logs.some((l) => l.log_date === todayKey())
-  const journalStatus = submittedToday ? 'submitted' : observations.trim() ? 'completed' : 'not_started'
+  const currentLogsToday = logs.find((l) => l.log_date === activeDate)
+  const journalStatus = submittedToday ? 'submitted' : (currentLogsToday?.observations || observations).trim() ? 'completed' : 'not_started'
   const status = JOURNAL_STATUS[journalStatus]
 
   return (
     <>
-      <PageHeader title="Daily Activity Log" />
+      <PageHeader title="Daily Journal" />
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
-          Log Leo&apos;s daily observations to help Dr. Jinky design more effective therapy.
-        </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
           <section className="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
-            <div className="text-sm font-semibold text-purple-800">Log Today&apos;s Activity</div>
-
-            <div className="mt-4 text-sm font-medium text-slate-700">
-              How was Leo&apos;s general mood today?
-            </div>
-            <div className="mt-2 grid grid-cols-5 gap-2">
-              {MOODS.map((m) => {
-                const selected = mood === m.id
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMood(m.id)}
-                    className={[
-                      'flex flex-col items-center rounded-xl border p-2 text-xs font-medium transition',
-                      selected
-                        ? 'border-purple-500 bg-purple-50 text-purple-800'
-                        : 'border-slate-200 text-slate-600 hover:border-purple-300',
-                    ].join(' ')}
-                  >
-                    <div className={`mb-1 h-9 w-9 rounded-full ${m.color}`} />
-                    {m.label}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Select label="Therapy task completion?" placeholder="Select" value={taskCompletion} onChange={(e) => setTaskCompletion(e.target.value)}>
-                <option value="yes_all">Yes, completed all tasks</option>
-                <option value="some">Some completed</option>
-                <option value="none">None</option>
-              </Select>
-              <Select label="Behavioral episodes today?" placeholder="Select" value={behavioral} onChange={(e) => setBehavioral(e.target.value)}>
-                <option value="none">No episodes — calm and cooperative</option>
-                <option value="mild">Mild episode</option>
-                <option value="significant">Significant episode</option>
-              </Select>
-              <Select label="Sleep quality last night" placeholder="Select" value={sleep} onChange={(e) => setSleep(e.target.value)}>
-                <option value="good">Slept well (7+ hours)</option>
-                <option value="restless">Restless</option>
-                <option value="poor">Poor</option>
-              </Select>
-              <Select label="Appetite / eating today?" placeholder="Select" value={appetite} onChange={(e) => setAppetite(e.target.value)}>
-                <option value="good">Good appetite — ate well</option>
-                <option value="average">Average</option>
-                <option value="refused">Refused meals</option>
-              </Select>
+            <div className="flex items-center justify-between border-b border-purple-100 pb-3">
+              <div className="text-sm font-semibold text-purple-800">
+                {activeDate === todayKey() ? "Write Today's Journal" : `Journal Entry: ${fmtDate(activeDate)}`}
+              </div>
+              {activeDate !== todayKey() ? (
+                <button
+                  type="button"
+                  onClick={handleBackToToday}
+                  className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50 cursor-pointer"
+                >
+                  &larr; Go to Today
+                </button>
+              ) : null}
             </div>
 
             <Textarea
               className="mt-4"
               label="Daily Journal"
-              rows={3}
-              placeholder="How did the day go? New behaviors, concerns, wins, or anything worth noting…"
+              rows={4}
+              placeholder="How did the day go? Note any new behaviors, concerns, wins, or anything worth recording..."
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
+              disabled={activeDate !== todayKey()}
             />
-            <p className="mt-1 text-xs text-slate-500">Required — please complete today&apos;s journal entry.</p>
+            {activeDate === todayKey() ? (
+              <p className="mt-1 text-xs text-slate-500">Required — please complete journal entry.</p>
+            ) : null}
 
-            <Button className="mt-4" size="md" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Sending…' : 'Send Report to Clinic'}
-            </Button>
+            <div className="mt-6 border-t border-purple-50 pt-5">
+              <div className="text-sm font-medium text-slate-700">
+                How was their general mood today?
+              </div>
+              <div className="mt-2 grid grid-cols-5 gap-2">
+                {MOODS.map((m) => {
+                  const selected = mood === m.id
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setMood(m.id)}
+                      disabled={activeDate !== todayKey()}
+                      className={[
+                        'flex flex-col items-center rounded-lg border py-1.5 px-2 text-[10px] font-medium transition',
+                        selected
+                          ? 'border-purple-500 bg-purple-50 text-purple-800'
+                          : 'border-slate-200 text-slate-600',
+                        activeDate === todayKey()
+                          ? 'cursor-pointer hover:border-purple-300'
+                          : 'opacity-80 cursor-default',
+                      ].join(' ')}
+                    >
+                      <div className={`mb-1 h-5 w-5 rounded-full ${m.color}`} />
+                      {m.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-purple-50 pt-5">
+              <div className="text-sm font-semibold text-purple-800 mb-3">Daily Metrics & Observations</div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Select label="Therapy task completion?" placeholder="Select" value={taskCompletion} onChange={(e) => setTaskCompletion(e.target.value)} disabled={activeDate !== todayKey()}>
+                  <option value="yes_all">Yes, completed all tasks</option>
+                  <option value="some">Some completed</option>
+                  <option value="none">None</option>
+                </Select>
+                <Select label="Behavioral episodes today?" placeholder="Select" value={behavioral} onChange={(e) => setBehavioral(e.target.value)} disabled={activeDate !== todayKey()}>
+                  <option value="none">No episodes — calm and cooperative</option>
+                  <option value="mild">Mild episode</option>
+                  <option value="significant">Significant episode</option>
+                </Select>
+                <Select label="Sleep quality last night" placeholder="Select" value={sleep} onChange={(e) => setSleep(e.target.value)} disabled={activeDate !== todayKey()}>
+                  <option value="good">Slept well (7+ hours)</option>
+                  <option value="restless">Restless</option>
+                  <option value="poor">Poor</option>
+                </Select>
+                <Select label="Appetite / eating today?" placeholder="Select" value={appetite} onChange={(e) => setAppetite(e.target.value)} disabled={activeDate !== todayKey()}>
+                  <option value="good">Good appetite — ate well</option>
+                  <option value="average">Average</option>
+                  <option value="refused">Refused meals</option>
+                </Select>
+              </div>
+            </div>
+
+            {activeDate === todayKey() ? (
+              <Button className="mt-6 w-full sm:w-auto" size="md" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? 'Submitting Entry…' : 'Submit Journal Entry'}
+              </Button>
+            ) : (
+              <div className="mt-6 rounded-xl bg-purple-50 px-4 py-3 text-xs font-semibold text-purple-700 border border-purple-100 flex items-center gap-2">
+                <span>🔒</span> This is a submitted past journal entry and cannot be edited.
+              </div>
+            )}
           </section>
 
           <div className="flex flex-col gap-5">
@@ -196,17 +276,27 @@ function DailyActivity() {
               {loading ? (
                 <SkeletonText className="mt-3" lines={5} />
               ) : (
-                <ul className="mt-3 space-y-3 text-sm">
+                <ul className="mt-3 space-y-2 text-sm">
                   {logs.length === 0 ? (
                     <li className="text-xs text-slate-500">No submissions yet.</li>
                   ) : null}
                   {logs.map((s) => (
-                    <li key={s.id} className="flex items-start gap-3">
-                      <span className={`mt-1.5 h-2 w-2 rounded-full ${TASK_DOT[s.task_completion] || 'bg-slate-300'}`} />
-                      <div>
-                        <div className="font-medium text-slate-800">{fmtDate(s.log_date)}</div>
-                        <div className="text-xs text-slate-500">Tasks: {TASK_LABEL[s.task_completion] || '—'}</div>
-                      </div>
+                    <li key={s.id}>
+                      <button
+                        onClick={() => handleSelectLog(s)}
+                        className={`w-full flex items-start gap-3 rounded-xl border p-2 text-left transition-all hover:bg-purple-50/40 cursor-pointer group ${
+                          activeDate === s.log_date ? 'border-purple-300 bg-purple-50/30' : 'border-transparent'
+                        }`}
+                      >
+                        <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${TASK_DOT[s.task_completion] || 'bg-slate-300'}`} />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-slate-800 text-xs sm:text-sm">{fmtDate(s.log_date)}</div>
+                          <div className="text-[10px] sm:text-xs text-slate-500 flex items-center justify-between gap-2 mt-0.5">
+                            <span>Tasks: {TASK_LABEL[s.task_completion] || '—'}</span>
+                            <span className="font-bold group-hover:underline text-[9px] uppercase tracking-wider shrink-0 text-purple-600">View Entry &rarr;</span>
+                          </div>
+                        </div>
+                      </button>
                     </li>
                   ))}
                 </ul>

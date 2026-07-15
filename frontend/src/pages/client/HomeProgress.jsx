@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import PageHeader from './PageHeader'
 import { api } from '../../lib/api'
 import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
@@ -25,40 +26,105 @@ const StatCard = ({ value, label, sub, loading = false }) => (
   </div>
 )
 
-const Badge = ({ children, tone = 'purple' }) => {
-  const tones = {
-    purple: 'bg-purple-100 text-purple-800',
-    green: 'bg-green-100 text-green-700',
-    amber: 'bg-amber-100 text-amber-700',
-  }
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${tones[tone]}`}>
-      {children}
-    </span>
-  )
+
+const formatDateStr = (dateStr) => {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  const monthIdx = parseInt(parts[1], 10) - 1
+  const day = parts[2]
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthName = months[monthIdx] || ''
+  return `${monthName} ${parseInt(day, 10)}`
 }
 
 function MoodChart({ points, loading = false }) {
   const max = 5
-  const width = 320
-  const height = 120
+  const width = 450
+  const height = 160
+  const paddingTop = 15
+  const paddingBottom = 45
+  const paddingLeft = 25
+  const paddingRight = 25
+
   if (loading) {
-    return <Skeleton className="h-32 w-full" />
+    return <Skeleton className="h-40 w-full" />
   }
-  if (!points || points.length < 2) {
-    return <div className="flex h-32 items-center justify-center text-sm text-slate-400">Not enough data yet</div>
+  if (!points || points.length === 0) {
+    return <div className="flex h-40 items-center justify-center text-sm text-slate-400">Not enough data yet</div>
   }
-  const step = width / (points.length - 1)
-  const path = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * step} ${height - (p / max) * height}`)
-    .join(' ')
+
+  const chartWidth = width - paddingLeft - paddingRight
+  const chartHeight = height - paddingTop - paddingBottom
+  const step = chartWidth / points.length
+  const barWidth = Math.max(step * 0.6, 4)
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-32 w-full">
-      <path d={path} stroke="#7c3aed" strokeWidth="2.5" fill="none" />
-      {points.map((p, i) => (
-        <circle key={i} cx={i * step} cy={height - (p / max) * height} r="3" fill="#7c3aed" />
-      ))}
-    </svg>
+    <div className="w-full">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-40 w-full overflow-visible">
+        {/* Draw horizontal reference lines */}
+        {[1, 2, 3, 4, 5].map((val) => {
+          const y = paddingTop + chartHeight - (val / max) * chartHeight
+          return (
+            <g key={val}>
+              <line
+                x1={paddingLeft}
+                y1={y}
+                x2={width - paddingRight}
+                y2={y}
+                stroke="#f3e8ff"
+                strokeWidth="1"
+                strokeDasharray="3,3"
+              />
+              <text
+                x={paddingLeft - 6}
+                y={y + 3}
+                textAnchor="end"
+                className="fill-slate-400 text-[8px] font-medium"
+              >
+                {val}
+              </text>
+            </g>
+          )
+        })}
+
+        {/* Draw bars and labels */}
+        {points.map((p, i) => {
+          const x = paddingLeft + i * step + (step - barWidth) / 2
+          const barHeight = (p.value / max) * chartHeight
+          const y = paddingTop + chartHeight - barHeight
+          
+          const showLabel = points.length <= 7 || i % 5 === 0 || i === points.length - 1
+          const dateLabel = p.date ? formatDateStr(p.date) : ''
+
+          return (
+            <g key={i} className="group">
+              <title>{`Mood: ${p.value}/5 on ${p.date ? formatDateStr(p.date) : 'unknown date'}`}</title>
+              
+              <rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={Math.max(barHeight, 2)}
+                rx={Math.min(barWidth / 2, 4)}
+                className="fill-purple-600 transition-all group-hover:fill-purple-800"
+              />
+              
+              {showLabel ? (
+                <text
+                  x={paddingLeft + i * step + step / 2}
+                  y={height - 15}
+                  textAnchor="middle"
+                  className="fill-slate-600 text-[10px] font-semibold"
+                >
+                  {dateLabel}
+                </text>
+              ) : null}
+            </g>
+          )
+        })}
+      </svg>
+    </div>
   )
 }
 
@@ -102,6 +168,7 @@ const AppointmentCard = ({ title, appt, loading = false, tone = 'purple', emptyT
 
 function HomeProgress() {
   const [data, setData] = useState(null)
+  const [moodFilter, setMoodFilter] = useState('7d')
 
   useEffect(() => {
     let on = true
@@ -113,54 +180,73 @@ function HomeProgress() {
 
   const loading = !data
   const patient = data?.patient
-  const clinical = data?.clinical
-  const stats = data?.stats
   const next = data?.nextAppointment
   const last = data?.lastAppointment
   const nextDt = next ? new Date(next.starts_at) : null
+
+  const todayKey = () => new Date().toISOString().slice(0, 10)
+  const submittedToday = data?.moodSeries?.some((m) => m.date === todayKey())
 
   return (
     <>
       <PageHeader title={patient ? `Good Day, ${patient.first_name}!` : 'Welcome'} />
       <div className="flex-1 overflow-y-auto p-6">
-        {stats?.assignedAssessments ? (
-          <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
-            {stats.assignedAssessments} new assessment{stats.assignedAssessments > 1 ? 's' : ''}
-            {clinical?.clinician_name ? ` assigned by ${clinical.clinician_name}` : ''} waiting.{' '}
-            <a href="/client/assessments" className="font-semibold underline">
-              Complete them now
-            </a>
-          </div>
-        ) : null}
 
-        <section className="mt-5 rounded-2xl bg-gradient-to-r from-purple-700 to-purple-900 p-5 text-white">
-          <div className="text-sm font-medium opacity-90">
-            Current developmental stage{patient ? ` for ${patient.full_name}` : ''}
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {loading ? (
-              <div className="h-5 w-48 rounded-full bg-white/20 animate-pulse" />
-            ) : (
-              <Badge tone="purple">{clinical?.iep_level || 'IEP level pending'}</Badge>
-            )}
-          </div>
-          <div className="mt-3 h-1.5 w-full rounded-full bg-white/20">
-            <div className="h-full rounded-full bg-white" style={{ width: `${clinical?.milestone_progress || 0}%` }} />
-          </div>
-          <div className="mt-1 text-xs opacity-80">{clinical?.milestone_progress || 0}% milestone progress</div>
-        </section>
-
-        <section className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatCard loading={loading} value={stats?.cbiSubmissions ?? '—'} label="CBI Submissions" />
-          <StatCard loading={loading} value={stats?.iepGoalsMet ?? '—'} label="IEP Goals Met" />
+        <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <StatCard loading={loading} value={nextDt ? fmtDate(next.starts_at) : '—'} label="Next Appointment" />
-          <StatCard loading={loading} value={stats?.avgMood ?? '—'} label="Avg Mood (7 days)" />
+          <Link to="/client/activity">
+            <div className="rounded-2xl bg-white p-5 shadow-sm border border-transparent hover:border-purple-300 transition-colors cursor-pointer flex justify-between items-center group">
+              <div>
+                {loading ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <div className={`text-2xl font-bold ${submittedToday ? 'text-green-600' : 'text-amber-500'}`}>
+                    {submittedToday ? 'Submitted' : 'Pending'}
+                  </div>
+                )}
+                <div className="mt-1 text-sm font-medium text-slate-700">Turn in Daily Journal</div>
+              </div>
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${submittedToday ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                {submittedToday ? (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                  </svg>
+                )}
+              </div>
+            </div>
+          </Link>
         </section>
 
         <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
-            <div className="mb-3 text-sm font-semibold text-purple-800">7-Day Mood Trend</div>
-            <MoodChart points={data?.moodSeries} loading={loading} />
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold text-purple-800">
+                {moodFilter === '7d' ? '7-Day' : 'Monthly'} Mood Trend
+              </div>
+              <div className="flex gap-1 rounded-md bg-purple-50 p-0.5 text-xs">
+                <button
+                  onClick={() => setMoodFilter('7d')}
+                  className={`rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
+                    moodFilter === '7d' ? 'bg-purple-700 text-white' : 'text-purple-700 hover:bg-purple-100'
+                  }`}
+                >
+                  7 Days
+                </button>
+                <button
+                  onClick={() => setMoodFilter('30d')}
+                  className={`rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
+                    moodFilter === '30d' ? 'bg-purple-700 text-white' : 'text-purple-700 hover:bg-purple-100'
+                  }`}
+                >
+                  Monthly
+                </button>
+              </div>
+            </div>
+            <MoodChart points={data?.moodSeries ? (moodFilter === '7d' ? data.moodSeries.slice(-7) : data.moodSeries) : []} loading={loading} />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <AppointmentCard
@@ -179,7 +265,7 @@ function HomeProgress() {
           </div>
         </section>
 
-        <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <section className="mt-5">
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-purple-800">Clinic Updates</div>
             <ul className="mt-3 space-y-3 text-sm">
@@ -190,27 +276,13 @@ function HomeProgress() {
               ) : (
                 (data?.announcements || []).map((a) => (
                   <li key={a.id} className="border-l-2 border-purple-400 pl-3">
-                    <div className="font-medium text-slate-800">{a.title}</div>
-                    <div className="text-xs text-slate-500">{fmtDate(a.publish_date)}</div>
+                    <div className="font-semibold text-slate-800">{a.title}</div>
+                    {a.body && <p className="text-xs text-slate-600 mt-1">{a.body}</p>}
+                    <div className="text-[10px] text-slate-400 mt-1">{fmtDate(a.publish_date)}</div>
                   </li>
                 ))
               )}
             </ul>
-          </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold text-purple-800">Latest Clinician Notes</div>
-            {loading ? (
-              <div className="mt-3"><SkeletonText lines={3} /></div>
-            ) : clinical?.notes ? (
-              <div className="mt-3 rounded-md bg-purple-50 p-3 text-sm text-slate-700">
-                <div className="font-medium text-purple-800">
-                  {clinical.clinician_name || 'Clinician'} · {fmtDate(clinical.updated_at)}
-                </div>
-                <p className="mt-1">{clinical.notes}</p>
-              </div>
-            ) : (
-              <div className="mt-3 text-sm text-slate-500">No clinician notes yet.</div>
-            )}
           </div>
         </section>
       </div>
