@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
 import { api } from '../../lib/api'
 import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
-import SurveyPrompt from './SurveyPrompt'
 
 const SESSION_LABEL = {
   mmse: 'MMSE Assessment',
@@ -124,7 +123,6 @@ function HomeProgress() {
     <>
       <PageHeader title={patient ? `Good Day, ${patient.first_name}!` : 'Welcome'} />
       <div className="flex-1 overflow-y-auto p-6">
-        <SurveyPrompt />
         {stats?.assignedAssessments ? (
           <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
             {stats.assignedAssessments} new assessment{stats.assignedAssessments > 1 ? 's' : ''}

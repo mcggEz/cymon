@@ -14,7 +14,6 @@ import Announcement from './pages/client/Announcement'
 import Appointments from './pages/client/Appointments'
 import Waivers from './pages/client/Waivers'
 import WaiverDetail from './pages/client/WaiverDetail'
-import Survey from './pages/client/Survey'
 import RequireAuth from './auth/RequireAuth'
 
 import PsychologistLayout from './pages/staff/PsychologistLayout'
@@ -73,7 +72,6 @@ function App() {
           <Route path="appointments" element={<Appointments />} />
           <Route path="waivers" element={<Waivers />} />
           <Route path="waivers/:id" element={<WaiverDetail />} />
-          <Route path="survey" element={<Survey />} />
         </Route>
 
         <Route

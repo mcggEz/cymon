@@ -16,7 +16,6 @@ const NAV = [
   { to: '/client/announcements', label: 'Announcements', d: 'M8 4h9a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2zM9 9h7M9 13h7M9 17h4' },
   { to: '/client/appointments', label: 'Appointments', d: 'M4 7h16v13H4zM4 11h16M8 3v4M16 3v4' },
   { to: '/client/waivers', label: 'Consents & Waivers', d: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4' },
-  { to: '/client/survey', label: 'Experience Survey', d: 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11' },
 ]
 
 function Sidebar({ open, collapsed, onNavigate, name, patientId }) {
