@@ -294,7 +294,10 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
         ? { starts_at: lastAppt.starts_at, session_type: lastAppt.session_type, practitioner: lastPractitionerName, location: lastAppt.location }
         : null,
       announcements: (announcements || [])
-        .filter((a) => !(a.audience || []).includes('public'))
+        .filter((a) => {
+          const aud = a.audience || [];
+          return aud.length === 0 || aud.includes('client') || aud.includes('public');
+        })
         .slice(0, 3),
     });
   } catch (err) {
@@ -408,7 +411,10 @@ router.get('/announcements', requireAuth, requireClient, async (req, res, next) 
       .is('deleted_at', null)
       .order('publish_date', { ascending: false });
     if (error) return next(error);
-    const all = (data || []).filter((a) => !(a.audience || []).includes('public'));
+    const all = (data || []).filter((a) => {
+      const aud = a.audience || [];
+      return aud.length === 0 || aud.includes('client') || aud.includes('public');
+    });
     res.json({
       messages: all.filter((a) => a.type !== 'event'),
       events: all.filter((a) => a.type === 'event'),
