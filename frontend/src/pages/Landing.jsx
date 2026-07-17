@@ -262,38 +262,26 @@ function Landing() {
           style={{ background: 'radial-gradient(circle, rgba(221,128,188,0.10) 0%, rgba(23,20,31,0) 70%)' }}
         />
 
-        <div className="relative z-20 mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="max-w-2xl">
-            <h1 className="font-sans text-4xl font-normal leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
-              Clarity of Mind, <span className="text-violet">Journey to Wellness.</span>
-            </h1>
+        <div className="relative z-20 mx-auto w-full max-w-4xl py-12 text-center flex flex-col items-center">
+          <h1 className="font-sans text-4xl font-normal leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
+            Clarity of Mind, <span className="text-violet">Journey to Wellness.</span>
+          </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-              One secure platform for assessments, intervention plans, and family updates — so
-              clinicians spend less time on paperwork and more time with the children in their care.
-            </p>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
+            One secure platform for assessments, intervention plans, and family updates — so
+            clinicians spend less time on paperwork and more time with the children in their care.
+          </p>
 
-            <div className="mt-9 flex flex-col gap-3 min-[360px]:flex-row min-[360px]:items-center">
-              <button
-                onClick={() => navigate('/login')}
-                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-violet px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet/25 transition-colors hover:bg-violet-dark"
-              >
-                Access the portal
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
-                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="hidden lg:block">
-            <div className="flex items-center justify-center h-full">
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-10 backdrop-blur-md shadow-2xl text-center max-w-sm">
-                <img src="/logo-cymon.png" alt="ClearMind Logo" className="h-28 w-28 mx-auto rounded-2xl object-cover shadow-lg border border-white/20" />
-                <div className="mt-6 text-3xl font-extrabold text-white tracking-wider">ClearMind</div>
-                <div className="mt-2 text-[10px] font-mono tracking-[0.2em] text-slate-300 uppercase">// PSYCHOLOGICAL SERVICES</div>
-                <p className="mt-4 text-xs text-slate-400 leading-relaxed font-light">Your journey to emotional well-being starts here. Empowering minds and restoring wellness.</p>
-              </div>
-            </div>
+          <div className="mt-9 flex flex-col gap-3 min-[360px]:flex-row min-[360px]:items-center justify-center">
+            <button
+              onClick={() => navigate('/login')}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-violet px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet/25 transition-colors hover:bg-violet-dark"
+            >
+              Access the portal
+              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
       </section>
@@ -628,26 +616,25 @@ function Landing() {
       </section>
 
       {/* Appointments Section */}
-      <section id="appointments" className="bg-[#17141f] text-white py-20 lg:py-32 px-6 lg:px-16 relative overflow-hidden">
-        {/* Background gradient rings */}
-        <div className="absolute left-0 bottom-0 w-96 h-96 rounded-full bg-gradient-to-tr from-violet/25 to-pink/10 blur-3xl pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto text-center space-y-6 relative z-10">
-          <span className="text-violet font-mono tracking-widest text-xs uppercase block">// Book a Session</span>
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Schedule Your Consultation</h2>
-          <p className="text-slate-300 max-w-xl mx-auto leading-relaxed text-sm md:text-base font-light">
-            We provide structured therapy sessions, parent consultations, and developmental assessments. Log in to your client account or contact the administration to reserve an appointment.
-          </p>
-          <div className="pt-4">
-            <button
-              onClick={() => navigate('/login')}
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-violet px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-violet/25 hover:bg-violet-dark transition-colors"
+      <section id="appointments" className="bg-[#24212a] text-white py-16 px-6 lg:px-16 relative overflow-hidden border-t border-b border-white/5">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2">
+            <span className="text-violet font-mono tracking-widest text-xs uppercase block">// START YOUR JOURNEY</span>
+            <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
+              Ready to begin your journey to wellness?
+            </h2>
+          </div>
+          <div>
+            <a
+              href="https://www.clearmindpsychservices.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[#24212a] hover:bg-violet hover:text-white transition-all shadow-lg shrink-0 cursor-pointer group"
             >
-              Book an Appointment
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg className="w-5 h-5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
-            </button>
+            </a>
           </div>
         </div>
       </section>

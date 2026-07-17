@@ -43,7 +43,7 @@ router.get('/approvals', async (req, res, next) => {
     try {
       const { data: dbPerms, error: dbErr } = await supabase
         .from('assessment_permissions')
-        .select('id, patient_id, status, created_at, requested_by_id, patients(first_name, last_name), profiles!requested_by_id(display_name)')
+        .select('id, patient_id, template_id, status, created_at, requested_by_id, patients(first_name, last_name), profiles!requested_by_id(display_name), assessment_templates(title, document_type_code)')
         .eq('clinic_id', req.profile.clinic_id)
         .eq('status', 'pending');
       if (dbErr) throw dbErr;
@@ -54,22 +54,27 @@ router.get('/approvals', async (req, res, next) => {
         const pending = Array.from(localPermissionsStore.values()).filter(p => p.clinic_id === req.profile.clinic_id && p.status === 'pending');
         const patientIds = pending.map(p => p.patient_id);
         const requesterIds = pending.map(p => p.requested_by_id);
+        const templateIds = pending.map(p => p.template_id);
         
-        const [{ data: pts }, { data: reqs }] = await Promise.all([
+        const [{ data: pts }, { data: reqs }, { data: tpls }] = await Promise.all([
           supabase.from('patients').select('id, first_name, last_name').in('id', patientIds),
-          supabase.from('profiles').select('id, display_name').in('id', requesterIds)
+          supabase.from('profiles').select('id, display_name').in('id', requesterIds),
+          supabase.from('assessment_templates').select('id, title, document_type_code').in('id', templateIds)
         ]);
         
         perms = pending.map(p => {
           const patient = (pts || []).find(pt => pt.id === p.patient_id);
           const requester = (reqs || []).find(r => r.id === p.requested_by_id);
+          const template = (tpls || []).find(t => t.id === p.template_id);
           return {
             id: p.id,
             patient_id: p.patient_id,
+            template_id: p.template_id,
             status: p.status,
             created_at: p.created_at || new Date().toISOString(),
             patients: patient ? { first_name: patient.first_name, last_name: patient.last_name } : null,
-            profiles: requester ? { display_name: requester.display_name } : null
+            profiles: requester ? { display_name: requester.display_name } : null,
+            assessment_templates: template ? { title: template.title, document_type_code: template.document_type_code } : null
           };
         });
       } else {
@@ -88,7 +93,9 @@ router.get('/approvals', async (req, res, next) => {
       permissions: perms.map((p) => ({
         id: p.id,
         patient_id: p.patient_id,
+        template_id: p.template_id,
         student_name: p.patients ? `${p.patients.first_name} ${p.patients.last_name}` : 'Student',
+        assessment_name: p.assessment_templates ? `${p.assessment_templates.title} (${p.assessment_templates.document_type_code})` : 'Standard Test',
         requested_by: p.profiles?.display_name || 'Psychometrician',
         date: p.created_at,
       })),
@@ -101,8 +108,8 @@ router.get('/approvals', async (req, res, next) => {
 router.post('/assessments/grant-permission', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { patient_id, status } = req.body || {}; // status: 'granted' or 'none' (for decline/revoke)
-    if (!patient_id || !status) return res.status(400).json({ error: 'patient_id and status are required' });
+    const { patient_id, template_id, status } = req.body || {}; // status: 'granted' or 'none' (for decline/revoke)
+    if (!patient_id || !template_id || !status) return res.status(400).json({ error: 'patient_id, template_id and status are required' });
     if (!['granted', 'none'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
     try {
@@ -114,6 +121,7 @@ router.post('/assessments/grant-permission', async (req, res, next) => {
           updated_at: new Date().toISOString(),
         })
         .eq('patient_id', patient_id)
+        .eq('template_id', template_id)
         .eq('clinic_id', req.profile.clinic_id)
         .select('*')
         .single();
@@ -122,14 +130,15 @@ router.post('/assessments/grant-permission', async (req, res, next) => {
     } catch (dbErr) {
       if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
         console.warn('[db] falling back to local memory store to grant permission');
-        const existing = localPermissionsStore.get(patient_id);
+        const key = `${patient_id}_${template_id}`;
+        const existing = localPermissionsStore.get(key);
         if (existing) {
           const updated = {
             ...existing,
             status,
             granted_by_id: status === 'granted' ? req.profile.id : null,
           };
-          localPermissionsStore.set(patient_id, updated);
+          localPermissionsStore.set(key, updated);
           res.json({ permission: updated });
         } else {
           res.status(404).json({ error: 'Permission request not found in store' });

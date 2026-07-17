@@ -9,292 +9,54 @@ import MmseForm from './MmseForm'
 import AdaptiveFunctioningForm from './AdaptiveFunctioningForm'
 import CaregiverChecklistForm from './CaregiverChecklistForm'
 import AnswerAssessment from './AnswerAssessment'
-
-const LOGS = [
-  {
-    id: 'dal',
-    code: 'CMPS:SE-FO-07',
-    title: 'Daily Activity Logging',
-    desc:
-      "Log daily session procedures, required prompts, and behavioral responses for the student's active session.",
-    duration: 'Post-Session',
-  },
-]
-
-function LaunchModal({ test, patients, employees, onClose, onAssign, assigning }) {
-  const [patient, setPatient] = useState('')
-  const [employee, setEmployee] = useState('')
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
-        <h2 className="text-xl font-bold text-purple-800">Assign Assessment</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Assigning: <span className="font-medium text-purple-700">{test.title}</span>
-        </p>
-
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">SELECT PATIENT</div>
-        <select
-          className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
-          value={patient}
-          onChange={(e) => setPatient(e.target.value)}
-        >
-          <option value="">-- Choose Patient --</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">ASSIGN TO CLINIC PROFESSIONAL</div>
-        <select
-          className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
-          value={employee}
-          onChange={(e) => setEmployee(e.target.value)}
-        >
-          <option value="">-- Choose Professional --</option>
-          {employees.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.name}
-            </option>
-          ))}
-        </select>
-
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onAssign(patient, employee)}
-            disabled={!patient || !employee || assigning}
-            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
-          >
-            {assigning ? 'Assigning…' : 'Assign'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function RequestModal({ test, onClose, onSubmit, submitting }) {
-  const [note, setNote] = useState('')
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
-        <h2 className="text-xl font-bold text-purple-800">Request Activation</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Ask Admin to make <span className="font-medium text-purple-700">{test.title}</span> available.
-        </p>
-
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">NOTE (OPTIONAL)</div>
-        <textarea
-          className="mt-1 w-full rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
-          rows={3}
-          placeholder="e.g. Needed for an incoming patient's evaluation."
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSubmit(note)}
-            disabled={submitting}
-            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
-          >
-            {submitting ? 'Sending…' : 'Send Request'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ToolCard({ t, onLaunch, onRequest, requested, half = false }) {
-  const available = t.active !== false
-  return (
-    <article className={`rounded-2xl border border-purple-200 bg-white p-5 shadow-sm ${half ? '' : 'sm:max-w-md'}`}>
-      <div className="flex items-start justify-end">
-        <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-purple-700">
-          {t.code}
-        </span>
-      </div>
-      <div className="mt-3 text-base font-semibold text-purple-800">{t.title}</div>
-      <p className="mt-1 text-sm text-slate-600">{t.desc}</p>
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs text-slate-500">{t.duration}</span>
-        {available ? (
-          <button
-            onClick={onLaunch}
-            className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-800"
-          >
-            Launch Tool
-          </button>
-        ) : requested ? (
-          <span className="rounded-md bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
-            Requested
-          </span>
-        ) : (
-          <button
-            onClick={onRequest}
-            className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
-          >
-            Request Activation
-          </button>
-        )}
-      </div>
-    </article>
-  )
-}
-
-function RosterAssignModal({ patient, tests, employees, onClose, onAssign, assigning }) {
-  const [testId, setTestId] = useState('')
-  const [employeeId, setEmployeeId] = useState('')
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
-        <h2 className="text-xl font-bold text-purple-800">Assign Assessment</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Assigning for student: <span className="font-medium text-purple-700">{patient.name}</span>
-        </p>
-
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">SELECT ASSESSMENT TOOL</div>
-        <select
-          className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
-          value={testId}
-          onChange={(e) => setTestId(e.target.value)}
-        >
-          <option value="">-- Choose Assessment --</option>
-          {tests.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.title} ({t.code})
-            </option>
-          ))}
-        </select>
-
-        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">ASSIGN TO CLINIC PROFESSIONAL</div>
-        <select
-          className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
-          value={employeeId}
-          onChange={(e) => setEmployeeId(e.target.value)}
-        >
-          <option value="">-- Choose Professional --</option>
-          {employees.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.name}
-            </option>
-          ))}
-        </select>
-
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onAssign(patient.id, testId, employeeId)}
-            disabled={!testId || !employeeId || assigning}
-            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
-          >
-            {assigning ? 'Assigning…' : 'Assign'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+import { useAuth } from '../../../auth/useAuth'
 
 function Assessments() {
-  const [activeTab, setActiveTab] = useState('roster')
-  const [active, setActive] = useState(null)
-  const [requestTarget, setRequestTarget] = useState(null)
-  const [rosterPatientTarget, setRosterPatientTarget] = useState(null)
+  const { profile } = useAuth()
   const [tests, setTests] = useState([])
   const [patients, setPatients] = useState([])
+  const [permissions, setPermissions] = useState([])
   const [employees, setEmployees] = useState([])
-  const [requested, setRequested] = useState([])
+  const [selectedPatientId, setSelectedPatientId] = useState('')
   const [loading, setLoading] = useState(true)
-  const [assigning, setAssigning] = useState(false)
-  const [requesting, setRequesting] = useState(false)
   const [requestingPermId, setRequestingPermId] = useState(null)
   const [query, setQuery] = useState('')
   const [openForm, setOpenForm] = useState(null)
-  const [answerOpen, setAnswerOpen] = useState(false)
+  const [answerPrefill, setAnswerPrefill] = useState(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    let on = true
+  const load = () =>
     api.psychometrician
       .assessments()
       .then((d) => {
-        if (!on) return
-        setTests(d.tests)
-        setPatients(d.patients)
+        setTests(d.tests || [])
+        setPatients(d.patients || [])
+        setPermissions(d.permissions || [])
         setEmployees(d.employees || [])
+        if (d.patients && d.patients.length > 0 && !selectedPatientId) {
+          setSelectedPatientId(d.patients[0].id)
+        }
       })
       .catch(() => {})
-      .finally(() => {
-        if (on) setLoading(false)
-      })
+
+  useEffect(() => {
+    let on = true
+    setLoading(true)
+    load().finally(() => {
+      if (on) setLoading(false)
+    })
     return () => {
       on = false
     }
   }, [])
 
-  const assign = async (patientId, employeeId) => {
-    setAssigning(true)
+  const handleRequestPermission = async (patientId, templateId) => {
+    const key = `${patientId}_${templateId}`
+    setRequestingPermId(key)
     try {
-      await api.psychometrician.assignAssessment({
-        patient_id: patientId,
-        template_id: active.id,
-        assigned_to_id: employeeId,
-      })
-      toast.success(`Assigned “${active.title}” successfully.`)
-      setActive(null)
-    } catch (e) {
-      toast.error(`Could not assign: ${e.message}`)
-    } finally {
-      setAssigning(false)
-    }
-  }
-
-  const rosterAssign = async (patientId, testId, employeeId) => {
-    setAssigning(true)
-    try {
-      const selectedTest = tests.find((t) => t.id === testId)
-      await api.psychometrician.assignAssessment({
-        patient_id: patientId,
-        template_id: testId,
-        assigned_to_id: employeeId,
-      })
-      toast.success(`Assigned “${selectedTest?.title}” successfully.`)
-      setRosterPatientTarget(null)
-    } catch (e) {
-      toast.error(`Could not assign: ${e.message}`)
-    } finally {
-      setAssigning(false)
-    }
-  }
-
-  const handleRequestPermission = async (patientId) => {
-    setRequestingPermId(patientId)
-    try {
-      await api.psychometrician.requestAssessmentPermission({ patient_id: patientId })
+      await api.psychometrician.requestAssessmentPermission({ patient_id: patientId, template_id: templateId })
       toast.success('Assessment permission requested from Psychologist.')
-      const d = await api.psychometrician.assessments()
-      setPatients(d.patients)
+      await load()
     } catch (e) {
       toast.error(`Could not request permission: ${e.message}`)
     } finally {
@@ -302,299 +64,292 @@ function Assessments() {
     }
   }
 
-  const submitRequest = async (note) => {
-    setRequesting(true)
+  const handleGrantPermission = async (patientId, templateId, status) => {
+    const key = `${patientId}_${templateId}`
+    setRequestingPermId(key)
     try {
-      await api.psychometrician.requestAssessment({ template_id: requestTarget.id, note })
-      setRequested((ids) => [...ids, requestTarget.id])
-      toast.success(`Requested “${requestTarget.title}” — Admin will review and activate it.`)
-      setRequestTarget(null)
+      await api.psychologist.grantAssessmentPermission({ patient_id: patientId, template_id: templateId, status })
+      toast.success(status === 'granted' ? 'Assessment permission granted.' : 'Assessment permission revoked.')
+      await load()
     } catch (e) {
-      toast.error(`Could not request: ${e.message}`)
+      toast.error(`Could not update permission: ${e.message}`)
     } finally {
-      setRequesting(false)
+      setRequestingPermId(null)
     }
   }
 
+  const getPermissionStatus = (patientId, templateId) => {
+    const found = permissions.find((p) => p.patient_id === patientId && p.template_id === templateId)
+    return found ? found.status : 'none'
+  }
+
+  const selectedPatient = patients.find((p) => p.id === selectedPatientId)
+  const activeTests = tests.filter((t) => t.active !== false)
+
   const q = query.trim().toLowerCase()
-  const matchesTest = (t) => !q || [t.title, t.code, t.desc].some((v) => (v || '').toLowerCase().includes(q))
-  const matchesPatient = (p) => !q || [p.name, p.patient_id].some((v) => (v || '').toLowerCase().includes(q))
+  const filteredPatients = patients.filter((p) =>
+    !q || [p.name, p.patient_id].some((v) => (v || '').toLowerCase().includes(q))
+  )
 
-  const visibleTests = tests.filter(matchesTest)
-  const availableTests = visibleTests.filter((t) => t.active !== false)
-  const unavailableTests = visibleTests.filter((t) => t.active === false)
-  const visibleLogs = LOGS.filter(matchesTest)
+  const getManualFormName = (code) => {
+    if (code?.includes('FO-04')) return 'mmse'
+    if (code?.includes('FO-05')) return 'adaptive'
+    if (code?.includes('FO-06')) return 'caregiver'
+    return null
+  }
 
-  const visiblePatients = patients.filter(matchesPatient)
-  const authorizedPatients = patients.filter((p) => p.permission === 'granted')
+  const isPsychologist = profile?.role === 'psychologist'
 
   return (
     <>
       <StaffHeader title="Assessment Services" />
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          {/* Tab Navigation */}
-          <div className="flex border-b border-purple-200">
-            <button
-              onClick={() => {
-                setActiveTab('roster')
-                setQuery('')
-              }}
-              className={`px-4 py-2 text-sm font-semibold border-b-2 transition-all ${
-                activeTab === 'roster'
-                  ? 'border-purple-700 text-purple-700'
-                  : 'border-transparent text-slate-500 hover:text-purple-700'
-              }`}
-            >
-              Student Roster & Permissions
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('tools')
-                setQuery('')
-              }}
-              className={`px-4 py-2 text-sm font-semibold border-b-2 transition-all ${
-                activeTab === 'tools'
-                  ? 'border-purple-700 text-purple-700'
-                  : 'border-transparent text-slate-500 hover:text-purple-700'
-              }`}
-            >
-              Assessment Tools Library
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto">
+          
+          {/* Main Layout Grid */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            
+            {/* Left Panel: Students List */}
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[650px] flex flex-col">
+              <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
+                Student Directory
+              </h2>
+              <div className="mt-3 shrink-0">
+                <SearchBar
+                  value={query}
+                  onChange={setQuery}
+                  placeholder="Search students…"
+                  className="w-full"
+                />
+              </div>
+              <div className="flex-1 overflow-y-auto mt-4 pr-1 space-y-2">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-16 w-full animate-pulse bg-slate-100 rounded-xl" />
+                  ))
+                ) : filteredPatients.length === 0 ? (
+                  <div className="text-center text-xs text-slate-400 py-12">
+                    No students found.
+                  </div>
+                ) : (
+                  filteredPatients.map((p) => {
+                    const isActive = selectedPatientId === p.id
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedPatientId(p.id)}
+                        className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
+                          isActive ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-800' : 'text-slate-800'}`}>
+                            {p.name}
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">
+                            ID: {p.patient_id || 'N/A'}
+                          </div>
+                        </div>
+                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600">Select &rarr;</span>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {activeTab === 'tools' && (
-              <>
-                <button
-                  onClick={() => setOpenForm('mmse')}
-                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-                >
-                  Open MMSE Form
-                </button>
-                <button
-                  onClick={() => setOpenForm('adaptive')}
-                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-                >
-                  Open Adaptive Functioning Form
-                </button>
-                <button
-                  onClick={() => setOpenForm('caregiver')}
-                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-                >
-                  Open Caregiver Checklist
-                </button>
-                <button
-                  onClick={() => setAnswerOpen(true)}
-                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-                >
-                  Administer Assessment
-                </button>
-              </>
-            )}
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              placeholder={activeTab === 'roster' ? "Search students…" : "Search assessments…"}
-              className="w-72"
-            />
+            {/* Right Panel: Student Assessment Authorizations */}
+            <div className="lg:col-span-2 space-y-6">
+              {selectedPatient ? (
+                <>
+                  {/* Selected Student header */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                    <h1 className="text-xl font-bold text-purple-800">
+                      {selectedPatient.name}
+                    </h1>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {isPsychologist 
+                        ? "Review and directly grant or revoke assessment tool permissions for this student."
+                        : "Request psychologist permission for specific assessment tools. Once authorization is granted, you can administer the standardized form."
+                      }
+                    </p>
+                  </div>
+
+                  {/* Assessment Tool Permissions Table */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-3">
+                      Standardized Assessment Templates
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100">
+                            <th className="py-2.5 px-3 text-left">Assessment Tool</th>
+                            <th className="py-2.5 px-3 text-left">Code / Duration</th>
+                            <th className="py-2.5 px-3 text-left">Status</th>
+                            <th className="py-2.5 px-3 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-purple-50/40">
+                          {activeTests.length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="py-8 text-center text-xs text-slate-400">
+                                No assessment templates configured.
+                              </td>
+                            </tr>
+                          ) : (
+                            activeTests.map((t) => {
+                              const status = getPermissionStatus(selectedPatientId, t.id)
+                              const reqKey = `${selectedPatientId}_${t.id}`
+                              const isBusy = requestingPermId === reqKey
+                              const manualFormKey = getManualFormName(t.code)
+
+                              return (
+                                <tr key={t.id} className="hover:bg-purple-50/20 transition-colors">
+                                  <td className="py-3.5 px-3">
+                                    <div className="font-semibold text-slate-800">{t.title}</div>
+                                    <div className="text-[11px] text-slate-400">{t.desc}</div>
+                                  </td>
+                                  <td className="py-3.5 px-3 text-xs text-slate-600">
+                                    <div>{t.code}</div>
+                                    <div className="text-[10px] text-purple-600 font-medium">{t.duration || 'Standard'}</div>
+                                  </td>
+                                  <td className="py-3.5 px-3">
+                                    {status === 'granted' ? (
+                                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                        Authorized
+                                      </span>
+                                    ) : status === 'pending' ? (
+                                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 animate-pulse">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                        Pending Review
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                                        Not Requested
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3.5 px-3 text-right">
+                                    <div className="flex flex-col gap-1.5 items-end">
+                                      {status === 'granted' ? (
+                                        <div className="flex items-center gap-2">
+                                          {manualFormKey && (
+                                            <button
+                                              onClick={() => setOpenForm(manualFormKey)}
+                                              className="rounded-md border border-purple-200 hover:bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700 cursor-pointer"
+                                            >
+                                              Manual Sheet
+                                            </button>
+                                          )}
+                                          <button
+                                            onClick={() => setAnswerPrefill({ patientId: selectedPatientId, templateId: t.id })}
+                                            className="rounded-md bg-purple-700 hover:bg-purple-800 px-3 py-1 text-xs font-semibold text-white cursor-pointer shadow-sm"
+                                          >
+                                            Answer Assessment
+                                          </button>
+                                          {isPsychologist && (
+                                            <button
+                                              onClick={() => handleGrantPermission(selectedPatientId, t.id, 'none')}
+                                              disabled={isBusy}
+                                              className="rounded-md border border-red-300 hover:bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 cursor-pointer"
+                                            >
+                                              Revoke
+                                            </button>
+                                          )}
+                                        </div>
+                                      ) : status === 'pending' ? (
+                                        isPsychologist ? (
+                                          <div className="flex items-center gap-2">
+                                            <button
+                                              onClick={() => handleGrantPermission(selectedPatientId, t.id, 'granted')}
+                                              disabled={isBusy}
+                                              className="rounded-md bg-emerald-600 hover:bg-emerald-700 px-3 py-1 text-xs font-semibold text-white cursor-pointer shadow-sm"
+                                            >
+                                              Approve
+                                            </button>
+                                            <button
+                                              onClick={() => handleGrantPermission(selectedPatientId, t.id, 'none')}
+                                              disabled={isBusy}
+                                              className="rounded-md border border-slate-300 hover:bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 cursor-pointer"
+                                            >
+                                              Deny
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <button
+                                            disabled
+                                            className="rounded-md bg-slate-50 border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-400 cursor-not-allowed"
+                                          >
+                                            Awaiting Approval
+                                          </button>
+                                        )
+                                      ) : (
+                                        isPsychologist ? (
+                                          <button
+                                            onClick={() => handleGrantPermission(selectedPatientId, t.id, 'granted')}
+                                            disabled={isBusy}
+                                            className="rounded-md bg-purple-700 hover:bg-purple-800 px-3.5 py-1.5 text-xs font-semibold text-white cursor-pointer shadow-sm"
+                                          >
+                                            Grant Permission
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={() => handleRequestPermission(selectedPatientId, t.id)}
+                                            disabled={isBusy}
+                                            className="rounded-md border border-purple-300 hover:bg-purple-50 px-3.5 py-1.5 text-xs font-semibold text-purple-700 cursor-pointer"
+                                          >
+                                            Request Permission
+                                          </button>
+                                        )
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center">
+                  <svg className="h-16 w-16 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
+                  </svg>
+                  <p className="mt-4 text-sm font-medium">Please select a student from the directory to configure assessment authorizations</p>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
-
-        {activeTab === 'roster' ? (
-          <section className="mt-5 rounded-2xl border border-purple-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-purple-800 mb-4">Student Assessment Authorization</h2>
-            <p className="text-sm text-slate-600 mb-6">
-              Below is the list of patients under your clinic. You must obtain permission from a Clinical Psychologist before administering any standardized tests to a student.
-            </p>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-purple-100 text-xs font-semibold uppercase tracking-wider text-purple-700 bg-purple-50/50">
-                    <th className="py-3 px-4">Student Name</th>
-                    <th className="py-3 px-4">Student ID</th>
-                    <th className="py-3 px-4">Permission Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    Array.from({ length: 3 }).map((_, idx) => (
-                      <tr key={idx} className="border-b border-slate-100">
-                        <td className="py-4 px-4"><Skeleton className="h-4 w-32" /></td>
-                        <td className="py-4 px-4"><Skeleton className="h-4 w-24" /></td>
-                        <td className="py-4 px-4"><Skeleton className="h-6 w-28 rounded-full" /></td>
-                        <td className="py-4 px-4 text-right"><Skeleton className="h-8 w-24 ml-auto rounded-md" /></td>
-                      </tr>
-                    ))
-                  ) : visiblePatients.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center text-sm text-slate-500">
-                        {q ? 'No students match your search.' : 'No students found.'}
-                      </td>
-                    </tr>
-                  ) : (
-                    visiblePatients.map((p) => (
-                      <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-slate-950">{p.name}</td>
-                        <td className="py-4 px-4 text-sm text-slate-600 font-mono">{p.patient_id || '—'}</td>
-                        <td className="py-4 px-4 text-sm">
-                          {p.permission === 'granted' ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                              Authorized
-                            </span>
-                          ) : p.permission === 'pending' ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                              Pending Approval
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800">
-                              <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                              No Permission
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          {p.permission === 'granted' ? (
-                            <button
-                              onClick={() => setRosterPatientTarget(p)}
-                              className="rounded-md bg-purple-700 hover:bg-purple-800 px-3.5 py-1.5 text-xs font-semibold text-white transition-all shadow-sm"
-                            >
-                              Assign Assessment
-                            </button>
-                          ) : p.permission === 'pending' ? (
-                            <button
-                              disabled
-                              className="rounded-md bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 cursor-not-allowed opacity-80"
-                            >
-                              Waiting for Approval
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleRequestPermission(p.id)}
-                              disabled={requestingPermId === p.id}
-                              className="rounded-md border border-purple-300 hover:bg-purple-50 px-3.5 py-1.5 text-xs font-semibold text-purple-700 transition-all"
-                            >
-                              {requestingPermId === p.id ? 'Requesting…' : 'Request Permission'}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold text-purple-800">
-              <span className="underline decoration-2 underline-offset-4">Tool Library</span>
-            </h1>
-            <div className="mt-3 rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
-              Select a tool from the library to assign and launch for an authorized patient.
-            </div>
-
-            <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
-              STANDARDIZED TESTS
-            </div>
-            <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {loading
-                ? Array.from({ length: 2 }).map((_, i) => (
-                    <Skeleton key={i} className="h-40 w-full" rounded="rounded-2xl" />
-                  ))
-                : availableTests.map((t) => (
-                    <ToolCard key={t.id} t={t} half onLaunch={() => setActive(t)} />
-                  ))}
-              {!loading && q && availableTests.length === 0 ? (
-                <p className="text-sm text-slate-500">No available tests match your search.</p>
-              ) : null}
-            </div>
-
-            {!loading && unavailableTests.length > 0 ? (
-              <>
-                <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
-                  NOT YET AVAILABLE
-                </div>
-                <div className="mt-1 text-sm text-slate-500">
-                  Ask Admin to activate these before you can assign them.
-                </div>
-                <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {unavailableTests.map((t) => (
-                    <ToolCard
-                      key={t.id}
-                      t={t}
-                      half
-                      requested={requested.includes(t.id)}
-                      onRequest={() => setRequestTarget(t)}
-                    />
-                  ))}
-                </div>
-              </>
-            ) : null}
-
-            {visibleLogs.length > 0 ? (
-              <>
-                <div className="mt-6 text-xs font-semibold tracking-wider text-purple-700">
-                  SESSION LOGS & OBSERVATIONS
-                </div>
-                <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {visibleLogs.map((t) => (
-                    <ToolCard key={t.id} t={t} half onLaunch={() => navigate('/psychometrician/activity')} />
-                  ))}
-                </div>
-              </>
-            ) : null}
-          </>
-        )}
-
-        {active ? (
-          <LaunchModal
-            test={active}
-            patients={authorizedPatients}
-            employees={employees}
-            onClose={() => setActive(null)}
-            onAssign={assign}
-            assigning={assigning}
-          />
-        ) : null}
-
-        {rosterPatientTarget ? (
-          <RosterAssignModal
-            patient={rosterPatientTarget}
-            tests={tests.filter((t) => t.active !== false)}
-            employees={employees}
-            onClose={() => setRosterPatientTarget(null)}
-            onAssign={rosterAssign}
-            assigning={assigning}
-          />
-        ) : null}
-
-        {requestTarget ? (
-          <RequestModal
-            test={requestTarget}
-            onClose={() => setRequestTarget(null)}
-            onSubmit={submitRequest}
-            submitting={requesting}
-          />
-        ) : null}
-
-        {openForm === 'mmse' ? <MmseForm onClose={() => setOpenForm(null)} /> : null}
-        {openForm === 'adaptive' ? (
-          <AdaptiveFunctioningForm onClose={() => setOpenForm(null)} />
-        ) : null}
-        {openForm === 'caregiver' ? (
-          <CaregiverChecklistForm onClose={() => setOpenForm(null)} />
-        ) : null}
-        {answerOpen ? (
-          <AnswerAssessment tests={tests} patients={authorizedPatients} onClose={() => setAnswerOpen(false)} />
-        ) : null}
       </div>
+
+      {/* Manual Printable / Sheet Forms Overlay */}
+      {openForm === 'mmse' ? <MmseForm onClose={() => setOpenForm(null)} /> : null}
+      {openForm === 'adaptive' ? <AdaptiveFunctioningForm onClose={() => setOpenForm(null)} /> : null}
+      {openForm === 'caregiver' ? <CaregiverChecklistForm onClose={() => setOpenForm(null)} /> : null}
+
+      {/* Interactive Answer Assessment Overlay */}
+      {answerPrefill && (
+        <AnswerAssessment
+          tests={tests}
+          patients={patients}
+          prefilledPatientId={answerPrefill.patientId}
+          prefilledTemplateId={answerPrefill.templateId}
+          onClose={() => {
+            setAnswerPrefill(null)
+            load()
+          }}
+        />
+      )}
     </>
   )
 }
 
-export default Assessments;
+export default Assessments

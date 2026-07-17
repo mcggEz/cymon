@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
 
-const selectClass = 'mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm'
+const selectClass = 'mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm disabled:bg-purple-50 disabled:text-slate-500'
 const labelClass = 'text-[11px] font-semibold uppercase tracking-wide text-purple-800'
 
 function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
@@ -57,9 +57,9 @@ function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
 // The psychometrician administers a template-driven assessment for a chosen
 // patient, records Yes/No responses + remarks, and submits the scored result
 // (which then surfaces in Data Review). Opened as an overlay from Assessments.
-function AnswerAssessment({ tests, patients, onClose }) {
-  const [patientId, setPatientId] = useState('')
-  const [templateId, setTemplateId] = useState('')
+function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTemplateId, onClose }) {
+  const [patientId, setPatientId] = useState(prefilledPatientId || '')
+  const [templateId, setTemplateId] = useState(prefilledTemplateId || '')
   const [template, setTemplate] = useState(null)
   const [loadingTpl, setLoadingTpl] = useState(false)
   const [answers, setAnswers] = useState({})
@@ -87,6 +87,12 @@ function AnswerAssessment({ tests, patients, onClose }) {
       setLoadingTpl(false)
     }
   }
+
+  useEffect(() => {
+    if (prefilledTemplateId) {
+      pickTemplate(prefilledTemplateId)
+    }
+  }, [prefilledTemplateId])
 
   const structure = useMemo(() => template?.structure || [], [template])
   const { total, max } = useMemo(() => {
@@ -171,7 +177,7 @@ function AnswerAssessment({ tests, patients, onClose }) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>Patient</label>
-                <select className={selectClass} value={patientId} onChange={(e) => setPatientId(e.target.value)}>
+                <select className={selectClass} value={patientId} onChange={(e) => setPatientId(e.target.value)} disabled={!!prefilledPatientId}>
                   <option value="">Select patient</option>
                   {patients.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -182,7 +188,7 @@ function AnswerAssessment({ tests, patients, onClose }) {
               </div>
               <div>
                 <label className={labelClass}>Assessment</label>
-                <select className={selectClass} value={templateId} onChange={(e) => pickTemplate(e.target.value)}>
+                <select className={selectClass} value={templateId} onChange={(e) => pickTemplate(e.target.value)} disabled={!!prefilledTemplateId}>
                   <option value="">Select assessment</option>
                   {activeTests.map((t) => (
                     <option key={t.id} value={t.id}>

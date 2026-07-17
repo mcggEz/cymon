@@ -132,7 +132,7 @@ router.get('/assessments', async (req, res, next) => {
     try {
       const { data, error } = await supabase
         .from('assessment_permissions')
-        .select('id, patient_id, status, requested_by_id, granted_by_id')
+        .select('id, patient_id, template_id, status, requested_by_id, granted_by_id')
         .eq('clinic_id', req.profile.clinic_id);
       if (error) throw error;
       permissions = data || [];
@@ -159,15 +159,17 @@ router.get('/assessments', async (req, res, next) => {
         id: s.id,
         label: `${name(s.patients)} (${new Date(s.starts_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} Session)`,
       })),
-      patients: (roster || []).map((p) => {
-        const perm = permissions.find((ap) => ap.patient_id === p.id) || { status: 'none' };
-        return {
-          id: p.id,
-          patient_id: p.patient_id,
-          name: patientName(p),
-          permission: perm.status,
-        };
-      }),
+      patients: (roster || []).map((p) => ({
+        id: p.id,
+        patient_id: p.patient_id,
+        name: patientName(p),
+      })),
+      permissions: permissions.map((ap) => ({
+        id: ap.id,
+        patient_id: ap.patient_id,
+        template_id: ap.template_id,
+        status: ap.status,
+      })),
       employees: (employees || []).map((e) => ({
         id: e.id,
         name: `${e.display_name} (${e.role.replace('_', ' ').toUpperCase()})`,
@@ -181,8 +183,8 @@ router.get('/assessments', async (req, res, next) => {
 router.post('/assessments/request-permission', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { patient_id } = req.body || {};
-    if (!patient_id) return res.status(400).json({ error: 'Patient ID is required' });
+    const { patient_id, template_id } = req.body || {};
+    if (!patient_id || !template_id) return res.status(400).json({ error: 'Patient ID and Template ID are required' });
 
     const { data: pt } = await supabase
       .from('patients')
@@ -199,10 +201,11 @@ router.post('/assessments/request-permission', async (req, res, next) => {
         .upsert({
           clinic_id: req.profile.clinic_id,
           patient_id,
+          template_id,
           requested_by_id: req.profile.id,
           status: 'pending',
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'clinic_id,patient_id' })
+        }, { onConflict: 'clinic_id,patient_id,template_id' })
         .select('*')
         .single();
       if (error) throw error;
@@ -210,14 +213,16 @@ router.post('/assessments/request-permission', async (req, res, next) => {
     } catch (dbErr) {
       if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
         console.warn('[db] falling back to local memory store to request permission');
+        const key = `${patient_id}_${template_id}`;
         const mockPerm = {
           id: require('crypto').randomUUID(),
           clinic_id: req.profile.clinic_id,
           patient_id,
+          template_id,
           requested_by_id: req.profile.id,
           status: 'pending',
         };
-        localPermissionsStore.set(patient_id, mockPerm);
+        localPermissionsStore.set(key, mockPerm);
         res.json({ permission: mockPerm });
       } else {
         throw dbErr;

@@ -67,10 +67,11 @@ function Approvals() {
     }
   }
 
-  const handlePermission = async (patientId, status) => {
-    setBusyId(patientId)
+  const handlePermission = async (patientId, templateId, status) => {
+    const key = `${patientId}_${templateId}`
+    setBusyId(key)
     try {
-      await api.psychologist.grantAssessmentPermission({ patient_id: patientId, status })
+      await api.psychologist.grantAssessmentPermission({ patient_id: patientId, template_id: templateId, status })
       toast.success(status === 'granted' ? 'Assessment permission granted.' : 'Assessment permission denied.')
       await load()
     } catch (e) {
@@ -185,7 +186,9 @@ function Approvals() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-base font-bold text-purple-800">{p.student_name}</div>
-                  <div className="text-sm text-slate-600">Request for Assessment Authorization</div>
+                  <div className="text-sm text-slate-600">
+                    Request for Assessment Authorization: <span className="font-semibold text-purple-700">{p.assessment_name}</span>
+                  </div>
                   <div className="mt-1 text-xs text-slate-500">
                     Requested by: <span className="font-semibold text-purple-700">{p.requested_by}</span>
                   </div>
@@ -195,16 +198,16 @@ function Approvals() {
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                   type="button"
-                  onClick={() => handlePermission(p.patient_id, 'granted')}
-                  disabled={busyId === p.patient_id}
+                  onClick={() => handlePermission(p.patient_id, p.template_id, 'granted')}
+                  disabled={busyId === `${p.patient_id}_${p.template_id}`}
                   className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60 cursor-pointer animate-pulse-subtle"
                 >
-                  {busyId === p.patient_id ? 'Working…' : 'Allow Assessment'}
+                  {busyId === `${p.patient_id}_${p.template_id}` ? 'Working…' : 'Allow Assessment'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => handlePermission(p.patient_id, 'none')}
-                  disabled={busyId === p.patient_id}
+                  onClick={() => handlePermission(p.patient_id, p.template_id, 'none')}
+                  disabled={busyId === `${p.patient_id}_${p.template_id}`}
                   className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 cursor-pointer"
                 >
                   Deny

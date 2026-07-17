@@ -91,6 +91,7 @@ function App() {
           <Route path="profile" element={<StaffProfile />} />
           <Route path="progress" element={<Progress />} />
           <Route path="reports" element={<DraftingReports />} />
+          <Route path="assessments" element={<PmAssessments />} />
         </Route>
 
         <Route
