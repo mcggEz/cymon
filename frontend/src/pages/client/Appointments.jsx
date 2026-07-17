@@ -43,7 +43,6 @@ function Appointments() {
     return { y: n.getFullYear(), m: n.getMonth() }
   })
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate())
-  const [practFilter, setPractFilter] = useState('all')
 
   const focusMonth = (list) => {
     if (!list.length) return
@@ -70,10 +69,7 @@ function Appointments() {
     }
   }, [])
 
-  const practitioners = [...new Set(appointments.map((a) => a.practitioner).filter(Boolean))].sort()
-  const filtered = appointments.filter((a) => {
-    return practFilter === 'all' || a.practitioner === practFilter
-  })
+  const filtered = appointments
 
   const monthStart = new Date(cursor.y, cursor.m, 1)
   const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate()
@@ -151,21 +147,6 @@ function Appointments() {
                 value={`${cursor.y}-${String(cursor.m + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`}
                 className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
               />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Practitioner:</label>
-              <select
-                value={practFilter}
-                onChange={(e) => setPractFilter(e.target.value)}
-                className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
-              >
-                <option value="all">All Practitioners</option>
-                {practitioners.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
         </div>
