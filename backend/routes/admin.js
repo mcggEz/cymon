@@ -970,6 +970,17 @@ router.post('/patients', async (req, res, next) => {
         : Promise.resolve(),
     ]);
 
+    try {
+      await sendMail({
+        to: parent_email,
+        subject: `ClearMind Psychological Services - Parent Account Details (${patient.patient_id})`,
+        text: `Hello,\n\nAn account has been created for you as the parent/caregiver of ${child.first_name} ${child.last_name} at ClearMind Psychological Services.\n\nYou can log in to the caregiver portal to track session logs, view reports, and manage appointments.\n\nYour login credentials:\n- Email: ${parent_email}\n- Temporary Password: ${parent_password}\n- Student ID: ${patient.patient_id}\n\nPlease change your password after logging in.\n\nBest regards,\nClearMind Clinical Team`,
+        html: `<p>Hello,</p><p>An account has been created for you as the parent/caregiver of <strong>${child.first_name} ${child.last_name}</strong> at ClearMind Psychological Services.</p><p>You can log in to the caregiver portal to track session logs, view reports, and manage appointments.</p><p>Your login credentials:</p><ul><li><strong>Email:</strong> ${parent_email}</li><li><strong>Temporary Password:</strong> ${parent_password}</li><li><strong>Student ID:</strong> ${patient.patient_id}</li></ul><p>Please change your password after logging in.</p><br/><p>Best regards,<br/>ClearMind Clinical Team</p>`
+      });
+    } catch (mailErr) {
+      console.error('[email] Failed to send welcome email to registered parent:', mailErr.message);
+    }
+
     res.status(201).json({ patient });
   } catch (err) {
     next(err);
