@@ -221,7 +221,7 @@ router.get('/progress', async (req, res, next) => {
     const [{ data, error }, patients] = await Promise.all([
       supabase
         .from('assessment_reports')
-        .select('id, title, period, trend, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .select('id, patient_id, title, period, trend, status, patients(first_name, middle_name, last_name, clinic_id)')
         .eq('report_type', 'progress_summary')
         .order('created_at', { ascending: false }),
       clinicPatients(req.profile.clinic_id),
@@ -230,6 +230,7 @@ router.get('/progress', async (req, res, next) => {
     res.json({
       items: inClinic(data, req.profile.clinic_id).map((r) => ({
         id: r.id,
+        patient_id: r.patient_id,
         name: name(r.patients),
         period: r.period,
         trend: r.trend,
@@ -242,11 +243,11 @@ router.get('/progress', async (req, res, next) => {
   }
 });
 
-// generate a progress-summary report (FO-08) draft
+// generate or update a progress-summary report (FO-08) draft
 router.post('/progress', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { patient_id, title, period, trend } = req.body || {};
+    const { id, patient_id, title, period, trend, status } = req.body || {};
     if (!patient_id || !title) return res.status(400).json({ error: 'Patient and title are required' });
     const { data: pt } = await supabase
       .from('patients')
@@ -256,21 +257,41 @@ router.post('/progress', async (req, res, next) => {
     if (!pt || pt.clinic_id !== req.profile.clinic_id) {
       return res.status(404).json({ error: 'Patient not found' });
     }
-    const { data, error } = await supabase
-      .from('assessment_reports')
-      .insert({
-        patient_id,
-        report_type: 'progress_summary',
-        title,
-        period: period || null,
-        trend: trend || null,
-        status: 'draft',
-        prepared_by_id: req.profile.id,
-      })
-      .select('id')
-      .single();
-    if (error) return res.status(400).json({ error: error.message });
-    res.status(201).json({ report: data });
+    
+    let result;
+    if (id) {
+      const { data, error } = await supabase
+        .from('assessment_reports')
+        .update({
+          patient_id,
+          title,
+          period: period || null,
+          trend: trend || null,
+          status: status || 'draft',
+        })
+        .eq('id', id)
+        .select('id')
+        .single();
+      if (error) return res.status(400).json({ error: error.message });
+      result = data;
+    } else {
+      const { data, error } = await supabase
+        .from('assessment_reports')
+        .insert({
+          patient_id,
+          report_type: 'progress_summary',
+          title,
+          period: period || null,
+          trend: trend || null,
+          status: 'draft',
+          prepared_by_id: req.profile.id,
+        })
+        .select('id')
+        .single();
+      if (error) return res.status(400).json({ error: error.message });
+      result = data;
+    }
+    res.status(201).json({ report: result });
   } catch (err) {
     next(err);
   }

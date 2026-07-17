@@ -51,7 +51,7 @@ function AssessmentCard({ a }) {
               {a.code}
             </span>
             <span className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
-              Administered by clinician
+              Assigned by {a.assigned_by || 'Clinic Staff'}
             </span>
           </div>
         </div>
@@ -71,7 +71,9 @@ function RecordCard({ r }) {
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-base font-semibold text-purple-800">{r.title}</div>
-          <div className="text-xs text-slate-500">Submitted: {fmtDate(r.submitted_at)}</div>
+          <div className="text-xs text-slate-500">
+            Administered by: {r.by || 'Clinician'} · Submitted: {fmtDate(r.submitted_at)}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">

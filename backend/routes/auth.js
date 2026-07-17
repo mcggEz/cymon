@@ -195,5 +195,26 @@ router.post('/reset-password', async (req, res, next) => {
   }
 });
 
+router.get('/public-announcements', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data, error } = await supabase
+      .from('announcements')
+      .select('id, title, body, type, publish_date, image_url, audience')
+      .is('deleted_at', null)
+      .order('publish_date', { ascending: false });
+    if (error) return next(error);
+
+    const publicAnnouncements = (data || []).filter((a) => {
+      const audience = a.audience || [];
+      return audience.includes('public');
+    });
+
+    res.json({ announcements: publicAnnouncements });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
 

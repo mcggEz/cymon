@@ -1,21 +1,44 @@
 import { useEffect, useState } from 'react'
 import StaffHeader from '../StaffHeader'
 import { api } from '../../../lib/api'
-import Skeleton from '../../../components/ui/Skeleton'
-import Pagination from '../../../components/ui/Pagination'
+import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import DailyActivityReportForm from './DailyActivityReportForm'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
 
-const PAGE_SIZE = 20
-
 const STATUS_META = {
-  draft: { label: 'Draft', tone: 'bg-amber-100 text-amber-700', action: 'Edit Log' },
-  pending: { label: 'Pending', tone: 'bg-sky-100 text-sky-700', action: 'View Details' },
-  approved: { label: 'Approved', tone: 'bg-emerald-100 text-emerald-700', action: 'View Details' },
+  draft: { label: 'Draft', tone: 'bg-amber-100 text-amber-700 hover:bg-amber-200/60' },
+  pending: { label: 'Pending', tone: 'bg-sky-100 text-sky-700 hover:bg-sky-200/60' },
+  approved: { label: 'Approved', tone: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200/60' },
 }
-const dayOf = (d) => (d ? String(new Date(d).getDate()) : '')
-const monOf = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : '')
+
+const formatLocalDate = (d) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getMonday = (d) => {
+  const date = new Date(d)
+  const day = date.getDay()
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1)
+  const mon = new Date(date.setDate(diff))
+  mon.setHours(0, 0, 0, 0)
+  return mon
+}
+
+const getWeekDays = (start) => {
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    days.push(d)
+  }
+  return days
+}
+
+const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
 function ActivityLog() {
   const [active, setActive] = useState(null)
@@ -23,16 +46,20 @@ function ActivityLog() {
   const [rows, setRows] = useState([])
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
+  const [selectedPatientId, setSelectedPatientId] = useState('')
   const [query, setQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
+  const [formPrefill, setFormPrefill] = useState({ patientId: '', dateStr: '' })
 
   const load = () =>
     api.psychometrician
       .activityLogs()
       .then((d) => {
-        setRows(d.rows)
+        setRows(d.rows || [])
         setPatients(d.patients || [])
+        if (d.patients && d.patients.length > 0 && !selectedPatientId) {
+          setSelectedPatientId(d.patients[0].id)
+        }
       })
       .catch(() => {})
 
@@ -46,202 +73,272 @@ function ActivityLog() {
     }
   }, [])
 
-  const q = query.trim().toLowerCase()
-  const filtered = rows.filter((r) => {
-    const mq = !q || r.name.toLowerCase().includes(q) || (r.detail || '').toLowerCase().includes(q)
-    const ms = statusFilter === 'all' || r.status === statusFilter
-    return mq && ms
-  })
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const prevWeek = () => {
+    const nextStart = new Date(weekStart)
+    nextStart.setDate(weekStart.getDate() - 7)
+    setWeekStart(nextStart)
+  }
+
+  const nextWeek = () => {
+    const nextStart = new Date(weekStart)
+    nextStart.setDate(weekStart.getDate() + 7)
+    setWeekStart(nextStart)
+  }
+
+  const selectedPatient = patients.find((p) => p.id === selectedPatientId)
+  const patientLogs = rows.filter((r) => r.patient_id === selectedPatientId)
+  const weekDays = getWeekDays(weekStart)
+
+  const filteredPatients = patients.filter((p) =>
+    p.name.toLowerCase().includes(query.trim().toLowerCase())
+  )
+
+  const handleOpenAddForm = (dateStr) => {
+    setFormPrefill({ patientId: selectedPatientId, dateStr })
+    setOpenForm('dailyActivity')
+  }
+
+  const handleOpenEdit = (log) => {
+    setActive(log)
+    setOpenForm('viewActivity')
+  }
 
   return (
     <>
-      <StaffHeader title="Daily Activity Report" />
+      <StaffHeader title="Daily Activity Report Logs" />
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="flex gap-6">
-        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-purple-800">Session Log History</h1>
-              <p className="text-sm text-slate-500">
-                Review past sessions, edit drafts, or track approval statuses.
-              </p>
-            </div>
-            <button
-              onClick={() => setOpenForm('dailyActivity')}
-              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-            >
-              Open Daily Activity Report Form
-            </button>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <SearchBar
-              value={query}
-              onChange={(v) => {
-                setQuery(v)
-                setPage(1)
-              }}
-              placeholder="Search by student name or activity…"
-              className="flex-1"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value)
-                setPage(1)
-              }}
-              className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm focus:border-purple-500 focus:outline-none"
-            >
-              <option value="all">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-            </select>
-          </div>
-
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="text-xs font-semibold tracking-wider text-purple-700">
-                  <th className="py-3 px-4 text-left">Student</th>
-                  <th className="py-3 px-4 text-left">Date</th>
-                  <th className="py-3 px-4 text-left">Activity</th>
-                  <th className="py-3 px-4 text-left">Status</th>
-                  <th className="py-3 px-4 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-purple-100">
-                {loading
-                  ? Array.from({ length: 4 }).map((_, i) => (
-                      <tr key={i}>
-                        <td colSpan={5} className="py-3 px-4">
-                          <Skeleton className="h-8 w-full" />
-                        </td>
-                      </tr>
-                    ))
-                  : null}
-                {!loading && filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
-                      {q ? 'No session logs match your search.' : 'No session logs yet.'}
-                    </td>
-                  </tr>
-                ) : null}
-                {!loading &&
-                  pageRows.map((r) => {
-                    const meta = STATUS_META[r.status] || STATUS_META.draft
-                    const isSelected = active && active.id === r.id
-                    const formattedDate = r.date
-                      ? new Date(r.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : '—'
-                    return (
-                      <tr
-                        key={r.id}
-                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
-                      >
-                        <td className="py-3 px-4 font-medium text-purple-800">{r.name}</td>
-                        <td className="py-3 px-4 text-slate-600">{formattedDate}</td>
-                        <td className="py-3 px-4 text-slate-600">
-                          {r.session_number ? `Session ${r.session_number} · ` : ''}{r.detail}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${meta.tone}`}>
-                            {meta.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <RowAction
-                            variant="view"
-                            onClick={() => setActive({ ...r, day: dayOf(r.date), mon: monOf(r.date) })}
-                          >
-                            View
-                          </RowAction>
-                        </td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </table>
-          </div>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
-        </section>
-
-        {active ? (
-          <>
-            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
-            <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl lg:static lg:z-auto lg:block lg:w-96 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:rounded-2xl lg:border lg:border-purple-200 lg:shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="text-lg font-semibold text-purple-800">Daily Activity Report</div>
-                <button onClick={() => setActive(null)} aria-label="Close" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-                </button>
+        <div className="max-w-7xl mx-auto">
+          {/* Main Layout Grid */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            
+            {/* Left Panel: Students List */}
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[650px] flex flex-col">
+              <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
+                Enrolled Students
+              </h2>
+              <div className="mt-3 shrink-0">
+                <SearchBar
+                  value={query}
+                  onChange={setQuery}
+                  placeholder="Search students…"
+                  className="w-full"
+                />
               </div>
-
-              <div className="text-xs text-slate-500">CMPS:SE-FO-07</div>
-
-              <div className="mt-4 text-xs font-semibold tracking-wider text-purple-700">
-                ACTIVITY DETAILS
-              </div>
-              <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Student Name</div>
-                  <div className="font-semibold text-purple-800">{active.name}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Date of Activity</div>
-                  <div className="font-semibold text-purple-800">
-                    {active.mon} {active.day}
-                    {active.session_number ? ` · Session ${active.session_number}` : ''}
+              <div className="flex-1 overflow-y-auto mt-4 pr-1 space-y-2">
+                {loading ? (
+                  <SkeletonText lines={10} />
+                ) : filteredPatients.length === 0 ? (
+                  <div className="text-center text-xs text-slate-400 py-12">
+                    No students found.
                   </div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Activity Title</div>
-                  <div className="font-semibold text-purple-800">{active.detail || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Target Domain</div>
-                  <div className="font-semibold text-purple-800">{active.target_domain || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
-                  <div className="font-semibold capitalize text-purple-800">{active.status}</div>
-                </div>
+                ) : (
+                  filteredPatients.map((p) => {
+                    const isActive = selectedPatientId === p.id
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedPatientId(p.id)}
+                        className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
+                          isActive ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-800' : 'text-slate-800'}`}>
+                            {p.name}
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">
+                            ID: {p.patient_id || 'N/A'}
+                          </div>
+                        </div>
+                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600">Select &rarr;</span>
+                      </button>
+                    )
+                  })
+                )}
               </div>
+            </div>
 
-              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">OBJECTIVES</div>
-              <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{active.objectives || '—'}</p>
+            {/* Right Panel: Daily Logs Dashboard */}
+            <div className="lg:col-span-2 space-y-6">
+              {selectedPatient ? (
+                <>
+                  {/* Selected Student header */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h1 className="text-xl font-bold text-purple-800">
+                          {selectedPatient.name}
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Track daily therapy log submissions, review draft entries, and submit behavioral indicators.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleOpenAddForm(formatLocalDate(new Date()))}
+                        className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 cursor-pointer"
+                      >
+                        + New Activity Report
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">ACTIVITY PROCEDURE</div>
-              <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{active.procedure || '—'}</p>
+                  {/* Weekly tracker calendar */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-purple-100 pb-3">
+                      <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider">
+                        Weekly Tracker Calendar
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={prevWeek}
+                          className="rounded-md border border-purple-200 p-1 text-slate-500 hover:bg-slate-100 cursor-pointer"
+                          aria-label="Previous Week"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <span className="text-xs font-semibold text-purple-800">
+                          Week of {weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        <button
+                          onClick={nextWeek}
+                          className="rounded-md border border-purple-200 p-1 text-slate-500 hover:bg-slate-100 cursor-pointer"
+                          aria-label="Next Week"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
 
-              <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">
-                BEHAVIORAL OBSERVATIONS
-              </div>
-              <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{active.observations || '—'}</p>
+                    <div className="grid grid-cols-7 gap-2 mt-4 text-center">
+                      {weekDays.map((d, index) => {
+                        const dateStr = formatLocalDate(d)
+                        const matchingLog = patientLogs.find((r) => r.date === dateStr)
+                        const label = WEEKDAYS[index]
+                        const isToday = formatLocalDate(new Date()) === dateStr
 
-              <div className="mt-6 border-t border-slate-100 pt-4 flex gap-2">
-                <button
-                  onClick={() => setOpenForm('viewActivity')}
-                  className="w-full rounded-md border border-purple-300 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
-                >
-                  View as Form
-                </button>
-              </div>
-            </aside>
-          </>
-        ) : null}
+                        return (
+                          <div
+                            key={dateStr}
+                            className={`rounded-xl border p-2 flex flex-col justify-between items-center min-h-[90px] ${
+                              isToday ? 'border-purple-400 bg-purple-50/20' : 'border-slate-100 bg-slate-50/30'
+                            }`}
+                          >
+                            <span className="text-[10px] font-bold text-slate-400">{label}</span>
+                            <span className="text-sm font-bold text-slate-800">{d.getDate()}</span>
+                            
+                            {matchingLog ? (
+                              <button
+                                onClick={() => handleOpenEdit(matchingLog)}
+                                className={`mt-2 w-full text-[10px] font-semibold py-1 rounded cursor-pointer text-center ${
+                                  STATUS_META[matchingLog.status]?.tone || 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                {STATUS_META[matchingLog.status]?.label || 'View'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleOpenAddForm(dateStr)}
+                                className="mt-2 w-full text-[10px] font-medium py-1 rounded border border-dashed border-purple-300 text-purple-700 hover:bg-purple-50 cursor-pointer text-center"
+                              >
+                                + Log
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Student History Logs list */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-3">
+                      Session History Log
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100">
+                            <th className="py-2.5 px-3 text-left">Session</th>
+                            <th className="py-2.5 px-3 text-left">Date</th>
+                            <th className="py-2.5 px-3 text-left">Activity / Domain</th>
+                            <th className="py-2.5 px-3 text-left">Status</th>
+                            <th className="py-2.5 px-3 text-left">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-purple-50/40">
+                          {patientLogs.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="py-8 text-center text-xs text-slate-400">
+                                No session logs recorded for this student yet.
+                              </td>
+                            </tr>
+                          ) : (
+                            patientLogs.map((log) => {
+                              const meta = STATUS_META[log.status] || STATUS_META.draft
+                              return (
+                                <tr key={log.id} className="hover:bg-purple-50/20 transition-colors">
+                                  <td className="py-3 px-3 text-slate-800 font-semibold">
+                                    {log.session_number ? `#${log.session_number}` : '—'}
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-600 text-xs">
+                                    {new Date(log.date).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                    })}
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <div className="font-semibold text-purple-800 text-xs">{log.detail}</div>
+                                    <div className="text-[10px] text-slate-400 mt-0.5">{log.target_domain || '—'}</div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.tone.split(' ')[0]} ${meta.tone.split(' ')[1]}`}>
+                                      {meta.label}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <RowAction variant="view" onClick={() => handleOpenEdit(log)}>
+                                      Open
+                                    </RowAction>
+                                  </td>
+                                </tr>
+                              )
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border-2 border-dashed border-purple-200 p-12 text-center text-slate-500 bg-white">
+                  Please select a student from the list to view or log daily activity reports.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {openForm === 'dailyActivity' ? (
-          <DailyActivityReportForm patients={patients} onSaved={load} onClose={() => setOpenForm(null)} />
+          <DailyActivityReportForm
+            patients={patients}
+            initialPatientId={formPrefill.patientId}
+            initialDate={formPrefill.dateStr}
+            onSaved={load}
+            onClose={() => setOpenForm(null)}
+          />
         ) : null}
         {openForm === 'viewActivity' ? (
-          <DailyActivityReportForm patients={patients} detail={active} readOnly={true} onClose={() => setOpenForm(null)} />
+          <DailyActivityReportForm
+            patients={patients}
+            detail={active}
+            readOnly={true}
+            onClose={() => setOpenForm(null)}
+          />
         ) : null}
       </div>
     </>

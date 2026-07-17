@@ -484,7 +484,7 @@ function Employees() {
 
             {form.roles.includes('admin') ? (
               <Section title="Administrator Details" hint="Stored on the admin profile">
-                <Input label="Employee ID" tone="purple" value={form.employee_id} onChange={(e) => set('employee_id', e.target.value)} />
+                <Input label="Employee ID (Leave blank to auto-generate)" tone="purple" value={form.employee_id} onChange={(e) => set('employee_id', e.target.value)} />
                 <Input label="Position" tone="purple" value={form.position} onChange={(e) => set('position', e.target.value)} />
               </Section>
             ) : null}

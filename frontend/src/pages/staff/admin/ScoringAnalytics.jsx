@@ -108,7 +108,6 @@ function ScoringAnalytics() {
                 <tr className="text-xs font-semibold tracking-wider text-purple-700">
                   <th className="py-3 px-4 text-left">Student Name</th>
                   <th className="py-3 px-4 text-left">Behavioral Score</th>
-                  <th className="py-3 px-4 text-left">GARS-3 Index</th>
                   <th className="py-3 px-4 text-left">CAFAT Score</th>
                   <th className="py-3 px-4 text-left">Status</th>
                   <th className="py-3 px-4 text-left">Action</th>
@@ -118,7 +117,7 @@ function ScoringAnalytics() {
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <tr key={`s${i}`}>
-                        <td colSpan={6} className="py-3 px-4">
+                        <td colSpan={5} className="py-3 px-4">
                           <Skeleton className="h-11 w-full" />
                         </td>
                       </tr>
@@ -126,7 +125,7 @@ function ScoringAnalytics() {
                   : null}
                 {!loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-6 px-4 text-center text-sm text-slate-500">
+                    <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
                       No students match your search.
                     </td>
                   </tr>
@@ -141,7 +140,6 @@ function ScoringAnalytics() {
                       >
                         <td className="py-3 px-4 font-medium text-slate-800">{r.name}</td>
                         <td className="py-3 px-4">{r.beh ?? '—'}</td>
-                        <td className="py-3 px-4">{r.gars ?? '—'}</td>
                         <td className="py-3 px-4">{r.cafat ?? '—'}</td>
                         <td className="py-3 px-4">
                           <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${STATUS_TONE[r.status] || STATUS_TONE['No Data']}`}>
@@ -181,10 +179,6 @@ function ScoringAnalytics() {
                 <div>
                   <dt className="text-[10px] uppercase tracking-wider text-slate-500">Behavioral Score</dt>
                   <dd className="font-medium text-purple-800">{active.beh ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-wider text-slate-500">GARS-3 Index</dt>
-                  <dd className="font-medium text-purple-800">{active.gars ?? '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-[10px] uppercase tracking-wider text-slate-500">CAFAT Score</dt>

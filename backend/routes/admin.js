@@ -646,16 +646,37 @@ router.post('/employees', async (req, res, next) => {
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
-    if (role === 'admin' && !employee_id) {
-      return res.status(400).json({ error: 'Employee ID is required for administrators' });
-    }
+    let finalEmpId = employee_id;
     if (role === 'admin') {
-      const { data: dupe } = await supabase
-        .from('admin_profiles')
-        .select('profile_id')
-        .eq('employee_id', employee_id)
-        .maybeSingle();
-      if (dupe) return res.status(409).json({ error: 'That Employee ID is already in use' });
+      if (!finalEmpId) {
+        let isDupe = true;
+        let seq = 1;
+        const { count } = await supabase
+          .from('admin_profiles')
+          .select('*', { count: 'exact', head: true });
+        seq = (count || 0) + 1;
+        const year = new Date().getFullYear();
+        while (isDupe) {
+          finalEmpId = `CMPS-EMP-${year}-${String(seq).padStart(3, '0')}`;
+          const { data: dupe } = await supabase
+            .from('admin_profiles')
+            .select('profile_id')
+            .eq('employee_id', finalEmpId)
+            .maybeSingle();
+          if (!dupe) {
+            isDupe = false;
+          } else {
+            seq++;
+          }
+        }
+      } else {
+        const { data: dupe } = await supabase
+          .from('admin_profiles')
+          .select('profile_id')
+          .eq('employee_id', finalEmpId)
+          .maybeSingle();
+        if (dupe) return res.status(409).json({ error: 'That Employee ID is already in use' });
+      }
     }
 
     // creating the auth user fires handle_new_user(), which inserts the profiles row
@@ -690,7 +711,7 @@ router.post('/employees', async (req, res, next) => {
     if (role === 'admin') {
       const { error } = await supabase
         .from('admin_profiles')
-        .insert({ profile_id: userId, employee_id, position: position || null });
+        .insert({ profile_id: userId, employee_id: finalEmpId, position: position || null });
       if (error) return res.status(400).json({ error: error.message });
     } else {
       const { error } = await supabase

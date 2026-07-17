@@ -141,6 +141,7 @@ function DataReview() {
                 <thead>
                   <tr className="text-xs font-semibold tracking-wider text-purple-700">
                     <th className="py-3 px-4 text-left">Student Name</th>
+                    <th className="py-3 px-4 text-left">File Type / Assessment</th>
                     <th className="py-3 px-4 text-left">Submitted By</th>
                     <th className="py-3 px-4 text-left">Date</th>
                     <th className="py-3 px-4 text-left">Clinician Status</th>
@@ -155,6 +156,7 @@ function DataReview() {
                             <Skeleton className="h-4 w-32" />
                             <Skeleton className="mt-1 h-3 w-20" />
                           </td>
+                          <td className="py-3 px-4"><Skeleton className="h-4 w-36" /></td>
                           <td className="py-3 px-4"><Skeleton className="h-4 w-28" /></td>
                           <td className="py-3 px-4"><Skeleton className="h-4 w-20" /></td>
                           <td className="py-3 px-4"><Skeleton className="h-6 w-28" /></td>
@@ -164,7 +166,7 @@ function DataReview() {
                     : null}
                   {!loading && filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
+                      <td colSpan={6} className="py-6 px-4 text-center text-sm text-slate-500">
                         No submissions match your search.
                       </td>
                     </tr>
@@ -183,6 +185,9 @@ function DataReview() {
                               {r.name}
                             </div>
                             <div className="text-xs text-slate-500">ID: {r.sid}</div>
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 font-medium">
+                            {r.assessment_type}
                           </td>
                           <td className="py-3 px-4 text-slate-700">
                             {r.by} <span className="text-xs text-slate-500">({r.rel})</span>

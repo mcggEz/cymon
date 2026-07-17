@@ -243,11 +243,10 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
           .maybeSingle(),
         supabase
           .from('announcements')
-          .select('id, title, body, publish_date')
+          .select('id, title, body, publish_date, audience')
           .eq('clinic_id', patient.clinic_id)
           .is('deleted_at', null)
-          .order('publish_date', { ascending: false })
-          .limit(3),
+          .order('publish_date', { ascending: false }),
         supabase
           .from('assessment_assignments')
           .select('*', { count: 'exact', head: true })
@@ -294,7 +293,9 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
       lastAppointment: lastAppt
         ? { starts_at: lastAppt.starts_at, session_type: lastAppt.session_type, practitioner: lastPractitionerName, location: lastAppt.location }
         : null,
-      announcements: announcements || [],
+      announcements: (announcements || [])
+        .filter((a) => !(a.audience || []).includes('public'))
+        .slice(0, 3),
     });
   } catch (err) {
     next(err);
@@ -402,12 +403,12 @@ router.get('/announcements', requireAuth, requireClient, async (req, res, next) 
     if (!patient) return;
     const { data, error } = await supabase
       .from('announcements')
-      .select('id, title, type, body, publish_date, image_url')
+      .select('id, title, type, body, publish_date, image_url, audience')
       .eq('clinic_id', patient.clinic_id)
       .is('deleted_at', null)
       .order('publish_date', { ascending: false });
     if (error) return next(error);
-    const all = data || [];
+    const all = (data || []).filter((a) => !(a.audience || []).includes('public'));
     res.json({
       messages: all.filter((a) => a.type !== 'event'),
       events: all.filter((a) => a.type === 'event'),
@@ -488,12 +489,12 @@ router.get('/assessments', requireAuth, requireClient, async (req, res, next) =>
     const [{ data: assignments }, { data: submissions }, { data: templates }] = await Promise.all([
       supabase
         .from('assessment_assignments')
-        .select('id, template_id, status, due_date, assigned_by_id')
+        .select('id, template_id, status, due_date, assigned_by_id, profiles!assigned_by_id(display_name)')
         .eq('patient_id', patient.id)
         .in('status', ['assigned', 'in_progress']),
       supabase
         .from('assessment_submissions')
-        .select('id, template_id, status, total_score, max_score, answers, submitted_at, created_at')
+        .select('id, template_id, status, total_score, max_score, answers, submitted_at, created_at, respondent_name')
         .eq('patient_id', patient.id)
         .order('created_at', { ascending: false }),
       supabase.from('assessment_templates').select('id, title, icon, document_type_code, structure, est_minutes'),
@@ -502,7 +503,16 @@ router.get('/assessments', requireAuth, requireClient, async (req, res, next) =>
     res.json({
       assigned: (assignments || []).map((a) => {
         const t = tplById[a.template_id] || {};
-        return { id: a.id, template_id: a.template_id, title: t.title, code: t.document_type_code, icon: t.icon, status: a.status, due_date: a.due_date };
+        return {
+          id: a.id,
+          template_id: a.template_id,
+          title: t.title,
+          code: t.document_type_code,
+          icon: t.icon,
+          status: a.status,
+          due_date: a.due_date,
+          assigned_by: a.profiles?.display_name || 'Clinic Staff',
+        };
       }),
       records: (submissions || []).map((s) => {
         const t = tplById[s.template_id] || {};
@@ -516,6 +526,7 @@ router.get('/assessments', requireAuth, requireClient, async (req, res, next) =>
           max_score: s.max_score,
           submitted_at: s.submitted_at || s.created_at,
           answers: s.answers,
+          by: s.respondent_name || 'Clinician',
         };
       }),
     });

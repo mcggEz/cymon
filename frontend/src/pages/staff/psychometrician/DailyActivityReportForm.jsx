@@ -21,10 +21,11 @@ const blank = {
   session_date: '',
 }
 
-function DailyActivityReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false }) {
+function DailyActivityReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false, initialPatientId = '', initialDate = '' }) {
   const [f, setF] = useState(() => {
     if (detail) {
       return {
+        id: detail.id,
         session_number: detail.session_number || '',
         patient_id: detail.patient_id || '',
         activity_title: detail.detail || '',
@@ -34,7 +35,15 @@ function DailyActivityReportForm({ patients = [], onSaved, onClose, detail = nul
         session_date: detail.date ? new Date(detail.date).toISOString().split('T')[0] : '',
       }
     }
-    return blank
+    return {
+      session_number: '',
+      patient_id: initialPatientId || '',
+      activity_title: '',
+      target_domain: '',
+      objectives: '',
+      procedure: '',
+      session_date: initialDate || new Date().toISOString().split('T')[0],
+    }
   })
   const [rows, setRows] = useState(() => {
     if (detail && detail.observations) {

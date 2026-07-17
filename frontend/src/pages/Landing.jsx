@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../lib/api'
 
 const FeatureItem = ({ n, title, body }) => (
   <div className="border-t border-white/10 pt-5">
@@ -63,7 +64,7 @@ function Landing() {
     }
   }
 
-  const announcements = [
+  const STATIC_ANNOUNCEMENTS = [
     {
       category: 'ACTIVITY LOG',
       date: '19.06.2026',
@@ -95,6 +96,33 @@ function Landing() {
       body: 'Assign caseloads and view collaborative clinical summaries between therapists, ensuring zero overlaps in children\'s individual care paths.',
     },
   ]
+
+  const [announcements, setAnnouncements] = useState([])
+
+  useEffect(() => {
+    let on = true
+    api.publicAnnouncements()
+      .then((d) => {
+        if (!on) return
+        if (d.announcements && d.announcements.length > 0) {
+          const mapped = d.announcements.map((a) => ({
+            category: a.type ? a.type.toUpperCase() : 'PROMOTION',
+            date: a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.') : '',
+            title: a.title,
+            body: a.body,
+          }))
+          setAnnouncements(mapped)
+        } else {
+          setAnnouncements(STATIC_ANNOUNCEMENTS)
+        }
+      })
+      .catch(() => {
+        if (on) setAnnouncements(STATIC_ANNOUNCEMENTS)
+      })
+    return () => {
+      on = false
+    }
+  }, [])
 
   return (
     <main id="top" className="min-h-screen bg-cream text-charcoal overflow-x-hidden selection:bg-violet selection:text-white">

@@ -58,6 +58,7 @@ export const api = {
   forgotPassword: (email) => request('/api/auth/forgot-password', { method: 'POST', body: { email } }),
   resetPassword: (accessToken, password) => request('/api/auth/reset-password', { method: 'POST', body: { accessToken, password } }),
   health: () => request('/api/health'),
+  publicAnnouncements: () => request('/api/auth/public-announcements'),
   // Per-recipient notifications — same endpoint for client and staff.
   notifications: () => request('/api/notifications', { auth: true }),
   markNotificationsRead: (ids) =>

@@ -18,6 +18,7 @@ const priorityMeta = {
 // Audience targeting — who is allowed to see the announcement.
 const AUDIENCES = [
   { value: 'all', label: 'Everyone' },
+  { value: 'public', label: 'Public (Promotions & Events)' },
   { value: 'all_employees', label: 'All Employees' },
   { value: 'all_mhp', label: 'All MHP' },
   { value: 'all_clients', label: 'All Clients / Parents' },

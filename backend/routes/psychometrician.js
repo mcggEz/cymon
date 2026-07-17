@@ -50,28 +50,53 @@ const inClinic = (rows, clinic) => (rows || []).filter((r) => r.patients && r.pa
 router.get('/tasks', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
-      .from('appointments')
-      .select('id, starts_at, session_type, location, status, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex)')
-      .eq('clinic_id', req.profile.clinic_id)
-      .order('starts_at', { ascending: true });
-    if (error) return next(error);
-    res.json({
-      tasks: (data || []).map((a) => {
-        const dt = new Date(a.starts_at);
-        const p = a.patients;
-        const sexInit = p?.sex ? p.sex[0].toUpperCase() : '';
-        return {
-          id: a.id,
-          name: name(p),
-          meta: p ? `ID: ${p.patient_id} · ${ageFromDob(p.date_of_birth)} yrs / ${sexInit}` : '',
-          detail: SESSION_LABEL[a.session_type] || a.session_type,
-          room: a.location || '—',
-          time: dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          status: a.status === 'completed' ? 'COMPLETED' : 'SCHEDULED',
-        };
-      }),
+    const [{ data: appts, error: apptErr }, { data: assigns, error: assignErr }] = await Promise.all([
+      supabase
+        .from('appointments')
+        .select('id, starts_at, session_type, location, status, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex, clinic_id)')
+        .eq('clinic_id', req.profile.clinic_id)
+        .order('starts_at', { ascending: true }),
+      supabase
+        .from('assessment_assignments')
+        .select('id, status, due_date, template_id, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex, clinic_id), assessment_templates(title, document_type_code)')
+        .in('status', ['assigned', 'in_progress'])
+        .order('due_date', { ascending: true }),
+    ]);
+    if (apptErr) return next(apptErr);
+    if (assignErr) return next(assignErr);
+
+    const tasks = (appts || []).map((a) => {
+      const dt = new Date(a.starts_at);
+      const p = a.patients;
+      const sexInit = p?.sex ? p.sex[0].toUpperCase() : '';
+      return {
+        id: a.id,
+        name: name(p),
+        meta: p ? `ID: ${p.patient_id} · ${ageFromDob(p.date_of_birth)} yrs / ${sexInit}` : '',
+        detail: SESSION_LABEL[a.session_type] || a.session_type,
+        room: a.location || '—',
+        time: dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        status: a.status === 'completed' ? 'COMPLETED' : 'SCHEDULED',
+      };
     });
+
+    const clinicAssigns = (assigns || []).filter((g) => g.patients && g.patients.clinic_id === req.profile.clinic_id);
+    const assessments = clinicAssigns.map((g) => {
+      const p = g.patients;
+      const sexInit = p?.sex ? p.sex[0].toUpperCase() : '';
+      const t = g.assessment_templates || {};
+      return {
+        id: g.id,
+        patientName: name(p),
+        meta: p ? `ID: ${p.patient_id} · ${ageFromDob(p.date_of_birth)} yrs / ${sexInit}` : '',
+        title: t.title || 'Assessment',
+        code: t.document_type_code || '',
+        dueDate: g.due_date,
+        status: g.status,
+      };
+    });
+
+    res.json({ tasks, assessments });
   } catch (err) {
     next(err);
   }
@@ -80,7 +105,7 @@ router.get('/tasks', async (req, res, next) => {
 router.get('/assessments', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const [{ data: tests }, { data: sessions }, { data: roster }] = await Promise.all([
+    const [{ data: tests }, { data: sessions }, { data: roster }, { data: employees }] = await Promise.all([
       supabase.from('assessment_templates').select('id, document_type_code, title, est_minutes, icon, is_active, document_types(description)').order('title', { ascending: true }),
       supabase
         .from('appointments')
@@ -94,6 +119,12 @@ router.get('/assessments', async (req, res, next) => {
         .eq('clinic_id', req.profile.clinic_id)
         .is('deleted_at', null)
         .order('first_name', { ascending: true }),
+      supabase
+        .from('profiles')
+        .select('id, display_name, role')
+        .eq('clinic_id', req.profile.clinic_id)
+        .neq('role', 'client')
+        .order('display_name', { ascending: true }),
     ]);
     res.json({
       tests: (tests || []).map((t) => ({
@@ -110,6 +141,10 @@ router.get('/assessments', async (req, res, next) => {
         label: `${name(s.patients)} (${new Date(s.starts_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} Session)`,
       })),
       patients: (roster || []).map((p) => ({ id: p.id, name: patientName(p) })),
+      employees: (employees || []).map((e) => ({
+        id: e.id,
+        name: `${e.display_name} (${e.role.replace('_', ' ').toUpperCase()})`,
+      })),
     });
   } catch (err) {
     next(err);
@@ -121,7 +156,7 @@ router.get('/data-review', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('assessment_submissions')
-      .select('id, status, flagged, submitted_at, created_at, respondent_name, respondent_relationship, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
+      .select('id, status, flagged, submitted_at, created_at, respondent_name, respondent_relationship, patients(first_name, middle_name, last_name, patient_id, clinic_id), assessment_templates(title, document_type_code)')
       .order('created_at', { ascending: false });
     if (error) return next(error);
     const rows = inClinic(data, req.profile.clinic_id);
@@ -140,6 +175,7 @@ router.get('/data-review', async (req, res, next) => {
         date: r.submitted_at || r.created_at,
         status: r.status,
         flag: r.flagged,
+        assessment_type: r.assessment_templates ? `${r.assessment_templates.title} (${r.assessment_templates.document_type_code})` : 'Self-Report Checklist',
       })),
     });
   } catch (err) {
@@ -182,7 +218,7 @@ router.get('/activity-logs', async (req, res, next) => {
     const [{ data, error }, { data: roster }] = await Promise.all([
       supabase
         .from('session_logs')
-        .select('id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .select('id, patient_id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status, patients(first_name, middle_name, last_name, clinic_id)')
         .order('session_date', { ascending: false }),
       supabase
         .from('patients')
@@ -195,6 +231,7 @@ router.get('/activity-logs', async (req, res, next) => {
     res.json({
       rows: inClinic(data, req.profile.clinic_id).map((r) => ({
         id: r.id,
+        patient_id: r.patient_id,
         name: name(r.patients),
         date: r.session_date,
         session_number: r.session_number,
@@ -212,11 +249,11 @@ router.get('/activity-logs', async (req, res, next) => {
   }
 });
 
-// create a session activity log (FO-07)
+// create or update a session activity log (FO-07)
 router.post('/activity-logs', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { patient_id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status } =
+    const { id, patient_id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status } =
       req.body || {};
     if (!patient_id || !activity_title) {
       return res.status(400).json({ error: 'Patient and activity title are required' });
@@ -230,24 +267,48 @@ router.post('/activity-logs', async (req, res, next) => {
       return res.status(404).json({ error: 'Patient not found' });
     }
     const safeStatus = ['draft', 'pending'].includes(status) ? status : 'draft';
-    const { data, error } = await supabase
-      .from('session_logs')
-      .insert({
-        patient_id,
-        author_id: req.profile.id,
-        session_number: session_number ? Number(session_number) : null,
-        session_date: session_date || undefined,
-        activity_title,
-        target_domain: target_domain || null,
-        objectives: objectives || null,
-        procedure: procedure || null,
-        observations: observations || null,
-        status: safeStatus,
-      })
-      .select('id')
-      .single();
-    if (error) return res.status(400).json({ error: error.message });
-    res.status(201).json({ log: data });
+    
+    let result;
+    if (id) {
+      const { data, error } = await supabase
+        .from('session_logs')
+        .update({
+          patient_id,
+          session_number: session_number ? Number(session_number) : null,
+          session_date: session_date || undefined,
+          activity_title,
+          target_domain: target_domain || null,
+          objectives: objectives || null,
+          procedure: procedure || null,
+          observations: observations || null,
+          status: safeStatus,
+        })
+        .eq('id', id)
+        .select('id')
+        .single();
+      if (error) return res.status(400).json({ error: error.message });
+      result = data;
+    } else {
+      const { data, error } = await supabase
+        .from('session_logs')
+        .insert({
+          patient_id,
+          author_id: req.profile.id,
+          session_number: session_number ? Number(session_number) : null,
+          session_date: session_date || undefined,
+          activity_title,
+          target_domain: target_domain || null,
+          objectives: objectives || null,
+          procedure: procedure || null,
+          observations: observations || null,
+          status: safeStatus,
+        })
+        .select('id')
+        .single();
+      if (error) return res.status(400).json({ error: error.message });
+      result = data;
+    }
+    res.status(201).json({ log: result });
   } catch (err) {
     next(err);
   }
@@ -318,7 +379,7 @@ router.post('/assessments/:templateId/submit', async (req, res, next) => {
 router.post('/assignments', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { patient_id, template_id, due_date } = req.body || {};
+    const { patient_id, template_id, due_date, assigned_to_id } = req.body || {};
     if (!patient_id || !template_id) {
       return res.status(400).json({ error: 'patient_id and template_id are required' });
     }
@@ -336,6 +397,7 @@ router.post('/assignments', async (req, res, next) => {
         patient_id,
         template_id,
         assigned_by_id: req.profile.id,
+        assigned_to_id: assigned_to_id || null,
         status: 'assigned',
         due_date: due_date || null,
       })

@@ -27,10 +27,10 @@ const emptyRow = () => ({
   outcome: '',
 })
 
-function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false }) {
+function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false, initialPatientId = '', initialPeriod = '' }) {
   const [rows, setRows] = useState(() => [emptyRow(), emptyRow(), emptyRow()])
-  const [patientId, setPatientId] = useState(() => detail?.patient_id || '')
-  const [period, setPeriod] = useState(() => detail?.period || '')
+  const [patientId, setPatientId] = useState(() => detail?.patient_id || initialPatientId || '')
+  const [period, setPeriod] = useState(() => detail?.period || initialPeriod || '')
   const [trend, setTrend] = useState(() => detail?.trend || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -44,6 +44,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = n
     setSaving(true)
     try {
       await api.psychologist.addProgressReport({
+        id: detail?.id || undefined,
         patient_id: patientId,
         title: 'Monthly Progress Summary',
         period,

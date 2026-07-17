@@ -21,8 +21,9 @@ const LOGS = [
   },
 ]
 
-function LaunchModal({ test, patients, onClose, onAssign, assigning }) {
+function LaunchModal({ test, patients, employees, onClose, onAssign, assigning }) {
   const [patient, setPatient] = useState('')
+  const [employee, setEmployee] = useState('')
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-950/40 p-4">
       <div className="w-full max-w-md rounded-2xl border-2 border-purple-300 bg-white p-6 shadow-xl">
@@ -45,6 +46,20 @@ function LaunchModal({ test, patients, onClose, onAssign, assigning }) {
           ))}
         </select>
 
+        <div className="mt-5 text-xs font-semibold tracking-wider text-purple-700">ASSIGN TO CLINIC PROFESSIONAL</div>
+        <select
+          className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
+          value={employee}
+          onChange={(e) => setEmployee(e.target.value)}
+        >
+          <option value="">-- Choose Professional --</option>
+          {employees.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.name}
+            </option>
+          ))}
+        </select>
+
         <div className="mt-5 flex items-center justify-end gap-2">
           <button
             onClick={onClose}
@@ -53,8 +68,8 @@ function LaunchModal({ test, patients, onClose, onAssign, assigning }) {
             Cancel
           </button>
           <button
-            onClick={() => onAssign(patient)}
-            disabled={!patient || assigning}
+            onClick={() => onAssign(patient, employee)}
+            disabled={!patient || !employee || assigning}
             className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
           >
             {assigning ? 'Assigning…' : 'Assign'}
@@ -146,6 +161,7 @@ function Assessments() {
   const [requestTarget, setRequestTarget] = useState(null)
   const [tests, setTests] = useState([])
   const [patients, setPatients] = useState([])
+  const [employees, setEmployees] = useState([])
   const [requested, setRequested] = useState([])
   const [loading, setLoading] = useState(true)
   const [assigning, setAssigning] = useState(false)
@@ -163,6 +179,7 @@ function Assessments() {
         if (!on) return
         setTests(d.tests)
         setPatients(d.patients)
+        setEmployees(d.employees || [])
       })
       .catch(() => {})
       .finally(() => {
@@ -173,12 +190,16 @@ function Assessments() {
     }
   }, [])
 
-  const assign = async (patientId) => {
+  const assign = async (patientId, employeeId) => {
     setAssigning(true)
     try {
-      await api.psychometrician.assignAssessment({ patient_id: patientId, template_id: active.id })
+      await api.psychometrician.assignAssessment({
+        patient_id: patientId,
+        template_id: active.id,
+        assigned_to_id: employeeId,
+      })
       const pname = patients.find((p) => p.id === patientId)?.name || 'the patient'
-      toast.success(`Assigned “${active.title}” to ${pname} — it now appears in their Assessment Services.`)
+      toast.success(`Assigned “${active.title}” successfully.`)
       setActive(null)
     } catch (e) {
       toast.error(`Could not assign: ${e.message}`)
@@ -307,6 +328,7 @@ function Assessments() {
           <LaunchModal
             test={active}
             patients={patients}
+            employees={employees}
             onClose={() => setActive(null)}
             onAssign={assign}
             assigning={assigning}
