@@ -2,6 +2,7 @@ const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
 const { createNotification } = require('../lib/notify');
 const { patientName } = require('../lib/names');
+const { localPermissionsStore } = require('../lib/permissions');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -37,6 +38,45 @@ router.get('/approvals', async (req, res, next) => {
       .eq('status', 'ready_for_review')
       .order('created_at', { ascending: false });
     if (error) return next(error);
+
+    let perms = [];
+    try {
+      const { data: dbPerms, error: dbErr } = await supabase
+        .from('assessment_permissions')
+        .select('id, patient_id, status, created_at, requested_by_id, patients(first_name, last_name), profiles!requested_by_id(display_name)')
+        .eq('clinic_id', req.profile.clinic_id)
+        .eq('status', 'pending');
+      if (dbErr) throw dbErr;
+      perms = dbPerms || [];
+    } catch (dbErr) {
+      if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
+        console.warn('[db] falling back to local memory store for approvals');
+        const pending = Array.from(localPermissionsStore.values()).filter(p => p.clinic_id === req.profile.clinic_id && p.status === 'pending');
+        const patientIds = pending.map(p => p.patient_id);
+        const requesterIds = pending.map(p => p.requested_by_id);
+        
+        const [{ data: pts }, { data: reqs }] = await Promise.all([
+          supabase.from('patients').select('id, first_name, last_name').in('id', patientIds),
+          supabase.from('profiles').select('id, display_name').in('id', requesterIds)
+        ]);
+        
+        perms = pending.map(p => {
+          const patient = (pts || []).find(pt => pt.id === p.patient_id);
+          const requester = (reqs || []).find(r => r.id === p.requested_by_id);
+          return {
+            id: p.id,
+            patient_id: p.patient_id,
+            status: p.status,
+            created_at: p.created_at || new Date().toISOString(),
+            patients: patient ? { first_name: patient.first_name, last_name: patient.last_name } : null,
+            profiles: requester ? { display_name: requester.display_name } : null
+          };
+        });
+      } else {
+        throw dbErr;
+      }
+    }
+
     res.json({
       reports: inClinic(data, req.profile.clinic_id).map((r) => ({
         id: r.id,
@@ -45,7 +85,59 @@ router.get('/approvals', async (req, res, next) => {
         date: r.created_at,
         priority: PRIORITY_LABEL[r.priority] || 'Medium Priority',
       })),
+      permissions: perms.map((p) => ({
+        id: p.id,
+        patient_id: p.patient_id,
+        student_name: p.patients ? `${p.patients.first_name} ${p.patients.last_name}` : 'Student',
+        requested_by: p.profiles?.display_name || 'Psychometrician',
+        date: p.created_at,
+      })),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/assessments/grant-permission', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, status } = req.body || {}; // status: 'granted' or 'none' (for decline/revoke)
+    if (!patient_id || !status) return res.status(400).json({ error: 'patient_id and status are required' });
+    if (!['granted', 'none'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+    try {
+      const { data, error } = await supabase
+        .from('assessment_permissions')
+        .update({
+          status,
+          granted_by_id: status === 'granted' ? req.profile.id : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('patient_id', patient_id)
+        .eq('clinic_id', req.profile.clinic_id)
+        .select('*')
+        .single();
+      if (error) throw error;
+      res.json({ permission: data });
+    } catch (dbErr) {
+      if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
+        console.warn('[db] falling back to local memory store to grant permission');
+        const existing = localPermissionsStore.get(patient_id);
+        if (existing) {
+          const updated = {
+            ...existing,
+            status,
+            granted_by_id: status === 'granted' ? req.profile.id : null,
+          };
+          localPermissionsStore.set(patient_id, updated);
+          res.json({ permission: updated });
+        } else {
+          res.status(404).json({ error: 'Permission request not found in store' });
+        }
+      } else {
+        throw dbErr;
+      }
+    }
   } catch (err) {
     next(err);
   }

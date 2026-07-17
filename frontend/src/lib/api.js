@@ -138,6 +138,8 @@ export const api = {
       request('/api/psychologist/progress', { method: 'POST', body: payload, auth: true }),
     updateReport: (id, payload) =>
       request(`/api/psychologist/reports/${id}`, { method: 'PATCH', body: payload, auth: true }),
+    grantAssessmentPermission: (payload) =>
+      request('/api/psychologist/assessments/grant-permission', { method: 'POST', body: payload, auth: true }),
   },
   psychometrician: {
     tasks: () => request('/api/psychometrician/tasks', { auth: true }),
@@ -161,5 +163,7 @@ export const api = {
       request(`/api/psychometrician/reports/${id}`, { method: 'PATCH', body: payload, auth: true }),
     patients: () => request('/api/psychometrician/patients', { auth: true }),
     studentJournal: (patientId) => request(`/api/psychometrician/student-journal/${patientId}`, { auth: true }),
+    requestAssessmentPermission: (payload) =>
+      request('/api/psychometrician/assessments/request-permission', { method: 'POST', body: payload, auth: true }),
   },
 }

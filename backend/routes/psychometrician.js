@@ -2,6 +2,7 @@ const express = require('express');
 const { supabase, supabaseConfigured } = require('../lib/supabase');
 const { createNotification } = require('../lib/notify');
 const { patientName } = require('../lib/names');
+const { localPermissionsStore } = require('../lib/permissions');
 const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
@@ -115,7 +116,7 @@ router.get('/assessments', async (req, res, next) => {
         .limit(6),
       supabase
         .from('patients')
-        .select('id, first_name, middle_name, last_name')
+        .select('id, patient_id, first_name, middle_name, last_name')
         .eq('clinic_id', req.profile.clinic_id)
         .is('deleted_at', null)
         .order('first_name', { ascending: true }),
@@ -126,6 +127,24 @@ router.get('/assessments', async (req, res, next) => {
         .neq('role', 'client')
         .order('display_name', { ascending: true }),
     ]);
+
+    let permissions = [];
+    try {
+      const { data, error } = await supabase
+        .from('assessment_permissions')
+        .select('id, patient_id, status, requested_by_id, granted_by_id')
+        .eq('clinic_id', req.profile.clinic_id);
+      if (error) throw error;
+      permissions = data || [];
+    } catch (dbErr) {
+      if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
+        console.warn('[db] falling back to local memory store for assessment permissions');
+        permissions = Array.from(localPermissionsStore.values()).filter(p => p.clinic_id === req.profile.clinic_id);
+      } else {
+        throw dbErr;
+      }
+    }
+
     res.json({
       tests: (tests || []).map((t) => ({
         id: t.id,
@@ -140,12 +159,70 @@ router.get('/assessments', async (req, res, next) => {
         id: s.id,
         label: `${name(s.patients)} (${new Date(s.starts_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} Session)`,
       })),
-      patients: (roster || []).map((p) => ({ id: p.id, name: patientName(p) })),
+      patients: (roster || []).map((p) => {
+        const perm = permissions.find((ap) => ap.patient_id === p.id) || { status: 'none' };
+        return {
+          id: p.id,
+          patient_id: p.patient_id,
+          name: patientName(p),
+          permission: perm.status,
+        };
+      }),
       employees: (employees || []).map((e) => ({
         id: e.id,
         name: `${e.display_name} (${e.role.replace('_', ' ').toUpperCase()})`,
       })),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/assessments/request-permission', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id } = req.body || {};
+    if (!patient_id) return res.status(400).json({ error: 'Patient ID is required' });
+
+    const { data: pt } = await supabase
+      .from('patients')
+      .select('id, clinic_id')
+      .eq('id', patient_id)
+      .maybeSingle();
+    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('assessment_permissions')
+        .upsert({
+          clinic_id: req.profile.clinic_id,
+          patient_id,
+          requested_by_id: req.profile.id,
+          status: 'pending',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'clinic_id,patient_id' })
+        .select('*')
+        .single();
+      if (error) throw error;
+      res.json({ permission: data });
+    } catch (dbErr) {
+      if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
+        console.warn('[db] falling back to local memory store to request permission');
+        const mockPerm = {
+          id: require('crypto').randomUUID(),
+          clinic_id: req.profile.clinic_id,
+          patient_id,
+          requested_by_id: req.profile.id,
+          status: 'pending',
+        };
+        localPermissionsStore.set(patient_id, mockPerm);
+        res.json({ permission: mockPerm });
+      } else {
+        throw dbErr;
+      }
+    }
   } catch (err) {
     next(err);
   }
