@@ -115,14 +115,14 @@ router.post('/assessments/grant-permission', async (req, res, next) => {
     try {
       const { data, error } = await supabase
         .from('assessment_permissions')
-        .update({
+        .upsert({
+          clinic_id: req.profile.clinic_id,
+          patient_id,
+          template_id,
           status,
           granted_by_id: status === 'granted' ? req.profile.id : null,
           updated_at: new Date().toISOString(),
-        })
-        .eq('patient_id', patient_id)
-        .eq('template_id', template_id)
-        .eq('clinic_id', req.profile.clinic_id)
+        }, { onConflict: 'clinic_id,patient_id,template_id' })
         .select('*')
         .single();
       if (error) throw error;
@@ -131,18 +131,19 @@ router.post('/assessments/grant-permission', async (req, res, next) => {
       if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
         console.warn('[db] falling back to local memory store to grant permission');
         const key = `${patient_id}_${template_id}`;
-        const existing = localPermissionsStore.get(key);
-        if (existing) {
-          const updated = {
-            ...existing,
-            status,
-            granted_by_id: status === 'granted' ? req.profile.id : null,
-          };
-          localPermissionsStore.set(key, updated);
-          res.json({ permission: updated });
-        } else {
-          res.status(404).json({ error: 'Permission request not found in store' });
-        }
+        const existing = localPermissionsStore.get(key) || {
+          id: require('crypto').randomUUID(),
+          clinic_id: req.profile.clinic_id,
+          patient_id,
+          template_id,
+        };
+        const updated = {
+          ...existing,
+          status,
+          granted_by_id: status === 'granted' ? req.profile.id : null,
+        };
+        localPermissionsStore.set(key, updated);
+        res.json({ permission: updated });
       } else {
         throw dbErr;
       }
