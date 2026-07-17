@@ -62,26 +62,43 @@ function StudentAdmissionForm({ onSaved, onClose }) {
     disability: '',
     allergies: '',
     iepLevel: '',
+    accountEmail: '',
+    accountPassword: genPassword(),
   })
   const [photo, setPhoto] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [created, setCreated] = useState(null)
-  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }))
+  const set = (k) => (e) => {
+    const val = e.target.value
+    setF((s) => {
+      const next = { ...s, [k]: val }
+      if (k === 'motherEmail' && (!s.accountEmail || s.accountEmail === s.motherEmail)) {
+        next.accountEmail = val
+      } else if (k === 'fatherEmail' && (!s.accountEmail || s.accountEmail === s.fatherEmail)) {
+        next.accountEmail = val
+      }
+      return next
+    })
+  }
 
   const register = async () => {
     setError(null)
-    const email = f.motherEmail.trim() || f.fatherEmail.trim()
+    const email = f.accountEmail.trim()
+    const password = f.accountPassword.trim()
     if (!f.firstName.trim() || !f.lastName.trim() || !f.birthdate || !f.sex) {
       setError('Student first name, last name, birthdate, and sex are required.')
       return
     }
     if (!email) {
-      setError('A parent email is required to create the student’s login.')
+      setError('An account email is required to create the student’s login.')
+      return
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
       return
     }
     setSaving(true)
-    const password = genPassword()
     try {
       const data = await api.admin.createPatient({
         parent_email: email,
@@ -146,7 +163,7 @@ function StudentAdmissionForm({ onSaved, onClose }) {
         Parent login email: <span className="font-mono">{created.email}</span>
       </div>
       <div className="text-slate-700">
-        Temporary password: <span className="font-mono">{created.password}</span>
+        Parent login password: <span className="font-mono">{created.password}</span>
       </div>
       <p className="mt-2 text-xs text-slate-500">Share these with the parent so they can sign in.</p>
       <Button className="mt-3" onClick={onClose}>
@@ -176,6 +193,16 @@ function StudentAdmissionForm({ onSaved, onClose }) {
       multiPage={true}
     >
       <div>
+        <FormHeading numeral="">Account Credentials</FormHeading>
+        <div className="space-y-0.5 mb-6">
+          <BlankField label="Login Email Address">
+            <input type="email" className={blankInput} value={f.accountEmail} onChange={set('accountEmail')} placeholder="Enter email address for parent account login" />
+          </BlankField>
+          <BlankField label="Login Password">
+            <input type="text" className={blankInput} value={f.accountPassword} onChange={set('accountPassword')} placeholder="Enter account password (min 6 characters)" />
+          </BlankField>
+        </div>
+
         <FormHeading numeral="">Personal Information</FormHeading>
         <div className="flex gap-6">
           <div className="flex-1 space-y-0.5">
