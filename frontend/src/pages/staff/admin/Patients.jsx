@@ -253,7 +253,6 @@ function Patients() {
                 <th className="py-3 px-4 text-left">Name</th>
                 <th className="py-3 px-4 text-left">Age</th>
                 <th className="py-3 px-4 text-left">Status</th>
-                <th className="py-3 px-4 text-left">Admission Form</th>
                 <th className="py-3 px-4 text-left">Actions</th>
               </tr>
             </thead>
@@ -261,7 +260,7 @@ function Patients() {
               {loading
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i}>
-                      <td colSpan={5} className="py-3 px-4">
+                      <td colSpan={4} className="py-3 px-4">
                         <Skeleton className="h-11 w-full" />
                       </td>
                     </tr>
@@ -269,7 +268,7 @@ function Patients() {
                 : null}
               {!loading && filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
+                  <td colSpan={4} className="py-6 px-4 text-center text-sm text-slate-500">
                     No patients match your search.
                   </td>
                 </tr>
@@ -291,7 +290,6 @@ function Patients() {
                         {r.status}
                       </span>
                     </td>
-                    <td className={`py-3 px-4 font-medium ${r.formTone}`}>{r.form}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <RowAction variant="view" onClick={() => openDetail(r)}>
