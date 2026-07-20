@@ -70,6 +70,7 @@ export const api = {
     home: () => request('/api/client/home', { auth: true }),
     activityLogs: () => request('/api/client/activity-logs', { auth: true }),
     addActivityLog: (payload) => request('/api/client/activity-logs', { method: 'POST', body: payload, auth: true }),
+    deleteActivityLog: (id) => request(`/api/client/activity-logs/${id}`, { method: 'DELETE', auth: true }),
     appointments: () => request('/api/client/appointments', { auth: true }),
     announcements: () => request('/api/client/announcements', { auth: true }),
     waivers: () => request('/api/client/waivers', { auth: true }),

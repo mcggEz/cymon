@@ -395,7 +395,7 @@ function Patients() {
               <div className="mt-5 border-t border-slate-100 pt-4">
                 {showDeleteConfirm ? (
                   <div className="space-y-2 rounded-xl bg-red-50 p-3 border border-red-200">
-                    <p className="text-xs font-bold text-red-850">Permanently delete student record?</p>
+                    <p className="text-xs font-bold text-red-800">Permanently delete student record?</p>
                     <p className="text-[10px] text-red-700 leading-normal">
                       This action is irreversible. It will permanently remove all logs, reports, and details associated with this student.
                     </p>
@@ -409,7 +409,7 @@ function Patients() {
                       <button
                         onClick={handleDelete}
                         disabled={deleting}
-                        className="rounded-md bg-red-650 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
+                        className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
                       >
                         {deleting ? 'Deleting…' : 'Confirm Delete'}
                       </button>

@@ -46,6 +46,8 @@ const TypeChip = ({ active, label, color, onClick }) => (
 
 function Announcements() {
   const [published, setPublished] = useState([])
+  const [patients, setPatients] = useState([])
+  const [patientId, setPatientId] = useState('')
   const [title, setTitle] = useState('')
   const [type, setType] = useState('urgent')
   const [priority, setPriority] = useState('normal')
@@ -59,10 +61,15 @@ function Announcements() {
   const [editingId, setEditingId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
 
-  const load = () => api.admin.announcements().then((d) => setPublished(d.announcements)).catch(() => {})
+  const load = () => api.admin.announcements().then((d) => setPublished(d.announcements || [])).catch(() => {})
   useEffect(() => {
     let on = true
-    load().finally(() => {
+    Promise.all([
+      load(),
+      api.admin.patients().then((d) => {
+        if (on) setPatients(d.patients || [])
+      }).catch(() => {})
+    ]).finally(() => {
       if (on) setLoading(false)
     })
     return () => {
@@ -88,6 +95,7 @@ function Announcements() {
     setAudience(['all'])
     setPublishDate('')
     setExpiresOn('')
+    setPatientId('')
   }
 
   const toInputDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '')
@@ -102,6 +110,7 @@ function Announcements() {
     setAudience(p.audience && p.audience.length ? p.audience : ['all'])
     setPublishDate(toInputDate(p.publish_date))
     setExpiresOn(toInputDate(p.expires_on))
+    setPatientId(p.patient_id || '')
   }
 
   const handleSave = async () => {
@@ -119,6 +128,7 @@ function Announcements() {
       body,
       publish_date: publishDate || undefined,
       expires_on: expiresOn || undefined,
+      patient_id: patientId || null,
     }
     try {
       if (editingId) {
@@ -242,6 +252,22 @@ function Announcements() {
                 </div>
               </div>
               <div>
+                <div className="text-xs font-semibold tracking-wider text-purple-700">SPECIFIC STUDENT TARGETING <span className="text-slate-400">(Optional)</span></div>
+                <div className="mt-1 text-xs text-slate-500">Select a specific student if this message is only for their caregiver (targeted message).</div>
+                <select
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
+                  className="mt-2 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                >
+                  <option value="">-- Broadcast (No specific student) --</option>
+                  {patients.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} (ID: {p.patient_id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <div className="text-xs font-semibold tracking-wider text-purple-700">
                   ATTACH PROMOTIONAL IMAGE <span className="text-slate-400">(Optional)</span>
                 </div>
@@ -314,6 +340,11 @@ function Announcements() {
                         {AUDIENCES.find((x) => x.value === a)?.label || a}
                       </span>
                     ))}
+                    {p.patient_id && (
+                      <span className="rounded-md bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-100 flex items-center gap-1">
+                        🎯 Specific: {patients.find((x) => x.id === p.patient_id)?.name || 'Student'}
+                      </span>
+                    )}
                   </div>
                   <div className="mt-1 text-[10px] text-slate-400">{fmtDate(p.publish_date)}</div>
                   <div className="mt-2 flex gap-2 text-xs">

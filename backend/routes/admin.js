@@ -170,18 +170,21 @@ router.delete('/patients/:id', async (req, res, next) => {
     if (delErr) return res.status(400).json({ error: delErr.message });
 
     // Log this high severity event in the audit trail
-    await supabase
-      .from('audit_log')
-      .insert({
-        clinic_id: req.profile.clinic_id,
-        actor_id: req.user.id,
-        action: 'delete_patient',
-        entity_type: 'patient',
-        entity_id: patient.id,
-        summary: `Permanently deleted student record for ${patient.first_name} ${patient.last_name} (ID: ${patient.patient_id})`,
-        severity: 'high',
-      })
-      .catch(() => {});
+    try {
+      await supabase
+        .from('audit_log')
+        .insert({
+          clinic_id: req.profile.clinic_id,
+          actor_id: req.user.id,
+          action: 'delete_patient',
+          entity_type: 'patient',
+          entity_id: patient.id,
+          summary: `Permanently deleted student record for ${patient.first_name} ${patient.last_name} (ID: ${patient.patient_id})`,
+          severity: 'high',
+        });
+    } catch (e) {
+      console.error('[audit] failed to write delete_patient log:', e);
+    }
 
     res.json({ ok: true });
   } catch (err) {
@@ -362,7 +365,7 @@ router.get('/announcements', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('announcements')
-      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url')
+      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url, patient_id')
       .eq('clinic_id', req.profile.clinic_id)
       .is('deleted_at', null)
       .order('publish_date', { ascending: false });
@@ -376,7 +379,7 @@ router.get('/announcements', async (req, res, next) => {
 router.post('/announcements', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { title, type = 'info', priority = 'normal', body, publish_date, expires_on, audience } = req.body || {};
+    const { title, type = 'info', priority = 'normal', body, publish_date, expires_on, audience, patient_id } = req.body || {};
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and body are required' });
     }
@@ -393,33 +396,60 @@ router.post('/announcements', async (req, res, next) => {
         expires_on: expires_on || null,
         audience: Array.isArray(audience) && audience.length ? audience : ['all'],
         created_by_id: req.profile.id,
+        patient_id: patient_id || null,
       })
-      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url')
+      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url, patient_id')
       .single();
     if (error) return res.status(400).json({ error: error.message });
 
     // Send email notification to parents in the background
     const savedAudience = data.audience || ['all'];
     if (savedAudience.includes('all') || savedAudience.includes('client')) {
-      supabase
-        .from('profiles')
-        .select('email, display_name')
-        .eq('role', 'client')
-        .eq('clinic_id', req.profile.clinic_id)
-        .is('deleted_at', null)
-        .then(({ data: clients }) => {
-          if (clients && clients.length) {
-            clients.forEach((c) => {
-              if (!c.email) return;
-              sendMail({
-                to: c.email,
-                subject: `New Announcement: ${title} - ClearMind Clinic`,
-                text: `Dear ${c.display_name},\n\nA new announcement has been posted on the ClearMind Clinic portal:\n\n${title}\n\n${body}\n\nTo read the announcement or access student services, please visit: https://cymon-clinic.vercel.app/\n\nBest regards,\nClearMind Psychological Services`,
-              }).catch((e) => console.error(`[email] failed to send announcement email to ${c.email}:`, e.message));
-            });
-          }
-        })
-        .catch((e) => console.error('[email] failed to fetch client emails for announcement:', e.message));
+      if (data.patient_id) {
+        supabase
+          .from('patients')
+          .select('caregiver_id')
+          .eq('id', data.patient_id)
+          .single()
+          .then(({ data: pt }) => {
+            if (pt && pt.caregiver_id) {
+              supabase
+                .from('profiles')
+                .select('email, display_name')
+                .eq('id', pt.caregiver_id)
+                .single()
+                .then(({ data: c }) => {
+                  if (c && c.email) {
+                    sendMail({
+                      to: c.email,
+                      subject: `New Targeted Message: ${title} - ClearMind Clinic`,
+                      text: `Dear ${c.display_name},\n\nA new clinical update regarding your child has been posted on the ClearMind Clinic portal:\n\n${title}\n\n${body}\n\nTo read the update or access student services, please visit: https://cymon-clinic.vercel.app/\n\nBest regards,\nClearMind Psychological Services`,
+                    }).catch((e) => console.error(`[email] failed to send announcement email to ${c.email}:`, e.message));
+                  }
+                });
+            }
+          });
+      } else {
+        supabase
+          .from('profiles')
+          .select('email, display_name')
+          .eq('role', 'client')
+          .eq('clinic_id', req.profile.clinic_id)
+          .is('deleted_at', null)
+          .then(({ data: clients }) => {
+            if (clients && clients.length) {
+              clients.forEach((c) => {
+                if (!c.email) return;
+                sendMail({
+                  to: c.email,
+                  subject: `New Announcement: ${title} - ClearMind Clinic`,
+                  text: `Dear ${c.display_name},\n\nA new announcement has been posted on the ClearMind Clinic portal:\n\n${title}\n\n${body}\n\nTo read the announcement or access student services, please visit: https://cymon-clinic.vercel.app/\n\nBest regards,\nClearMind Psychological Services`,
+                }).catch((e) => console.error(`[email] failed to send announcement email to ${c.email}:`, e.message));
+              });
+            }
+          })
+          .catch((e) => console.error('[email] failed to fetch client emails for announcement:', e.message));
+      }
     }
 
     res.status(201).json({ announcement: data });
@@ -431,7 +461,7 @@ router.post('/announcements', async (req, res, next) => {
 router.patch('/announcements/:id', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { title, type, priority, body, publish_date, expires_on, audience } = req.body || {};
+    const { title, type, priority, body, publish_date, expires_on, audience, patient_id } = req.body || {};
     const patch = {};
     if (title !== undefined) patch.title = title;
     if (type !== undefined) patch.type = type;
@@ -442,6 +472,7 @@ router.patch('/announcements/:id', async (req, res, next) => {
     if (expires_on !== undefined) patch.expires_on = expires_on || null;
     if (audience !== undefined)
       patch.audience = Array.isArray(audience) && audience.length ? audience : ['all'];
+    if (patient_id !== undefined) patch.patient_id = patient_id || null;
     if (Object.keys(patch).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
@@ -451,7 +482,7 @@ router.patch('/announcements/:id', async (req, res, next) => {
       .eq('id', req.params.id)
       .eq('clinic_id', req.profile.clinic_id)
       .is('deleted_at', null)
-      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url')
+      .select('id, title, type, priority, body, publish_date, expires_on, audience, image_url, patient_id')
       .maybeSingle();
     if (error) return res.status(400).json({ error: error.message });
     if (!data) return res.status(404).json({ error: 'Announcement not found' });

@@ -34,7 +34,7 @@ router.get('/approvals', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('assessment_reports')
-      .select('id, title, document_type_code, report_type, priority, created_at, patients(first_name, middle_name, last_name, clinic_id)')
+      .select('id, patient_id, title, document_type_code, report_type, priority, created_at, patients(id, first_name, middle_name, last_name, clinic_id)')
       .eq('status', 'ready_for_review')
       .order('created_at', { ascending: false });
     if (error) return next(error);
@@ -43,7 +43,7 @@ router.get('/approvals', async (req, res, next) => {
     try {
       const { data: dbPerms, error: dbErr } = await supabase
         .from('assessment_permissions')
-        .select('id, patient_id, template_id, status, created_at, requested_by_id, patients(first_name, last_name), profiles!requested_by_id(display_name), assessment_templates(title, document_type_code)')
+        .select('id, patient_id, template_id, status, created_at, requested_by_id, patients(id, first_name, last_name), profiles!requested_by_id(display_name), assessment_templates(title, document_type_code)')
         .eq('clinic_id', req.profile.clinic_id)
         .eq('status', 'pending');
       if (dbErr) throw dbErr;
@@ -85,6 +85,7 @@ router.get('/approvals', async (req, res, next) => {
     res.json({
       reports: inClinic(data, req.profile.clinic_id).map((r) => ({
         id: r.id,
+        patient_id: r.patient_id,
         name: name(r.patients),
         type: `${r.title}${r.document_type_code ? ` (${r.document_type_code.replace('CMPS:SE-', '')})` : ''}`,
         date: r.created_at,

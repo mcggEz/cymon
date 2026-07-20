@@ -140,6 +140,7 @@ function StudentJournal() {
   const [loadingPatients, setLoadingPatients] = useState(true)
   const [loadingLogs, setLoadingLogs] = useState(false)
   const [query, setQuery] = useState('')
+  const [journalQuery, setJournalQuery] = useState('')
   const [error, setError] = useState(null)
 
   // Load patients lookup on mount
@@ -168,6 +169,7 @@ function StudentJournal() {
     let on = true
     setLoadingLogs(true)
     setLogs([])
+    setJournalQuery('')
     
     api.psychometrician.studentJournal(selectedPatientId)
       .then((d) => {
@@ -188,6 +190,16 @@ function StudentJournal() {
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(query.trim().toLowerCase())
   )
+
+  const jq = journalQuery.trim().toLowerCase()
+  const filteredLogs = logs.filter((log) => {
+    if (!jq) return true
+    const moodMeta = MOOD_META[log.mood] || MOOD_META.okay
+    const matchesDate = fmtDate(log.log_date).toLowerCase().includes(jq)
+    const matchesMood = (moodMeta.label || '').toLowerCase().includes(jq)
+    const matchesObs = (log.observations || '').toLowerCase().includes(jq)
+    return matchesDate || matchesMood || matchesObs
+  })
 
   return (
     <>
@@ -266,9 +278,19 @@ function StudentJournal() {
 
                   {/* Journal Submissions List Table */}
                   <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-                    <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-3">
-                      Caregiver Journal Entries
-                    </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-purple-100 pb-3 mb-4 gap-3">
+                      <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider">
+                        Caregiver Journal Entries
+                      </h3>
+                      <div className="w-full sm:w-72">
+                        <SearchBar
+                          value={journalQuery}
+                          onChange={setJournalQuery}
+                          placeholder="Search logs by date, mood, observation…"
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
@@ -291,14 +313,14 @@ function StudentJournal() {
                                 <td className="py-3 px-3 text-right"><Skeleton className="h-8 w-20 ml-auto rounded-md" /></td>
                               </tr>
                             ))
-                          ) : logs.length === 0 ? (
+                          ) : filteredLogs.length === 0 ? (
                             <tr>
                               <td colSpan={5} className="py-8 text-center text-xs text-slate-400">
-                                No journal submissions logged for this student yet.
+                                {journalQuery ? 'No journal entries match your search.' : 'No journal submissions logged for this student yet.'}
                               </td>
                             </tr>
                           ) : (
-                            logs.map((log) => {
+                            filteredLogs.map((log) => {
                               const moodMeta = MOOD_META[log.mood] || MOOD_META.okay
                               return (
                                 <tr key={log.id} className="hover:bg-purple-50/20 transition-colors">

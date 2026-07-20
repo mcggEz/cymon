@@ -200,8 +200,9 @@ router.get('/public-announcements', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('announcements')
-      .select('id, title, body, type, publish_date, image_url, audience')
+      .select('id, title, body, type, publish_date, image_url, audience, patient_id')
       .is('deleted_at', null)
+      .is('patient_id', null)
       .order('publish_date', { ascending: false });
     if (error) return next(error);
 

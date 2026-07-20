@@ -4,6 +4,7 @@ import PageHeader from './PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import Button from '../../components/ui/Button'
+import SearchBar from '../../components/ui/SearchBar'
 import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
@@ -68,7 +69,18 @@ function DailyActivity() {
   const [submitting, setSubmitting] = useState(false)
   const [logs, setLogs] = useState([])
   const [series, setSeries] = useState([])
+  const [historyQuery, setHistoryQuery] = useState('')
   const [loading, setLoading] = useState(true)
+
+  const hq = historyQuery.trim().toLowerCase()
+  const filteredLogs = logs.filter((l) => {
+    if (!hq) return true
+    const matchesDate = fmtDate(l.log_date).toLowerCase().includes(hq)
+    const matchesObs = (l.observations || '').toLowerCase().includes(hq)
+    const moodLabel = MOODS.find(m => m.id === l.mood)?.label || ''
+    const matchesMood = moodLabel.toLowerCase().includes(hq)
+    return matchesDate || matchesObs || matchesMood
+  })
 
   const load = (targetDate = activeDate) =>
     api.client.activityLogs().then((d) => {
@@ -139,6 +151,7 @@ function DailyActivity() {
 
   const handleSubmit = async () => {
     setSubmitting(true)
+    const exists = logs.some((l) => l.log_date === activeDate)
     try {
       await api.client.addActivityLog({
         mood,
@@ -149,10 +162,26 @@ function DailyActivity() {
         observations: observations || null,
         log_date: activeDate,
       })
-      toast.success(activeDate === todayKey() ? 'Journal entry submitted.' : 'Journal entry updated.')
+      toast.success(exists ? 'Journal entry updated.' : 'Journal entry submitted.')
       await load(activeDate)
     } catch (err) {
       toast.error(err.message || 'Failed to save entry.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    const found = logs.find((l) => l.log_date === activeDate)
+    if (!found) return
+    if (!window.confirm('Are you sure you want to permanently delete this journal entry?')) return
+    setSubmitting(true)
+    try {
+      await api.client.deleteActivityLog(found.id)
+      toast.success('Journal entry deleted.')
+      await load(activeDate)
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete entry.')
     } finally {
       setSubmitting(false)
     }
@@ -170,33 +199,91 @@ function DailyActivity() {
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
           <section className="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
-            <div className="flex items-center justify-between border-b border-purple-100 pb-3">
-              <div className="text-sm font-semibold text-purple-800">
-                {activeDate === todayKey() ? "Write Today's Journal" : `Journal Entry: ${fmtDate(activeDate)}`}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-purple-800">Journal Date:</span>
+                <input
+                  type="date"
+                  value={activeDate}
+                  onChange={(e) => {
+                    const selected = e.target.value
+                    if (selected) {
+                      setActiveDate(selected)
+                      const found = logs.find((l) => l.log_date === selected)
+                      if (found) {
+                        setMood(found.mood)
+                        setTaskCompletion(found.task_completion || '')
+                        setBehavioral(found.behavioral_episodes || '')
+                        setSleep(found.sleep_quality || '')
+                        setAppetite(found.appetite || '')
+                        setObservations(found.observations || '')
+                      } else {
+                        setMood('okay')
+                        setTaskCompletion('')
+                        setBehavioral('')
+                        setSleep('')
+                        setAppetite('')
+                        setObservations('')
+                      }
+                    }
+                  }}
+                  className="h-9 rounded-lg border border-purple-200 bg-white px-3 py-1 text-sm text-slate-800 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                />
               </div>
-              {activeDate !== todayKey() ? (
+              {activeDate !== todayKey() && (
                 <button
                   type="button"
-                  onClick={handleBackToToday}
+                  onClick={() => {
+                    setActiveDate(todayKey())
+                    const found = logs.find((l) => l.log_date === todayKey())
+                    if (found) {
+                      setMood(found.mood)
+                      setTaskCompletion(found.task_completion || '')
+                      setBehavioral(found.behavioral_episodes || '')
+                      setSleep(found.sleep_quality || '')
+                      setAppetite(found.appetite || '')
+                      setObservations(found.observations || '')
+                    } else {
+                      setMood('okay')
+                      setTaskCompletion('')
+                      setBehavioral('')
+                      setSleep('')
+                      setAppetite('')
+                      setObservations('')
+                    }
+                  }}
                   className="rounded-md border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50 cursor-pointer"
                 >
                   &larr; Go to Today
                 </button>
-              ) : null}
+              )}
             </div>
 
-            <Textarea
-              className="mt-4"
-              label="Daily Journal"
-              rows={4}
-              placeholder="How did the day go? Note any new behaviors, concerns, wins, or anything worth recording..."
-              value={observations}
-              onChange={(e) => setObservations(e.target.value)}
-              disabled={activeDate !== todayKey()}
-            />
-            {activeDate === todayKey() ? (
+            <div className="flex flex-col gap-1.5 mt-4 relative">
+              <label className="text-sm font-semibold text-purple-800">
+                Observations & Daily Journal
+              </label>
+              <div className="relative rounded-2xl border border-purple-200 bg-white p-5 shadow-sm overflow-hidden">
+                {/* Spine notebook margin effect */}
+                <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-purple-100 to-transparent" />
+                <div className="absolute left-3 top-0 bottom-0 w-px bg-purple-200" />
+                
+                <textarea
+                  rows={6}
+                  className="w-full pl-6 border-none bg-transparent text-slate-800 placeholder:text-slate-400 focus:outline-none text-base leading-[28px] font-sans resize-none"
+                  style={{
+                    backgroundImage: 'linear-gradient(rgba(124, 58, 237, 0.08) 1px, transparent 1px)',
+                    backgroundSize: '100% 28px',
+                    lineHeight: '28px',
+                    paddingTop: '2px'
+                  }}
+                  placeholder="How did the day go? Note any new behaviors, concerns, wins, or anything worth recording..."
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                />
+              </div>
               <p className="mt-1 text-xs text-slate-500">Required — please complete journal entry.</p>
-            ) : null}
+            </div>
 
             <div className="mt-6 border-t border-purple-50 pt-5">
               <div className="text-sm font-medium text-slate-700">
@@ -210,15 +297,12 @@ function DailyActivity() {
                       key={m.id}
                       type="button"
                       onClick={() => setMood(m.id)}
-                      disabled={activeDate !== todayKey()}
                       className={[
                         'flex flex-col items-center rounded-lg border py-1.5 px-2 text-[10px] font-medium transition',
                         selected
                           ? 'border-purple-500 bg-purple-50 text-purple-800'
                           : 'border-slate-200 text-slate-600',
-                        activeDate === todayKey()
-                          ? 'cursor-pointer hover:border-purple-300'
-                          : 'opacity-80 cursor-default',
+                        'cursor-pointer hover:border-purple-300',
                       ].join(' ')}
                     >
                       <div className={`mb-1 h-5 w-5 rounded-full ${m.color}`} />
@@ -232,22 +316,22 @@ function DailyActivity() {
             <div className="mt-6 border-t border-purple-50 pt-5">
               <div className="text-sm font-semibold text-purple-800 mb-3">Daily Metrics & Observations</div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Select label="Therapy task completion?" placeholder="Select" value={taskCompletion} onChange={(e) => setTaskCompletion(e.target.value)} disabled={activeDate !== todayKey()}>
+                <Select label="Therapy task completion?" placeholder="Select" value={taskCompletion} onChange={(e) => setTaskCompletion(e.target.value)}>
                   <option value="yes_all">Yes, completed all tasks</option>
                   <option value="some">Some completed</option>
                   <option value="none">None</option>
                 </Select>
-                <Select label="Behavioral episodes today?" placeholder="Select" value={behavioral} onChange={(e) => setBehavioral(e.target.value)} disabled={activeDate !== todayKey()}>
+                <Select label="Behavioral episodes today?" placeholder="Select" value={behavioral} onChange={(e) => setBehavioral(e.target.value)}>
                   <option value="none">No episodes — calm and cooperative</option>
                   <option value="mild">Mild episode</option>
                   <option value="significant">Significant episode</option>
                 </Select>
-                <Select label="Sleep quality last night" placeholder="Select" value={sleep} onChange={(e) => setSleep(e.target.value)} disabled={activeDate !== todayKey()}>
+                <Select label="Sleep quality last night" placeholder="Select" value={sleep} onChange={(e) => setSleep(e.target.value)}>
                   <option value="good">Slept well (7+ hours)</option>
                   <option value="restless">Restless</option>
                   <option value="poor">Poor</option>
                 </Select>
-                <Select label="Appetite / eating today?" placeholder="Select" value={appetite} onChange={(e) => setAppetite(e.target.value)} disabled={activeDate !== todayKey()}>
+                <Select label="Appetite / eating today?" placeholder="Select" value={appetite} onChange={(e) => setAppetite(e.target.value)}>
                   <option value="good">Good appetite — ate well</option>
                   <option value="average">Average</option>
                   <option value="refused">Refused meals</option>
@@ -255,20 +339,43 @@ function DailyActivity() {
               </div>
             </div>
 
-            {activeDate === todayKey() ? (
-              <Button className="mt-6 w-full sm:w-auto" size="md" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? 'Submitting Entry…' : 'Submit Journal Entry'}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button
+                size="md"
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="w-full sm:w-auto cursor-pointer"
+              >
+                {submitting
+                  ? 'Saving…'
+                  : logs.some((l) => l.log_date === activeDate)
+                  ? 'Update Journal Entry'
+                  : 'Submit Journal Entry'}
               </Button>
-            ) : (
-              <div className="mt-6 rounded-xl bg-purple-50 px-4 py-3 text-xs font-semibold text-purple-700 border border-purple-100 flex items-center gap-2">
-                <span>🔒</span> This is a submitted past journal entry and cannot be edited.
-              </div>
-            )}
+              {logs.some((l) => l.log_date === activeDate) && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={submitting}
+                  className="rounded-md border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 cursor-pointer"
+                >
+                  Delete Journal Entry
+                </button>
+              )}
+            </div>
           </section>
 
           <div className="flex flex-col gap-5">
             <section className="rounded-2xl bg-white p-5 shadow-sm">
-              <div className="text-sm font-semibold text-purple-800">Recent Submissions</div>
+              <div className="text-sm font-semibold text-purple-800">Journal Archive & History</div>
+              <div className="mt-2.5">
+                <SearchBar
+                  value={historyQuery}
+                  onChange={setHistoryQuery}
+                  placeholder="Search past logs…"
+                  className="w-full"
+                />
+              </div>
               <div className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${status.cls}`}>
                 <span className={`h-2 w-2 shrink-0 rounded-full ${status.dot}`} />
                 {status.label}
@@ -276,30 +383,34 @@ function DailyActivity() {
               {loading ? (
                 <SkeletonText className="mt-3" lines={5} />
               ) : (
-                <ul className="mt-3 space-y-2 text-sm">
-                  {logs.length === 0 ? (
-                    <li className="text-xs text-slate-500">No submissions yet.</li>
-                  ) : null}
-                  {logs.map((s) => (
-                    <li key={s.id}>
-                      <button
-                        onClick={() => handleSelectLog(s)}
-                        className={`w-full flex items-start gap-3 rounded-xl border p-2 text-left transition-all hover:bg-purple-50/40 cursor-pointer group ${
-                          activeDate === s.log_date ? 'border-purple-300 bg-purple-50/30' : 'border-transparent'
-                        }`}
-                      >
-                        <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${TASK_DOT[s.task_completion] || 'bg-slate-300'}`} />
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-slate-800 text-xs sm:text-sm">{fmtDate(s.log_date)}</div>
-                          <div className="text-[10px] sm:text-xs text-slate-500 flex items-center justify-between gap-2 mt-0.5">
-                            <span>Tasks: {TASK_LABEL[s.task_completion] || '—'}</span>
-                            <span className="font-bold group-hover:underline text-[9px] uppercase tracking-wider shrink-0 text-purple-600">View Entry &rarr;</span>
+                <div className="max-h-[320px] overflow-y-auto mt-3 pr-1 space-y-2">
+                  <ul className="space-y-2 text-sm">
+                    {filteredLogs.length === 0 ? (
+                      <li className="text-xs text-slate-500">
+                        {historyQuery ? 'No matching logs found.' : 'No submissions yet.'}
+                      </li>
+                    ) : null}
+                    {filteredLogs.map((s) => (
+                      <li key={s.id}>
+                        <button
+                          onClick={() => handleSelectLog(s)}
+                          className={`w-full flex items-start gap-3 rounded-xl border p-2.5 text-left transition-all hover:bg-purple-50/40 cursor-pointer group ${
+                            activeDate === s.log_date ? 'border-purple-300 bg-purple-50/30' : 'border-transparent'
+                          }`}
+                        >
+                          <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${TASK_DOT[s.task_completion] || 'bg-slate-300'}`} />
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-slate-800 text-xs sm:text-sm">{fmtDate(s.log_date)}</div>
+                            <div className="text-[10px] sm:text-xs text-slate-500 flex items-center justify-between gap-2 mt-0.5">
+                              <span>Tasks: {TASK_LABEL[s.task_completion] || '—'}</span>
+                              <span className="font-bold group-hover:underline text-[9px] uppercase tracking-wider shrink-0 text-purple-600">View Entry &rarr;</span>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </section>
 

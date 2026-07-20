@@ -243,9 +243,10 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
           .maybeSingle(),
         supabase
           .from('announcements')
-          .select('id, title, body, publish_date, audience')
+          .select('id, title, body, publish_date, audience, patient_id')
           .eq('clinic_id', patient.clinic_id)
           .is('deleted_at', null)
+          .or(`patient_id.is.null,patient_id.eq.${patient.id}`)
           .order('publish_date', { ascending: false }),
         supabase
           .from('assessment_assignments')
@@ -316,12 +317,10 @@ router.get('/activity-logs', requireAuth, requireClient, async (req, res, next) 
       .from('daily_activity_logs')
       .select('id, log_date, mood, task_completion, behavioral_episodes, sleep_quality, appetite, observations')
       .eq('patient_id', patient.id)
-      .order('log_date', { ascending: false })
-      .limit(14);
+      .order('log_date', { ascending: false });
     if (error) return next(error);
-    const recent = (data || []).slice(0, 7);
     const series = (data || []).slice(0, 7).slice().reverse().map((l) => ({ date: l.log_date, score: MOOD_SCORE[l.mood] || 0 }));
-    res.json({ logs: recent, moodSeries: series });
+    res.json({ logs: data || [], moodSeries: series });
   } catch (err) {
     next(err);
   }
@@ -354,6 +353,25 @@ router.post('/activity-logs', requireAuth, requireClient, async (req, res, next)
       .single();
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json({ log: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/activity-logs/:id', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const patient = await requirePatient(req, res);
+    if (!patient) return;
+    const { data, error } = await supabase
+      .from('daily_activity_logs')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('patient_id', patient.id)
+      .select('*')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }
@@ -406,9 +424,10 @@ router.get('/announcements', requireAuth, requireClient, async (req, res, next) 
     if (!patient) return;
     const { data, error } = await supabase
       .from('announcements')
-      .select('id, title, type, body, publish_date, image_url, audience')
+      .select('id, title, type, body, publish_date, image_url, audience, patient_id')
       .eq('clinic_id', patient.clinic_id)
       .is('deleted_at', null)
+      .or(`patient_id.is.null,patient_id.eq.${patient.id}`)
       .order('publish_date', { ascending: false });
     if (error) return next(error);
     const all = (data || []).filter((a) => {
