@@ -645,15 +645,11 @@ const PROGRESS_STATUS = {
 router.get('/drafting-reports', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const [{ data: daily, error: e1 }, { data: progress, error: e2 }, { data: pts, error: e3 }] = await Promise.all([
-      supabase
-        .from('session_logs')
-        .select('id, session_date, activity_title, status, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
-        .order('session_date', { ascending: false }),
+    const [{ data: behavioral, error: e2 }, { data: pts, error: e3 }] = await Promise.all([
       supabase
         .from('assessment_reports')
         .select('id, title, status, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
-        .eq('report_type', 'progress_summary')
+        .eq('report_type', 'behavioral')
         .order('updated_at', { ascending: false }),
       supabase
         .from('patients')
@@ -661,31 +657,20 @@ router.get('/drafting-reports', async (req, res, next) => {
         .eq('clinic_id', req.profile.clinic_id)
         .order('first_name'),
     ]);
-    if (e1) return next(e1);
     if (e2) return next(e2);
     if (e3) return next(e3);
-    const rows = [
-      ...inClinic(daily, req.profile.clinic_id).map((r) => ({
-        id: r.id,
-        type: 'daily_activity',
-        typeLabel: 'Daily Activity Report',
-        name: name(r.patients),
-        sid: r.patients.patient_id,
-        title: r.activity_title || 'Daily Activity Report',
-        date: r.session_date,
-        status: DAILY_STATUS[r.status] || 'draft',
-      })),
-      ...inClinic(progress, req.profile.clinic_id).map((r) => ({
-        id: r.id,
-        type: 'progress_summary',
-        typeLabel: 'Monthly Summary Progress',
-        name: name(r.patients),
-        sid: r.patients.patient_id,
-        title: r.title || 'Monthly Summary Progress',
-        date: r.updated_at,
-        status: PROGRESS_STATUS[r.status] || 'draft',
-      })),
-    ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+    const rows = inClinic(behavioral, req.profile.clinic_id).map((r) => ({
+      id: r.id,
+      type: 'behavioral',
+      typeLabel: 'Behavioral Assessment Report',
+      name: name(r.patients),
+      sid: r.patients.patient_id,
+      title: r.title || 'Behavioral Assessment Report',
+      date: r.updated_at,
+      status: PROGRESS_STATUS[r.status] || 'draft',
+    })).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
     res.json({
       summary: {
         draft: rows.filter((r) => r.status === 'draft').length,

@@ -5,28 +5,89 @@ import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
 import Pagination from '../../../components/ui/Pagination'
+import Modal from '../../../components/ui/Modal'
 import { api } from '../../../lib/api'
 
 const PAGE_SIZE = 20
 
-const TABS = ['All Issues', 'Overdue', 'Pending Signature', 'SPED (FO-02)', 'SummerScape (FO-13)']
+const TABS = ['All Issues', 'Overdue', 'Pending Signature', 'Submitted', 'Approved', 'SPED (FO-02)', 'SummerScape (FO-13)']
 
 const tone = {
   rose: 'text-rose-700',
   amber: 'text-amber-700',
+  emerald: 'text-emerald-700',
 }
 
-const STATUS_LABEL = { overdue: 'OVERDUE', pending_signature: 'PENDING SIG.' }
+const STATUS_LABEL = { overdue: 'OVERDUE', pending_signature: 'PENDING SIG.', submitted: 'SUBMITTED', approved: 'APPROVED' }
 const fmtDue = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
 
 function toRow(r) {
+  const statusTone = r.status === 'overdue' ? 'rose' : (r.status === 'submitted' || r.status === 'approved' ? 'emerald' : 'amber')
   return {
     ...r,
     due: fmtDue(r.due_date),
     label: STATUS_LABEL[r.status] || r.status,
-    tone: r.status === 'overdue' ? 'rose' : 'amber',
+    tone: statusTone,
   }
+}
+
+function WaiverViewModal({ row, onClose }) {
+  const sa = row.provisions_agreed || {}
+  const signature = sa.signature_image || null
+
+  return (
+    <Modal title={row.doc} subtitle={`Form: ${row.code} · Student ID: ${row.sid}`} onClose={onClose}>
+      <div className="space-y-5">
+        <section className="rounded-2xl border border-purple-200 bg-purple-50 p-5 text-sm">
+          <div className="font-semibold text-purple-800">Acknowledgement Summary</div>
+          <div className="mt-3 grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <span className="text-slate-500 block">Parent / Guardian Name</span>
+              <span className="font-bold text-slate-800">{sa.parent_name || row.signature_text || '—'}</span>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Signed Date</span>
+              <span className="font-bold text-slate-800">
+                {sa.date ? fmtDue(sa.date) : (row.signed_at ? fmtDue(row.signed_at) : '—')}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Student Name</span>
+              <span className="font-bold text-slate-800">{sa.child_name || row.student || '—'}</span>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Relationship</span>
+              <span className="font-bold text-slate-800">{sa.relationship || '—'}</span>
+            </div>
+          </div>
+        </section>
+
+        {row.code !== 'CMPS:SE-FO-01' && row.code !== 'CMPS:SE-FO-13' && (
+          <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm space-y-2">
+            <div className="font-semibold text-purple-800 text-sm">Agreements & Provisions</div>
+            <p className="text-xs text-slate-600">
+              The parent agreed to the nature of the program, authority to provide services, confidentiality guidelines, health and safety policies, and financial commitments.
+            </p>
+            <div className="mt-2 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded px-2.5 py-1 inline-flex items-center gap-1.5">
+              ✓ Agreed to all clauses & house rules
+            </div>
+          </section>
+        )}
+
+        <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+          <div className="font-semibold text-purple-800 text-sm">E-Signature Image</div>
+          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 flex justify-center">
+            {signature ? (
+              <img src={signature} alt="Parent Signature" className="max-h-28 object-contain mx-auto" />
+            ) : (
+              <span className="text-xs text-slate-400 italic">No signature image available</span>
+            )}
+          </div>
+        </section>
+      </div>
+    </Modal>
+  )
 }
 
 const Stat = ({ value, label, color }) => (
@@ -44,6 +105,7 @@ function Compliance() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [active, setActive] = useState(null)
+  const [viewWaiver, setViewWaiver] = useState(null)
 
   const load = () => api.admin.compliance().then(setData).catch(() => {})
 
@@ -89,9 +151,13 @@ function Compliance() {
           ? r.status === 'overdue'
           : tab === 'Pending Signature'
             ? r.status === 'pending_signature'
-            : foMatch
-              ? (r.code || '').includes(foMatch[0])
-              : true
+            : tab === 'Submitted'
+              ? r.status === 'submitted'
+              : tab === 'Approved'
+                ? r.status === 'approved'
+                : foMatch
+                  ? (r.code || '').includes(foMatch[0])
+                  : true
     const matchesQuery =
       !q ||
       (r.student || '').toLowerCase().includes(q) ||
@@ -110,12 +176,6 @@ function Compliance() {
           Monitor missing documents, overdue forms, and pending signatures
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.overdue ?? '—'} label="Overdue" color="text-rose-600" />
-          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.pending ?? '—'} label="Pending Signature" color="text-amber-600" />
-          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.compliant ?? '—'} label="Fully Compliant" color="text-emerald-600" />
-          <Stat value={loading ? <Skeleton className="h-8 w-16" /> : summary?.total ?? '—'} label="Total Students" color="text-sky-600" />
-        </div>
 
         <div className="mt-5 flex gap-6">
         <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -279,27 +339,38 @@ function Compliance() {
                 </div>
               </dl>
 
-              <div className="mt-5 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => remind(active)}
-                  disabled={busyId === active.id}
-                  className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
-                >
-                  {busyId === active.id ? '…' : 'Remind'}
-                </button>
-                <button
-                  onClick={() => markProcessed(active)}
-                  disabled={busyId === active.id}
-                  className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-50"
-                >
-                  {busyId === active.id ? '…' : 'Process'}
-                </button>
+              <div className="mt-5 space-y-2">
+                {(active.status === 'submitted' || active.status === 'approved') && (
+                  <button
+                    onClick={() => setViewWaiver(active)}
+                    className="w-full rounded-md border border-purple-300 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer text-center"
+                  >
+                    View Signed Form
+                  </button>
+                )}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => remind(active)}
+                    disabled={busyId === active.id}
+                    className="rounded-md border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50"
+                  >
+                    {busyId === active.id ? '…' : 'Remind'}
+                  </button>
+                  <button
+                    onClick={() => markProcessed(active)}
+                    disabled={busyId === active.id || active.status === 'approved'}
+                    className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-50"
+                  >
+                    {active.status === 'approved' ? 'Processed' : (busyId === active.id ? '…' : 'Process')}
+                  </button>
+                </div>
               </div>
             </aside>
           </>
         ) : null}
         </div>
       </div>
+      {viewWaiver ? <WaiverViewModal row={viewWaiver} onClose={() => setViewWaiver(null)} /> : null}
     </>
   )
 }

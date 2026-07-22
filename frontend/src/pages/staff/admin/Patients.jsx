@@ -192,6 +192,36 @@ function Patients() {
   })
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
+  const handleExport = () => {
+    if (!filtered || filtered.length === 0) {
+      toast.error('No student records to export.')
+      return
+    }
+    const headers = ['Student ID', 'Full Name', 'Age', 'Sex', 'Status', 'Date of Birth', 'Admission Form']
+    const csvRows = filtered.map((r) => [
+      r.id,
+      r.name,
+      r.age,
+      r.sex,
+      r.status,
+      r.date_of_birth,
+      r.form,
+    ])
+    const csvContent = [headers, ...csvRows]
+      .map((row) => row.map((val) => `"${String(val || '').replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `students_export_${new Date().toISOString().slice(0, 10)}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <>
       <StaffHeader title="Student Management" />
@@ -238,7 +268,10 @@ function Patients() {
               <option value="Active">Active</option>
               <option value="Pending">Pending</option>
             </select>
-            <button className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50">
+            <button
+              onClick={handleExport}
+              className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+            >
               Export List
             </button>
           </div>

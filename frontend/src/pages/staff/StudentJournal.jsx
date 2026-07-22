@@ -201,6 +201,16 @@ function StudentJournal() {
     return matchesDate || matchesMood || matchesObs
   })
 
+  const handleToggleJournalPermission = (patientId, allowBool) => {
+    api.psychologist.updateJournalPermission(patientId, allowBool)
+      .then(() => {
+        setPatients((prev) =>
+          prev.map((p) => (p.id === patientId ? { ...p, allow_journal_entry: allowBool } : p))
+        )
+      })
+      .catch((err) => setError(err.message || 'Failed to update journal permission.'))
+  }
+
   return (
     <>
       <StaffHeader title="Student Journal Logs" />
@@ -250,8 +260,11 @@ function StudentJournal() {
                           <div className={`font-semibold text-sm ${isActive ? 'text-purple-800' : 'text-slate-800'}`}>
                             {p.name}
                           </div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">
-                            ID: {p.patient_id || 'N/A'}
+                          <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                            <span>ID: {p.patient_id || 'N/A'}</span>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${p.allow_journal_entry ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                              {p.allow_journal_entry ? 'Active' : 'Locked'}
+                            </span>
                           </div>
                         </div>
                         <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600">Select &rarr;</span>
@@ -267,13 +280,32 @@ function StudentJournal() {
               {selectedPatient ? (
                 <>
                   {/* Selected Student header */}
-                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-                    <h1 className="text-xl font-bold text-purple-800">
-                      {selectedPatient.name}
-                    </h1>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Inspect family-submitted daily logs, activities, and observations. Select a journal entry from the history table below to see its details.
-                    </p>
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <h1 className="text-xl font-bold text-purple-800">
+                          {selectedPatient.name}
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Inspect family-submitted daily logs, activities, and observations. Select a journal entry from the history table below to see its details.
+                        </p>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-2">
+                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${selectedPatient.allow_journal_entry ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {selectedPatient.allow_journal_entry ? '✓ Journal Allowed' : '🔒 Journal Locked'}
+                        </span>
+                        <button
+                          onClick={() => handleToggleJournalPermission(selectedPatient.id, !selectedPatient.allow_journal_entry)}
+                          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold cursor-pointer transition-all shadow-sm ${
+                            selectedPatient.allow_journal_entry
+                              ? 'bg-rose-100 text-rose-800 hover:bg-rose-200 border border-rose-200'
+                              : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                          }`}
+                        >
+                          {selectedPatient.allow_journal_entry ? 'Lock Journal' : 'Allow Student to Answer'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Journal Submissions List Table */}

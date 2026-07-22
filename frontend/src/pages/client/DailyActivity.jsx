@@ -69,6 +69,7 @@ function DailyActivity() {
   const [submitting, setSubmitting] = useState(false)
   const [logs, setLogs] = useState([])
   const [series, setSeries] = useState([])
+  const [allowJournalEntry, setAllowJournalEntry] = useState(false)
   const [historyQuery, setHistoryQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -84,8 +85,9 @@ function DailyActivity() {
 
   const load = (targetDate = activeDate) =>
     api.client.activityLogs().then((d) => {
-      setLogs(d.logs)
-      setSeries(d.moodSeries)
+      setLogs(d.logs || [])
+      setSeries(d.moodSeries || [])
+      setAllowJournalEntry(Boolean(d.allow_journal_entry))
       
       // Sync form fields with selected date
       const found = (d.logs || []).find((l) => l.log_date === targetDate)
@@ -129,52 +131,52 @@ function DailyActivity() {
     setObservations(s.observations || '')
   }
 
-  const handleBackToToday = () => {
-    setActiveDate(todayKey())
-    const found = logs.find((l) => l.log_date === todayKey())
-    if (found) {
-      setMood(found.mood)
-      setTaskCompletion(found.task_completion || '')
-      setBehavioral(found.behavioral_episodes || '')
-      setSleep(found.sleep_quality || '')
-      setAppetite(found.appetite || '')
-      setObservations(found.observations || '')
-    } else {
-      setMood('okay')
-      setTaskCompletion('')
-      setBehavioral('')
-      setSleep('')
-      setAppetite('')
-      setObservations('')
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!allowJournalEntry) {
+      toast.error('Journal writing for this student is locked by your Psychologist.')
+      return
     }
-  }
+    if (!observations.trim()) {
+      toast.error('Please fill in your observations before submitting.')
+      return
+    }
 
-  const handleSubmit = async () => {
     setSubmitting(true)
-    const exists = logs.some((l) => l.log_date === activeDate)
     try {
       await api.client.addActivityLog({
+        log_date: activeDate,
         mood,
         task_completion: taskCompletion || null,
         behavioral_episodes: behavioral || null,
         sleep_quality: sleep || null,
         appetite: appetite || null,
-        observations: observations || null,
-        log_date: activeDate,
+        observations: observations.trim(),
       })
-      toast.success(exists ? 'Journal entry updated.' : 'Journal entry submitted.')
+
+      const isUpdate = logs.some((l) => l.log_date === activeDate)
+      toast.success(isUpdate ? 'Journal entry updated!' : 'Journal entry submitted!')
+
       await load(activeDate)
     } catch (err) {
-      toast.error(err.message || 'Failed to save entry.')
+      toast.error(err.message || 'Failed to submit log.')
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleDelete = async () => {
+    if (!allowJournalEntry) {
+      toast.error('Journal editing for this student is locked by your Psychologist.')
+      return
+    }
     const found = logs.find((l) => l.log_date === activeDate)
     if (!found) return
-    if (!window.confirm('Are you sure you want to permanently delete this journal entry?')) return
+
+    if (!window.confirm(`Are you sure you want to delete the journal entry for ${fmtDate(activeDate)}?`)) {
+      return
+    }
+
     setSubmitting(true)
     try {
       await api.client.deleteActivityLog(found.id)
@@ -196,6 +198,17 @@ function DailyActivity() {
     <>
       <PageHeader title="Daily Journal" />
       <div className="flex-1 overflow-y-auto p-6">
+        {!loading && !allowJournalEntry && (
+          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-sm flex items-start gap-3 animate-fadeIn mb-2">
+            <div className="text-2xl shrink-0">🔒</div>
+            <div>
+              <div className="font-bold text-sm">Journal Writing Locked by Psychologist</div>
+              <div className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
+                Students and caregivers are not permitted to submit or edit daily journal entries unless allowed by your supervising Psychologist. If you need to log entries, please request your Psychologist to grant journal writing permissions.
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
           <section className="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
@@ -263,26 +276,29 @@ function DailyActivity() {
               <label className="text-sm font-semibold text-purple-800">
                 Observations & Daily Journal
               </label>
-              <div className="relative rounded-2xl border border-purple-200 bg-white p-5 shadow-sm overflow-hidden">
+              <div className={`relative rounded-2xl border bg-white p-5 shadow-sm overflow-hidden ${!allowJournalEntry ? 'border-amber-200 bg-amber-50/20 opacity-80' : 'border-purple-200'}`}>
                 {/* Spine notebook margin effect */}
                 <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-purple-100 to-transparent" />
                 <div className="absolute left-3 top-0 bottom-0 w-px bg-purple-200" />
                 
                 <textarea
                   rows={6}
-                  className="w-full pl-6 border-none bg-transparent text-slate-800 placeholder:text-slate-400 focus:outline-none text-base leading-[28px] font-sans resize-none"
+                  disabled={!allowJournalEntry}
+                  className="w-full pl-6 border-none bg-transparent text-slate-800 placeholder:text-slate-400 focus:outline-none text-base leading-[28px] font-sans resize-none disabled:cursor-not-allowed"
                   style={{
                     backgroundImage: 'linear-gradient(rgba(124, 58, 237, 0.08) 1px, transparent 1px)',
                     backgroundSize: '100% 28px',
                     lineHeight: '28px',
                     paddingTop: '2px'
                   }}
-                  placeholder="How did the day go? Note any new behaviors, concerns, wins, or anything worth recording..."
+                  placeholder={allowJournalEntry ? "How did the day go? Note any new behaviors, concerns, wins, or anything worth recording..." : "Journal writing is currently locked by your Psychologist."}
                   value={observations}
                   onChange={(e) => setObservations(e.target.value)}
                 />
               </div>
-              <p className="mt-1 text-xs text-slate-500">Required — please complete journal entry.</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {allowJournalEntry ? 'Required — please complete journal entry.' : '🔒 Permission required to submit.'}
+              </p>
             </div>
 
             <div className="mt-6 border-t border-purple-50 pt-5">
@@ -296,13 +312,14 @@ function DailyActivity() {
                     <button
                       key={m.id}
                       type="button"
+                      disabled={!allowJournalEntry}
                       onClick={() => setMood(m.id)}
                       className={[
-                        'flex flex-col items-center rounded-lg border py-1.5 px-2 text-[10px] font-medium transition',
+                        'flex flex-col items-center rounded-lg border py-1.5 px-2 text-[10px] font-medium transition disabled:opacity-50 disabled:cursor-not-allowed',
                         selected
                           ? 'border-purple-500 bg-purple-50 text-purple-800'
                           : 'border-slate-200 text-slate-600',
-                        'cursor-pointer hover:border-purple-300',
+                        allowJournalEntry ? 'cursor-pointer hover:border-purple-300' : '',
                       ].join(' ')}
                     >
                       <div className={`mb-1 h-5 w-5 rounded-full ${m.color}`} />
@@ -316,22 +333,22 @@ function DailyActivity() {
             <div className="mt-6 border-t border-purple-50 pt-5">
               <div className="text-sm font-semibold text-purple-800 mb-3">Daily Metrics & Observations</div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Select label="Therapy task completion?" placeholder="Select" value={taskCompletion} onChange={(e) => setTaskCompletion(e.target.value)}>
+                <Select disabled={!allowJournalEntry} label="Therapy task completion?" placeholder="Select" value={taskCompletion} onChange={(e) => setTaskCompletion(e.target.value)}>
                   <option value="yes_all">Yes, completed all tasks</option>
                   <option value="some">Some completed</option>
                   <option value="none">None</option>
                 </Select>
-                <Select label="Behavioral episodes today?" placeholder="Select" value={behavioral} onChange={(e) => setBehavioral(e.target.value)}>
+                <Select disabled={!allowJournalEntry} label="Behavioral episodes today?" placeholder="Select" value={behavioral} onChange={(e) => setBehavioral(e.target.value)}>
                   <option value="none">No episodes — calm and cooperative</option>
                   <option value="mild">Mild episode</option>
                   <option value="significant">Significant episode</option>
                 </Select>
-                <Select label="Sleep quality last night" placeholder="Select" value={sleep} onChange={(e) => setSleep(e.target.value)}>
+                <Select disabled={!allowJournalEntry} label="Sleep quality last night" placeholder="Select" value={sleep} onChange={(e) => setSleep(e.target.value)}>
                   <option value="good">Slept well (7+ hours)</option>
                   <option value="restless">Restless</option>
                   <option value="poor">Poor</option>
                 </Select>
-                <Select label="Appetite / eating today?" placeholder="Select" value={appetite} onChange={(e) => setAppetite(e.target.value)}>
+                <Select disabled={!allowJournalEntry} label="Appetite / eating today?" placeholder="Select" value={appetite} onChange={(e) => setAppetite(e.target.value)}>
                   <option value="good">Good appetite — ate well</option>
                   <option value="average">Average</option>
                   <option value="refused">Refused meals</option>
@@ -343,8 +360,8 @@ function DailyActivity() {
               <Button
                 size="md"
                 onClick={handleSubmit}
-                disabled={submitting}
-                className="w-full sm:w-auto cursor-pointer"
+                disabled={submitting || !allowJournalEntry}
+                className="w-full sm:w-auto cursor-pointer disabled:cursor-not-allowed"
               >
                 {submitting
                   ? 'Saving…'
@@ -356,8 +373,8 @@ function DailyActivity() {
                 <button
                   type="button"
                   onClick={handleDelete}
-                  disabled={submitting}
-                  className="rounded-md border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 cursor-pointer"
+                  disabled={submitting || !allowJournalEntry}
+                  className="rounded-md border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                 >
                   Delete Journal Entry
                 </button>

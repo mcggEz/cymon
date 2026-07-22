@@ -74,14 +74,25 @@ export const api = {
     appointments: () => request('/api/client/appointments', { auth: true }),
     announcements: () => request('/api/client/announcements', { auth: true }),
     waivers: () => request('/api/client/waivers', { auth: true }),
+    waiverDetails: (code) => request(`/api/client/waivers/${code}`, { auth: true }),
     submitWaiver: (code, payload) =>
       request(`/api/client/waivers/${code}`, { method: 'POST', body: payload, auth: true }),
     assessments: () => request('/api/client/assessments', { auth: true }),
+    submitAssessment: (templateId, payload) =>
+      request(`/api/client/assessments/${templateId}/submit`, { method: 'POST', body: payload, auth: true }),
+    assessmentTemplate: (templateId) =>
+      request(`/api/client/assessments/templates/${templateId}`, { auth: true }),
     survey: () => request('/api/client/survey', { auth: true }),
     submitSurvey: (payload) => request('/api/client/survey', { method: 'POST', body: payload, auth: true }),
   },
   admin: {
     overview: () => request('/api/admin/overview', { auth: true }),
+    attendanceStats: () => request('/api/admin/attendance-stats', { auth: true }),
+    getAttendanceSessionForm: (patient_id, month_year) => request(`/api/admin/attendance-session-forms?patient_id=${patient_id}&month_year=${encodeURIComponent(month_year)}`, { auth: true }),
+    saveAttendanceSessionForm: (payload) => request('/api/admin/attendance-session-forms', { method: 'POST', body: payload, auth: true }),
+    getPendingPatientPermissions: () => request('/api/admin/assessment-permissions/pending', { auth: true }),
+    resolvePatientPermission: (id, status) => request(`/api/admin/assessment-permissions/${id}`, { method: 'PATCH', body: { status }, auth: true }),
+    grantPatientPermissionDirect: (payload) => request('/api/admin/assessment-permissions/grant', { method: 'POST', body: payload, auth: true }),
     patients: () => request('/api/admin/patients', { auth: true }),
     patient: (id) => request(`/api/admin/patients/${id}`, { auth: true }),
     createPatient: (payload) =>
@@ -128,6 +139,8 @@ export const api = {
     roster: () => request('/api/psychologist/roster', { auth: true }),
     updateRoster: (id, payload) =>
       request(`/api/psychologist/roster/${id}`, { method: 'PATCH', body: payload, auth: true }),
+    updateJournalPermission: (patient_id, allow_journal_entry) =>
+      request('/api/psychologist/journal-permission', { method: 'PATCH', body: { patient_id, allow_journal_entry }, auth: true }),
     mainstreaming: () => request('/api/psychologist/mainstreaming', { auth: true }),
     addMainstreaming: (payload) =>
       request('/api/psychologist/mainstreaming', { method: 'POST', body: payload, auth: true }),

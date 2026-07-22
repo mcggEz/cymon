@@ -31,6 +31,7 @@ import AdminClinicalRecords from './pages/staff/admin/ClinicalRecords'
 import AdminAnnouncements from './pages/staff/admin/Announcements'
 import AdminEmployees from './pages/staff/admin/Employees'
 import AdminAuditTrail from './pages/staff/admin/AuditTrail'
+import AdminAttendance from './pages/staff/admin/AttendanceDashboard'
 import PsychometricianLayout from './pages/staff/PsychometricianLayout'
 import Tasks from './pages/staff/psychometrician/Tasks'
 import PmAssessments from './pages/staff/psychometrician/Assessments'
@@ -125,6 +126,7 @@ function App() {
           <Route path="employees" element={<AdminEmployees />} />
           <Route path="compliance" element={<AdminCompliance />} />
           <Route path="schedule" element={<AdminSchedule />} />
+          <Route path="attendance" element={<AdminAttendance />} />
           <Route path="scoring" element={<AdminScoring />} />
           <Route path="assessments" element={<AdminAssessments />} />
           <Route path="activity" element={<PmActivityLog />} />

@@ -47,6 +47,7 @@ const TypeChip = ({ active, label, color, onClick }) => (
 function Announcements() {
   const [published, setPublished] = useState([])
   const [patients, setPatients] = useState([])
+  const [deliveryType, setDeliveryType] = useState('broadcast') // 'broadcast' or 'targeted'
   const [patientId, setPatientId] = useState('')
   const [title, setTitle] = useState('')
   const [type, setType] = useState('urgent')
@@ -79,7 +80,6 @@ function Announcements() {
 
   const toggleAudience = (v) => {
     setAudience((prev) => {
-      // "Everyone" is exclusive; picking anything else clears it and vice-versa.
       if (v === 'all') return ['all']
       const next = prev.filter((a) => a !== 'all')
       return next.includes(v) ? next.filter((a) => a !== v) : [...next, v]
@@ -96,6 +96,7 @@ function Announcements() {
     setPublishDate('')
     setExpiresOn('')
     setPatientId('')
+    setDeliveryType('broadcast')
   }
 
   const toInputDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '')
@@ -111,6 +112,7 @@ function Announcements() {
     setPublishDate(toInputDate(p.publish_date))
     setExpiresOn(toInputDate(p.expires_on))
     setPatientId(p.patient_id || '')
+    setDeliveryType(p.patient_id ? 'targeted' : 'broadcast')
   }
 
   const handleSave = async () => {
@@ -119,16 +121,20 @@ function Announcements() {
       setError('Title and message body are required.')
       return
     }
+    if (deliveryType === 'targeted' && !patientId) {
+      setError('Please select a specific student for targeted announcement.')
+      return
+    }
     setSubmitting(true)
     const payload = {
       title,
       type,
       priority,
-      audience: audience.length ? audience : ['all'],
+      audience: deliveryType === 'targeted' ? ['all_clients'] : (audience.length ? audience : ['all']),
       body,
       publish_date: publishDate || undefined,
       expires_on: expiresOn || undefined,
-      patient_id: patientId || null,
+      patient_id: deliveryType === 'targeted' ? patientId : null,
     }
     try {
       if (editingId) {
@@ -180,8 +186,33 @@ function Announcements() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. World Down Syndrome Day"
-                  className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
+                  className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
+              </div>
+              <div>
+                <div className="text-xs font-semibold tracking-wider text-purple-700">DELIVERY TYPE</div>
+                <div className="mt-2 flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="deliveryType"
+                      checked={deliveryType === 'broadcast'}
+                      onChange={() => setDeliveryType('broadcast')}
+                      className="text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium text-slate-700">Broadcast to Groups / Roles</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="deliveryType"
+                      checked={deliveryType === 'targeted'}
+                      onChange={() => setDeliveryType('targeted')}
+                      className="text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium text-slate-700">Target specific Student / Caregiver</span>
+                  </label>
+                </div>
               </div>
               <div>
                 <div className="text-xs font-semibold tracking-wider text-purple-700">TYPE</div>
@@ -212,7 +243,7 @@ function Announcements() {
                     type="date"
                     value={publishDate}
                     onChange={(e) => setPublishDate(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
                 <div>
@@ -221,7 +252,7 @@ function Announcements() {
                     type="date"
                     value={expiresOn}
                     onChange={(e) => setExpiresOn(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
               </div>
@@ -232,41 +263,47 @@ function Announcements() {
                   onChange={(e) => setBody(e.target.value)}
                   rows={4}
                   placeholder="Type the full announcement message here…"
-                  className="mt-1 w-full rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
-              <div>
-                <div className="text-xs font-semibold tracking-wider text-purple-700">AUDIENCE</div>
-                <div className="mt-1 text-xs text-slate-500">Choose who can see this announcement.</div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                  {AUDIENCES.map((a) => (
-                    <label key={a.value} className="flex items-center gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2">
-                      <input
-                        type="checkbox"
-                        checked={audience.includes(a.value)}
-                        onChange={() => toggleAudience(a.value)}
-                      />
-                      <span>{a.label}</span>
-                    </label>
-                  ))}
+
+              {deliveryType === 'broadcast' ? (
+                <div>
+                  <div className="text-xs font-semibold tracking-wider text-purple-700">AUDIENCE</div>
+                  <div className="mt-1 text-xs text-slate-500">Choose who can see this announcement.</div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                    {AUDIENCES.map((a) => (
+                      <label key={a.value} className="flex items-center gap-2 rounded-md border border-purple-200 bg-purple-50 px-3 py-2 cursor-pointer hover:bg-purple-100/30 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={audience.includes(a.value)}
+                          onChange={() => toggleAudience(a.value)}
+                          className="rounded text-purple-600 focus:ring-purple-500"
+                        />
+                        <span>{a.label}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold tracking-wider text-purple-700">SPECIFIC STUDENT TARGETING <span className="text-slate-400">(Optional)</span></div>
-                <div className="mt-1 text-xs text-slate-500">Select a specific student if this message is only for their caregiver (targeted message).</div>
-                <select
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  className="mt-2 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                >
-                  <option value="">-- Broadcast (No specific student) --</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} (ID: {p.patient_id})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              ) : (
+                <div>
+                  <div className="text-xs font-semibold tracking-wider text-purple-700">TARGET STUDENT *</div>
+                  <div className="mt-1 text-xs text-slate-500">Select the student. The announcement will only be delivered to their caregiver.</div>
+                  <select
+                    value={patientId}
+                    onChange={(e) => setPatientId(e.target.value)}
+                    className="mt-2 h-10 w-full rounded-md border border-purple-200 bg-purple-50 px-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                  >
+                    <option value="">-- Choose student --</option>
+                    {patients.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} (ID: {p.patient_id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <div className="text-xs font-semibold tracking-wider text-purple-700">
                   ATTACH PROMOTIONAL IMAGE <span className="text-slate-400">(Optional)</span>
@@ -284,7 +321,7 @@ function Announcements() {
                   type="button"
                   onClick={handleSave}
                   disabled={submitting}
-                  className="flex-1 rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60"
+                  className="flex-1 rounded-md bg-purple-700 px-4 py-3 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-60 cursor-pointer"
                 >
                   {submitting
                     ? editingId
@@ -299,7 +336,7 @@ function Announcements() {
                     type="button"
                     onClick={resetForm}
                     disabled={submitting}
-                    className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+                    className="rounded-md border border-purple-300 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-60 cursor-pointer"
                   >
                     Cancel
                   </button>

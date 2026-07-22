@@ -205,9 +205,8 @@ router.get('/compliance', async (req, res, next) => {
     const { data: rows, error } = await supabase
       .from('waiver_submissions')
       .select(
-        'id, due_date, status, document_type_code, patient_id, patients(first_name, middle_name, last_name, patient_id), document_types(title)'
+        'id, due_date, status, document_type_code, patient_id, provisions_agreed, signature_text, signed_at, patients(first_name, middle_name, last_name, patient_id), document_types(title)'
       )
-      .in('status', ['overdue', 'pending_signature'])
       .order('due_date', { ascending: true });
     if (error) return next(error);
 
@@ -233,6 +232,9 @@ router.get('/compliance', async (req, res, next) => {
           code: r.document_type_code,
           due_date: r.due_date,
           status: r.status,
+          provisions_agreed: r.provisions_agreed,
+          signature_text: r.signature_text,
+          signed_at: r.signed_at,
         };
       }),
     });
@@ -340,21 +342,81 @@ router.get('/schedule', async (req, res, next) => {
 router.get('/documents', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
+    // 1. Fetch from 'documents'
+    const { data: rawDocs, error: rawErr } = await supabase
       .from('documents')
-      .select('id, title, document_type_code, finalized_at, patients(first_name, middle_name, last_name), document_types(title)')
+      .select('id, title, document_type_code, finalized_at, patients(first_name, middle_name, last_name, patient_id), document_types(title)')
       .order('finalized_at', { ascending: false });
-    if (error) return next(error);
 
-    res.json({
-      documents: (data || []).map((d) => ({
+    if (rawErr) return next(rawErr);
+
+    // 2. Fetch approved reports from 'assessment_reports'
+    const { data: rawReports, error: repErr } = await supabase
+      .from('assessment_reports')
+      .select('id, title, report_type, document_type_code, finalized_at, content, patients(first_name, middle_name, last_name, patient_id), document_types(title)')
+      .eq('status', 'approved')
+      .neq('report_type', 'behavioral')
+      .order('finalized_at', { ascending: false });
+
+    if (repErr) return next(repErr);
+
+    // 3. Fetch completed submissions from 'assessment_submissions'
+    const { data: rawSubs, error: subErr } = await supabase
+      .from('assessment_submissions')
+      .select('id, template_id, status, submitted_at, total_score, max_score, respondent_name, answers, domain_scores, patients(first_name, middle_name, last_name, patient_id), assessment_templates(title, document_type_code, document_types(title))')
+      .in('status', ['processed', 'scored'])
+      .order('submitted_at', { ascending: false });
+
+    if (subErr) return next(subErr);
+
+    // Normalize and combine
+    const combined = [];
+
+    (rawDocs || []).forEach((d) => {
+      combined.push({
         id: d.id,
+        sourceTable: 'documents',
         name: patientName(d.patients),
+        sid: d.patients ? d.patients.patient_id : '—',
         type: d.document_types ? d.document_types.title : d.title,
         code: d.document_type_code,
         finalized_at: d.finalized_at,
-      })),
+        details: d
+      });
     });
+
+    (rawReports || []).forEach((r) => {
+      combined.push({
+        id: r.id,
+        sourceTable: 'assessment_reports',
+        name: patientName(r.patients),
+        sid: r.patients ? r.patients.patient_id : '—',
+        type: r.title || (r.report_type === 'progress_summary' ? 'Progress Summary Report' : 'Behavioral Assessment Report'),
+        code: r.document_type_code || (r.report_type === 'progress_summary' ? 'CMPS:SE-FO-08' : 'CMPS:SE-FO-06'),
+        finalized_at: r.finalized_at,
+        details: r
+      });
+    });
+
+    (rawSubs || []).forEach((s) => {
+      const tpl = s.assessment_templates || {};
+      const docType = tpl.document_types || {};
+      combined.push({
+        id: s.id,
+        sourceTable: 'assessment_submissions',
+        name: patientName(s.patients),
+        sid: s.patients ? s.patients.patient_id : '—',
+        type: tpl.title || docType.title || 'Standardized Assessment',
+        code: tpl.document_type_code || 'CMPS:SE-FO-04',
+        finalized_at: s.submitted_at,
+        details: s
+      });
+    });
+
+    // Sort combined list by finalized_at descending
+    combined.sort((a, b) => new Date(b.finalized_at) - new Date(a.finalized_at));
+
+    res.json({ documents: combined });
   } catch (err) {
     next(err);
   }
@@ -1054,7 +1116,12 @@ router.get('/patients/:id', async (req, res, next) => {
 router.get('/assessments', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const [{ data: templates, error: tErr }, { data: requests, error: rErr }] = await Promise.all([
+    const [
+      { data: templates, error: tErr },
+      { data: requests, error: rErr },
+      { data: permissions, error: pErr },
+      { data: patients, error: ptErr }
+    ] = await Promise.all([
       supabase
         .from('assessment_templates')
         .select('id, title, document_type_code, est_minutes, is_active, document_types(description)')
@@ -1065,9 +1132,22 @@ router.get('/assessments', async (req, res, next) => {
         .eq('clinic_id', req.profile.clinic_id)
         .eq('status', 'pending')
         .order('created_at', { ascending: true }),
+      supabase
+        .from('assessment_permissions')
+        .select('id, patient_id, template_id, status, requested_by_id, granted_by_id')
+        .eq('clinic_id', req.profile.clinic_id),
+      supabase
+        .from('patients')
+        .select('id, patient_id, first_name, middle_name, last_name')
+        .eq('clinic_id', req.profile.clinic_id)
+        .order('last_name', { ascending: true })
     ]);
+
     if (tErr) return next(tErr);
     if (rErr) return next(rErr);
+    if (pErr) return next(pErr);
+    if (ptErr) return next(ptErr);
+
     res.json({
       templates: (templates || []).map((t) => ({
         id: t.id,
@@ -1085,6 +1165,12 @@ router.get('/assessments', async (req, res, next) => {
         requestedBy: r.requested_by ? r.requested_by.display_name : 'A professional',
         createdAt: r.created_at,
       })),
+      permissions: permissions || [],
+      patients: (patients || []).map((p) => ({
+        id: p.id,
+        patient_id: p.patient_id,
+        name: `${p.first_name} ${p.last_name}`
+      }))
     });
   } catch (err) {
     next(err);
@@ -1193,6 +1279,369 @@ router.post('/users/:id/change-password', async (req, res, next) => {
     }
     
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get a specific student's attendance & session form for a month_year
+// Get aggregated attendance statistics for the admin dashboard
+router.get('/attendance-stats', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: attendanceLogs, error: attErr } = await supabase
+      .from('student_attendance_records')
+      .select(`
+        id,
+        date,
+        status,
+        time_in,
+        time_out,
+        remarks,
+        student_attendance_session_forms (
+          month_year,
+          program_enrolled,
+          patient_id,
+          patients (
+            first_name,
+            last_name,
+            patient_id
+          )
+        )
+      `)
+      .order('date', { ascending: false });
+
+    if (attErr) return next(attErr);
+
+    let total = 0;
+    let present = 0;
+    let absent = 0;
+    let excused = 0;
+    const studentBreakdown = {};
+
+    (attendanceLogs || []).forEach((row) => {
+      total++;
+      if (row.status === 'Present') present++;
+      else if (row.status === 'Absent') absent++;
+      else if (row.status === 'Excused') excused++;
+
+      const form = row.student_attendance_session_forms;
+      if (form && form.patients) {
+        const studentId = form.patient_id;
+        const studentName = `${form.patients.first_name} ${form.patients.last_name}`;
+        if (!studentBreakdown[studentId]) {
+          studentBreakdown[studentId] = {
+            id: studentId,
+            sid: form.patients.patient_id,
+            name: studentName,
+            program: form.program_enrolled,
+            total: 0,
+            present: 0,
+            absent: 0,
+            excused: 0
+          };
+        }
+        studentBreakdown[studentId].total++;
+        if (row.status === 'Present') studentBreakdown[studentId].present++;
+        else if (row.status === 'Absent') studentBreakdown[studentId].absent++;
+        else if (row.status === 'Excused') studentBreakdown[studentId].excused++;
+      }
+    });
+
+    res.json({
+      summary: {
+        total,
+        present,
+        absent,
+        excused,
+        presentRate: total > 0 ? Math.round((present / total) * 100) : 100
+      },
+      students: Object.values(studentBreakdown),
+      recentLogs: (attendanceLogs || []).map((row) => {
+        const form = row.student_attendance_session_forms;
+        return {
+          id: row.id,
+          date: row.date,
+          status: row.status,
+          timeIn: row.time_in,
+          timeOut: row.time_out,
+          remarks: row.remarks,
+          studentName: form && form.patients ? `${form.patients.first_name} ${form.patients.last_name}` : 'Unknown Student',
+          patientId: form ? form.patient_id : null,
+          program: form ? form.program_enrolled : ''
+        };
+      })
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/attendance-session-forms', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, month_year } = req.query || {};
+    if (!patient_id || !month_year) {
+      return res.status(400).json({ error: 'patient_id and month_year are required' });
+    }
+
+    // 1. Fetch form header
+    const { data: form, error: formErr } = await supabase
+      .from('student_attendance_session_forms')
+      .select('*')
+      .eq('patient_id', patient_id)
+      .eq('month_year', month_year)
+      .maybeSingle();
+
+    if (formErr) return next(formErr);
+
+    if (!form) {
+      return res.json({ form: null, attendance: [], sessions: [] });
+    }
+
+    // 2. Fetch attendance rows
+    const { data: attendance, error: attErr } = await supabase
+      .from('student_attendance_records')
+      .select('*')
+      .eq('form_id', form.id)
+      .order('date', { ascending: true });
+
+    if (attErr) return next(attErr);
+
+    // 3. Fetch session rows
+    const { data: sessions, error: sessErr } = await supabase
+      .from('student_session_records')
+      .select('*')
+      .eq('form_id', form.id)
+      .order('date', { ascending: true });
+
+    if (sessErr) return next(sessErr);
+
+    res.json({ form, attendance, sessions });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Create or update a student's attendance & session form (FO-11)
+router.post('/attendance-session-forms', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, month_year, program_enrolled, facilitator_signature, signoff_date, additional_notes, attendance = [], sessions = [] } = req.body || {};
+
+    if (!patient_id || !month_year) {
+      return res.status(400).json({ error: 'patient_id and month_year are required' });
+    }
+
+    // 1. Upsert form header
+    const { data: existingForm } = await supabase
+      .from('student_attendance_session_forms')
+      .select('id')
+      .eq('patient_id', patient_id)
+      .eq('month_year', month_year)
+      .maybeSingle();
+
+    let formId;
+    if (existingForm) {
+      formId = existingForm.id;
+      const { error: updateErr } = await supabase
+        .from('student_attendance_session_forms')
+        .update({
+          program_enrolled,
+          facilitator_signature,
+          signoff_date: signoff_date || new Date().toISOString().slice(0, 10),
+          additional_notes,
+          created_by: req.profile.id
+        })
+        .eq('id', formId);
+      if (updateErr) return next(updateErr);
+    } else {
+      const { data: newForm, error: insertErr } = await supabase
+        .from('student_attendance_session_forms')
+        .insert({
+          patient_id,
+          month_year,
+          program_enrolled,
+          facilitator_signature,
+          signoff_date: signoff_date || new Date().toISOString().slice(0, 10),
+          additional_notes,
+          created_by: req.profile.id
+        })
+        .select('id')
+        .single();
+      if (insertErr) return next(insertErr);
+      formId = newForm.id;
+    }
+
+    // 2. Sync attendance rows
+    const { error: delAttErr } = await supabase
+      .from('student_attendance_records')
+      .delete()
+      .eq('form_id', formId);
+    if (delAttErr) return next(delAttErr);
+
+    if (attendance.length > 0) {
+      const { error: insAttErr } = await supabase
+        .from('student_attendance_records')
+        .insert(attendance.map((r) => ({
+          form_id: formId,
+          date: r.date,
+          status: r.status,
+          time_in: r.time_in || r.timeIn || null,
+          time_out: r.time_out || r.timeOut || null,
+          remarks: r.remarks || null
+        })));
+      if (insAttErr) return next(insAttErr);
+    }
+
+    // 3. Sync session rows
+    const { error: delSessErr } = await supabase
+      .from('student_session_records')
+      .delete()
+      .eq('form_id', formId);
+    if (delSessErr) return next(delSessErr);
+
+    if (sessions.length > 0) {
+      const { error: insSessErr } = await supabase
+        .from('student_session_records')
+        .insert(sessions.map((r) => ({
+          form_id: formId,
+          date: r.date,
+          domain: r.domain || null,
+          activity: r.activity || null,
+          assistance: r.assistance || null,
+          prompts: r.prompts || null,
+          cues: r.cues || null,
+          prodding: r.prodding || null,
+          notes: r.notes || null
+        })));
+      if (insSessErr) return next(insSessErr);
+    }
+
+    res.status(200).json({ success: true, formId });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get pending patient assessment permissions
+router.get('/assessment-permissions/pending', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: rows, error } = await supabase
+      .from('assessment_permissions')
+      .select('id, patient_id, template_id, status, requested_by_id, patients(first_name, last_name, patient_id), assessment_templates(title), requested_by:requested_by_id(display_name)')
+      .eq('clinic_id', req.profile.clinic_id)
+      .eq('status', 'pending');
+
+    if (error) return next(error);
+
+    res.json({
+      requests: (rows || []).map((r) => ({
+        id: r.id,
+        patientName: r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : 'Unknown Student',
+        sid: r.patients ? r.patients.patient_id : '—',
+        templateTitle: r.assessment_templates ? r.assessment_templates.title : '—',
+        requestedBy: r.requested_by ? r.requested_by.display_name : 'MHP',
+        patient_id: r.patient_id,
+        template_id: r.template_id
+      }))
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Approve or deny a patient assessment permission request
+router.patch('/assessment-permissions/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { status } = req.body || {}; // 'granted' or 'none'
+    if (!['granted', 'none'].includes(status)) {
+      return res.status(400).json({ error: 'status must be granted or none' });
+    }
+
+    const { data: perm } = await supabase
+      .from('assessment_permissions')
+      .select('id, clinic_id, patient_id, template_id, requested_by_id')
+      .eq('id', req.params.id)
+      .maybeSingle();
+
+    if (!perm || perm.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Permission request not found' });
+    }
+
+    const { error } = await supabase
+      .from('assessment_permissions')
+      .update({
+        status,
+        granted_by_id: status === 'granted' ? req.profile.id : null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', perm.id);
+
+    if (error) return next(error);
+
+    if (status === 'granted') {
+      await supabase
+        .from('assessment_assignments')
+        .insert({
+          patient_id: perm.patient_id,
+          template_id: perm.template_id,
+          assigned_by_id: perm.requested_by_id,
+          status: 'assigned',
+          due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Direct Grant or Revoke patient assessment permission (also resolves pending requests)
+router.post('/assessment-permissions/grant', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, template_id, status } = req.body || {}; // status: 'granted' or 'none'
+    if (!patient_id || !template_id || !status) {
+      return res.status(400).json({ error: 'patient_id, template_id and status are required' });
+    }
+    if (!['granted', 'none'].includes(status)) {
+      return res.status(400).json({ error: 'status must be granted or none' });
+    }
+
+    // Upsert the permission row
+    const { data: perm, error } = await supabase
+      .from('assessment_permissions')
+      .upsert({
+        clinic_id: req.profile.clinic_id,
+        patient_id,
+        template_id,
+        status,
+        granted_by_id: status === 'granted' ? req.profile.id : null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'clinic_id,patient_id,template_id' })
+      .select('*')
+      .single();
+
+    if (error) return next(error);
+
+    // If granted, create an assignment automatically!
+    if (status === 'granted') {
+      await supabase
+        .from('assessment_assignments')
+        .insert({
+          patient_id,
+          template_id,
+          assigned_by_id: req.profile.id,
+          status: 'assigned',
+          due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), // 14 days due date
+        });
+    }
+
+    res.json({ ok: true, permission: perm });
   } catch (err) {
     next(err);
   }

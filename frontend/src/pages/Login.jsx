@@ -213,10 +213,10 @@ function Login() {
             </div>
 
             <Input
-              label="Email address"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
+              label="Email address or Account Number/ID"
+              type="text"
+              autoComplete="username"
+              placeholder="you@example.com or CMPS-XXXX-XXX"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

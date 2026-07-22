@@ -78,7 +78,51 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const { data, error } = await authClient.auth.signInWithPassword({ email, password });
+    let loginEmail = email;
+    if (!email.includes('@')) {
+      const lookupId = email.trim().toUpperCase();
+      // Try resolving as student/patient ID
+      const { data: patientData } = await supabase
+        .from('patients')
+        .select('caregiver_id')
+        .eq('patient_id', lookupId)
+        .maybeSingle();
+
+      if (patientData && patientData.caregiver_id) {
+        const { data: caregiverProfile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', patientData.caregiver_id)
+          .maybeSingle();
+        if (caregiverProfile && caregiverProfile.email) {
+          loginEmail = caregiverProfile.email;
+        }
+      } else {
+        // Try resolving as employee ID
+        const { data: adminData } = await supabase
+          .from('admin_profiles')
+          .select('profile_id')
+          .eq('employee_id', lookupId)
+          .maybeSingle();
+
+        if (adminData && adminData.profile_id) {
+          const { data: employeeProfile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', adminData.profile_id)
+            .maybeSingle();
+          if (employeeProfile && employeeProfile.email) {
+            loginEmail = employeeProfile.email;
+          }
+        }
+      }
+
+      if (loginEmail === email) {
+        return res.status(401).json({ error: 'Invalid Account Number or ID.' });
+      }
+    }
+
+    const { data, error } = await authClient.auth.signInWithPassword({ email: loginEmail, password });
     if (error) {
       return res.status(401).json({ error: error.message });
     }

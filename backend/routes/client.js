@@ -296,8 +296,9 @@ router.get('/home', requireAuth, requireClient, async (req, res, next) => {
         : null,
       announcements: (announcements || [])
         .filter((a) => {
+          if (a.patient_id === patient.id) return true;
           const aud = a.audience || [];
-          return aud.length === 0 || aud.includes('client') || aud.includes('public');
+          return aud.length === 0 || aud.includes('all') || aud.includes('all_clients') || aud.includes('client') || aud.includes('public');
         })
         .slice(0, 3),
     });
@@ -320,7 +321,7 @@ router.get('/activity-logs', requireAuth, requireClient, async (req, res, next) 
       .order('log_date', { ascending: false });
     if (error) return next(error);
     const series = (data || []).slice(0, 7).slice().reverse().map((l) => ({ date: l.log_date, score: MOOD_SCORE[l.mood] || 0 }));
-    res.json({ logs: data || [], moodSeries: series });
+    res.json({ logs: data || [], moodSeries: series, allow_journal_entry: Boolean(patient.allow_journal_entry) });
   } catch (err) {
     next(err);
   }
@@ -331,6 +332,11 @@ router.post('/activity-logs', requireAuth, requireClient, async (req, res, next)
   try {
     const patient = await requirePatient(req, res);
     if (!patient) return;
+
+    if (!patient.allow_journal_entry) {
+      return res.status(403).json({ error: 'Journal entries for this student are locked. Permission from your supervising Psychologist is required before submitting.' });
+    }
+
     const { mood, task_completion, behavioral_episodes, sleep_quality, appetite, observations, log_date } = req.body || {};
     if (!mood) return res.status(400).json({ error: 'Mood is required' });
     const { data, error } = await supabase
@@ -363,6 +369,11 @@ router.delete('/activity-logs/:id', requireAuth, requireClient, async (req, res,
   try {
     const patient = await requirePatient(req, res);
     if (!patient) return;
+
+    if (!patient.allow_journal_entry) {
+      return res.status(403).json({ error: 'Journal editing for this student is locked. Permission from your supervising Psychologist is required.' });
+    }
+
     const { data, error } = await supabase
       .from('daily_activity_logs')
       .delete()
@@ -431,8 +442,9 @@ router.get('/announcements', requireAuth, requireClient, async (req, res, next) 
       .order('publish_date', { ascending: false });
     if (error) return next(error);
     const all = (data || []).filter((a) => {
+      if (a.patient_id === patient.id) return true;
       const aud = a.audience || [];
-      return aud.length === 0 || aud.includes('client') || aud.includes('public');
+      return aud.length === 0 || aud.includes('all') || aud.includes('all_clients') || aud.includes('client') || aud.includes('public');
     });
     res.json({
       messages: all.filter((a) => a.type !== 'event'),
@@ -469,6 +481,24 @@ router.get('/waivers', requireAuth, requireClient, async (req, res, next) => {
         status: statusByCode[t.code] || 'not_started',
       })),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/waivers/:code', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const patient = await requirePatient(req, res);
+    if (!patient) return;
+    const { data, error } = await supabase
+      .from('waiver_submissions')
+      .select('*')
+      .eq('patient_id', patient.id)
+      .eq('document_type_code', req.params.code)
+      .maybeSingle();
+    if (error) return next(error);
+    res.json({ submission: data });
   } catch (err) {
     next(err);
   }
@@ -555,6 +585,63 @@ router.get('/assessments', requireAuth, requireClient, async (req, res, next) =>
         };
       }),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Submit an assessment questionnaire as a caregiver/client
+router.post('/assessments/:templateId/submit', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const patient = await requirePatient(req, res);
+    if (!patient) return;
+    const { answers = {}, domain_scores = {}, total_score, max_score } = req.body || {};
+    
+    const { data, error } = await supabase
+      .from('assessment_submissions')
+      .insert({
+        patient_id: patient.id,
+        template_id: req.params.templateId,
+        respondent_profile_id: req.profile.id,
+        respondent_name: req.profile.display_name,
+        respondent_relationship: 'Parent / Caregiver',
+        answers,
+        domain_scores,
+        total_score: total_score ?? null,
+        max_score: max_score ?? null,
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+      })
+      .select('id, status')
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+
+    await supabase
+      .from('assessment_assignments')
+      .update({ status: 'submitted' })
+      .eq('patient_id', patient.id)
+      .eq('template_id', req.params.templateId)
+      .in('status', ['assigned', 'in_progress']);
+
+    res.status(201).json({ submission: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get a specific assessment template definition for caregiver
+router.get('/assessments/templates/:templateId', requireAuth, requireClient, async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { data: template, error } = await supabase
+      .from('assessment_templates')
+      .select('id, title, document_type_code, structure, max_score')
+      .eq('id', req.params.templateId)
+      .maybeSingle();
+    if (error) return next(error);
+    if (!template) return res.status(404).json({ error: 'Assessment not found' });
+    res.json({ template });
   } catch (err) {
     next(err);
   }

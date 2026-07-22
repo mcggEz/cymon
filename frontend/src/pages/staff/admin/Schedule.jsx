@@ -4,7 +4,6 @@ import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import Modal from '../../../components/ui/Modal'
 import SearchBar from '../../../components/ui/SearchBar'
 import { api } from '../../../lib/api'
-import AttendanceSessionForm from './AttendanceSessionForm'
 
 const SESSION_LABEL = {
   mmse: 'MMSE',
@@ -182,7 +181,6 @@ function BookModal({ patients, practitioners, onClose, onBooked }) {
 
 function Schedule() {
   const [open, setOpen] = useState(false)
-  const [openAttendanceForm, setOpenAttendanceForm] = useState(false)
   const [appts, setAppts] = useState([])
   const [loading, setLoading] = useState(true)
   const [cursor, setCursor] = useState(() => {
@@ -269,9 +267,12 @@ function Schedule() {
     .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
     .map((a) => ({
       id: a.id,
+      patient_id: a.patient_id,
+      starts_at: a.starts_at,
       time: timeOf(a.starts_at),
       name: a.patient,
       detail: `${a.practitioner} · ${SESSION_LABEL[a.session_type] || a.session_type}`,
+      session_type: a.session_type,
       location: a.location,
       notes: a.notes,
     }))
@@ -295,12 +296,6 @@ function Schedule() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-purple-800">Clinic Master Schedule</h1>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setOpenAttendanceForm(true)}
-              className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
-            >
-              Open Attendance & Session Record
-            </button>
             <button
               onClick={() => setOpen(true)}
               className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800"
@@ -443,11 +438,13 @@ function Schedule() {
                         <div className="text-xs text-slate-500 leading-normal">
                           {u.detail}
                         </div>
-                        {u.location ? (
-                          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
-                            📍 {u.location}
-                          </div>
-                        ) : null}
+                        <div className="mt-2 flex items-center justify-between">
+                          {u.location ? (
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                              📍 {u.location}
+                            </div>
+                          ) : <div />}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -465,9 +462,6 @@ function Schedule() {
           onClose={() => setOpen(false)}
           onBooked={onBooked}
         />
-      ) : null}
-      {openAttendanceForm ? (
-        <AttendanceSessionForm onClose={() => setOpenAttendanceForm(false)} />
       ) : null}
     </>
   )

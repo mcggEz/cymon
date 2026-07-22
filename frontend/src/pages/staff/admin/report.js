@@ -5,14 +5,17 @@
 
 export function buildReport(row) {
   const name = row?.name || 'Student'
-  const dateOfReport = row?.date || 'March 28, 2026'
+  const dateOfReport = row?.finalized_at 
+    ? new Date(row.finalized_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : 'March 28, 2026'
   const initials = (row?.type || 'DOC')
     .split(/\s+/)
     .map((w) => w[0])
     .join('')
     .toUpperCase()
   const ref = `${initials}-${String(row?.id || '00000000').slice(0, 8).toUpperCase()}`
-  return {
+
+  const baseReport = {
     clinic: {
       name: 'ClearMind Psychological Services',
       unit: 'Special Education (SPED) Program',
@@ -20,30 +23,79 @@ export function buildReport(row) {
       contact: 'records@clearmind.example · (02) 8123 4567',
     },
     title: row?.type || 'Progress Summary Report',
-    code: 'CMPS:SE-FO-08',
+    code: row?.code || 'CMPS:SE-FO-08',
     meta: [
       { label: 'Student Name', value: name },
-      { label: 'Age / Sex', value: '7 / Male' },
+      { label: 'Student ID', value: row?.sid || '—' },
       { label: 'Date of Report', value: dateOfReport },
       { label: 'Reference No.', value: ref },
     ],
-    sections: [
-      {
-        heading: 'Summary of Progress',
-        body: `${name} has shown significant improvement in fine motor skills over the last three months and can now sort pegs by color with minimal prompting. Attention span during seated tasks remains a target area for the coming quarter.`,
-      },
-      {
-        heading: 'Clinical Observations',
-        body: 'The student engaged cooperatively across scheduled sessions and responded well to a structured, low-distraction environment. Transitions between activities were smoother when supported by a visual schedule.',
-      },
-      {
-        heading: 'Recommendations',
-        body: 'Continue occupational therapy twice weekly.\nImplement a visual timer for seated tasks at home and in school.\nRe-evaluate attention and behavioral goals at the next quarterly review.',
-      },
-    ],
+    sections: [],
     preparedBy: { name: 'Erika Faustino, RPm', role: 'Psychometrician' },
     reviewedBy: { name: 'Dr. Alden Cruz, RPsy', role: 'Chief Psychologist' },
   }
+
+  const details = row?.details || {}
+
+  if (row?.sourceTable === 'assessment_reports') {
+    // IEP, Progress, or Behavioral report
+    baseReport.sections = [
+      {
+        heading: 'Clinical Report Content',
+        body: details.content || 'No report contents recorded.',
+      }
+    ]
+    if (details.period) {
+      baseReport.meta.push({ label: 'Period Covered', value: details.period })
+    }
+  } else if (row?.sourceTable === 'assessment_submissions') {
+    // Standardized test submissions (MMSE, CAFAT, etc.)
+    baseReport.sections = [
+      {
+        heading: 'Assessment Results Summary',
+        body: `Standardized assessment score: ${details.total_score || 0} out of ${details.max_score || 100}.\nRespondent: ${details.respondent_name || 'Assigned Specialist'}.\nStatus: ${details.status || 'Processed'}.`,
+      }
+    ]
+
+    const domainScores = details.domain_scores || {}
+    if (Object.keys(domainScores).length > 0) {
+      const scoresText = Object.entries(domainScores)
+        .map(([k, v]) => {
+          const val = typeof v === 'object' ? `${v.score} / ${v.max}` : v
+          return `• ${k}: ${val}`
+        })
+        .join('\n')
+      baseReport.sections.push({
+        heading: 'Domain Scores Breakdown',
+        body: scoresText,
+      })
+    }
+
+    const answers = details.answers || {}
+    if (Object.keys(answers).length > 0) {
+      const answersText = Object.entries(answers)
+        .map(([k, v]) => {
+          const val = typeof v === 'object' ? v.response : v
+          const rem = typeof v === 'object' && v.remarks ? ` (${v.remarks})` : ''
+          return `${k}: ${val}${rem}`
+        })
+        .join('\n')
+      baseReport.sections.push({
+        heading: 'Standardized Responses Ledger',
+        body: answersText,
+      })
+    }
+  } else {
+    // Other clinical documents (registrations / compliance forms)
+    baseReport.sections = [
+      {
+        heading: 'Compliance Archive Summary',
+        body: `This record represents a signed compliance form or registration document (${row?.code || '—'}). It was finalized and recorded on the clinic's digital compliance vault.`,
+      }
+    ]
+  }
+
+  return baseReport
 }
 
 const esc = (s) =>

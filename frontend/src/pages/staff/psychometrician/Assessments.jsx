@@ -98,7 +98,7 @@ function Assessments() {
     return null
   }
 
-  const isPsychologist = profile?.role === 'psychologist'
+  const isPsychologist = false // Only Admin approves now
 
   return (
     <>

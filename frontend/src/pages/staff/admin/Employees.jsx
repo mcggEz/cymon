@@ -369,6 +369,38 @@ function Employees() {
   })
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
+  const handleExport = () => {
+    if (!filtered || filtered.length === 0) {
+      toast.error('No employee records to export.')
+      return
+    }
+    const headers = ['Employee ID', 'Name', 'Email', 'Phone', 'Primary Role', 'Extra Roles', 'License No', 'Title', 'Joined']
+    const csvRows = filtered.map((e) => [
+      e.employee_id || '—',
+      e.name,
+      e.email,
+      e.phone || '—',
+      ROLE_META[e.role]?.label || e.role,
+      (e.extra_roles || []).map((x) => ROLE_META[x]?.label || x).join('; '),
+      e.license_no || '—',
+      e.staff_title || '—',
+      fmtDate(e.created_at),
+    ])
+    const csvContent = [headers, ...csvRows]
+      .map((row) => row.map((val) => `"${String(val || '').replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `employees_export_${new Date().toISOString().slice(0, 10)}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <>
       <StaffHeader title="Employees" />
@@ -527,6 +559,12 @@ function Employees() {
                 </option>
               ))}
             </select>
+            <button
+              onClick={handleExport}
+              className="rounded-md border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
+            >
+              Export List
+            </button>
           </div>
         </section>
 

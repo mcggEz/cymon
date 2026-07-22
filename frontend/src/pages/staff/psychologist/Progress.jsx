@@ -177,7 +177,6 @@ function Progress() {
                         <thead>
                           <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100">
                             <th className="py-2.5 px-3 text-left">Period</th>
-                            <th className="py-2.5 px-3 text-left">Trend</th>
                             <th className="py-2.5 px-3 text-left">Status</th>
                             <th className="py-2.5 px-3 text-left">Action</th>
                           </tr>
@@ -185,29 +184,17 @@ function Progress() {
                         <tbody className="divide-y divide-purple-50/40">
                           {patientReports.length === 0 ? (
                             <tr>
-                              <td colSpan={4} className="py-8 text-center text-xs text-slate-400">
+                              <td colSpan={3} className="py-8 text-center text-xs text-slate-400">
                                 No monthly progress reports recorded for this student yet.
                               </td>
                             </tr>
                           ) : (
                             patientReports.map((report) => {
                               const meta = STATUS_META[report.status] || STATUS_META.draft
-                              const trendTone = report.trend && report.trend.toLowerCase().includes('improv') ? 'emerald' : 'amber'
                               return (
                                 <tr key={report.id} className="hover:bg-purple-50/20 transition-colors">
                                   <td className="py-3 px-3 text-slate-800 font-semibold">
                                     {report.period || '—'}
-                                  </td>
-                                  <td className="py-3 px-3 text-slate-600 text-xs">
-                                    {report.trend ? (
-                                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                                        trendTone === 'emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                                      }`}>
-                                        {report.trend}
-                                      </span>
-                                    ) : (
-                                      '—'
-                                    )}
                                   </td>
                                   <td className="py-3 px-3">
                                     <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone[meta.tone].split(' ')[0]} ${tone[meta.tone].split(' ')[1]}`}>

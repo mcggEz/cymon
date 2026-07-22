@@ -36,6 +36,7 @@ router.get('/approvals', async (req, res, next) => {
       .from('assessment_reports')
       .select('id, patient_id, title, document_type_code, report_type, priority, created_at, patients(id, first_name, middle_name, last_name, clinic_id)')
       .eq('status', 'ready_for_review')
+      .neq('report_type', 'behavioral')
       .order('created_at', { ascending: false });
     if (error) return next(error);
 
@@ -154,12 +155,34 @@ router.post('/assessments/grant-permission', async (req, res, next) => {
   }
 });
 
+router.patch('/journal-permission', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, allow_journal_entry } = req.body || {};
+    if (!patient_id || typeof allow_journal_entry !== 'boolean') {
+      return res.status(400).json({ error: 'patient_id and allow_journal_entry boolean are required' });
+    }
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ allow_journal_entry })
+      .eq('id', patient_id)
+      .eq('clinic_id', req.profile.clinic_id)
+      .select('id, patient_id, first_name, last_name, allow_journal_entry')
+      .maybeSingle();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Patient not found' });
+    res.json({ patient: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/roster', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
     const { data, error } = await supabase
       .from('patients')
-      .select('id, first_name, middle_name, last_name, clinical_profiles(support_level, milestone_progress, chief_complaint, working_diagnosis, updated_at)')
+      .select('id, first_name, middle_name, last_name, allow_journal_entry, clinical_profiles(support_level, milestone_progress, chief_complaint, working_diagnosis, updated_at)')
       .eq('clinic_id', req.profile.clinic_id)
       .is('deleted_at', null)
       .order('first_name', { ascending: true });
@@ -170,6 +193,7 @@ router.get('/roster', async (req, res, next) => {
         return {
           id: p.id,
           name: patientName(p),
+          allow_journal_entry: p.allow_journal_entry || false,
           level: cp.support_level || '—',
           progress: cp.milestone_progress || 0,
           chief_complaint: cp.chief_complaint || '',
@@ -186,11 +210,11 @@ router.get('/roster', async (req, res, next) => {
 async function clinicPatients(clinicId) {
   const { data } = await supabase
     .from('patients')
-    .select('id, first_name, middle_name, last_name')
+    .select('id, first_name, middle_name, last_name, allow_journal_entry')
     .eq('clinic_id', clinicId)
     .is('deleted_at', null)
     .order('first_name', { ascending: true });
-  return (data || []).map((p) => ({ id: p.id, name: patientName(p) }));
+  return (data || []).map((p) => ({ id: p.id, name: patientName(p), allow_journal_entry: p.allow_journal_entry || false }));
 }
 
 router.get('/mainstreaming', async (req, res, next) => {
@@ -404,6 +428,9 @@ router.post('/progress', async (req, res, next) => {
 router.patch('/reports/:id', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
+    if (req.profile.role !== 'psychologist') {
+      return res.status(403).json({ error: 'Only psychologists are allowed to sign or approve finalized reports.' });
+    }
     const { status } = req.body || {};
     if (!['approved', 'revise_requested'].includes(status)) {
       return res.status(400).json({ error: 'A psychologist can approve or request a revision' });

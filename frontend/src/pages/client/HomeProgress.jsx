@@ -14,17 +14,6 @@ const SESSION_LABEL = {
   parent_consultation: 'Parent Consultation',
 }
 
-const StatCard = ({ value, label, sub, loading = false }) => (
-  <div className="rounded-2xl bg-white p-5 shadow-sm">
-    {loading ? (
-      <Skeleton className="h-8 w-16" />
-    ) : (
-      <div className="text-3xl font-bold text-purple-800">{value}</div>
-    )}
-    <div className="mt-1 text-sm font-medium text-slate-700">{label}</div>
-    {sub ? <div className="mt-0.5 text-xs text-slate-500">{sub}</div> : null}
-  </div>
-)
 
 
 const formatDateStr = (dateStr) => {
@@ -193,7 +182,25 @@ function HomeProgress() {
       <div className="flex-1 overflow-y-auto p-6">
 
         <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <StatCard loading={loading} value={nextDt ? fmtDate(next.starts_at) : '—'} label="Next Appointment" />
+          <Link to="/client/assessments">
+            <div className="rounded-2xl bg-white p-5 shadow-sm border border-transparent hover:border-purple-300 transition-colors cursor-pointer flex justify-between items-center group">
+              <div>
+                {loading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <div className="text-2xl font-bold text-purple-800">
+                    {data?.stats?.assignedAssessments ?? 0}
+                  </div>
+                )}
+                <div className="mt-1 text-sm font-medium text-slate-700">Pending Assessments</div>
+              </div>
+              <div className="h-10 w-10 rounded-full flex items-center justify-center bg-purple-100 text-purple-700">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+            </div>
+          </Link>
           <Link to="/client/activity">
             <div className="rounded-2xl bg-white p-5 shadow-sm border border-transparent hover:border-purple-300 transition-colors cursor-pointer flex justify-between items-center group">
               <div>

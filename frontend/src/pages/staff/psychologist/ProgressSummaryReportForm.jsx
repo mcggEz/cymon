@@ -31,7 +31,6 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = n
   const [rows, setRows] = useState(() => [emptyRow(), emptyRow(), emptyRow()])
   const [patientId, setPatientId] = useState(() => detail?.patient_id || initialPatientId || '')
   const [period, setPeriod] = useState(() => detail?.period || initialPeriod || '')
-  const [trend, setTrend] = useState(() => detail?.trend || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -48,7 +47,6 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = n
         patient_id: patientId,
         title: 'Monthly Progress Summary',
         period,
-        trend,
       })
       onSaved?.()
       onClose()
@@ -67,18 +65,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = n
   const actions = (
     <div>
       {error ? <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-[12.5px] text-red-700">{error}</div> : null}
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-        <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-purple-800">
-            Trend (optional)
-          </label>
-          <input
-            className={blankInput}
-            value={trend}
-            onChange={(e) => setTrend(e.target.value)}
-            placeholder="e.g. Improving"
-          />
-        </div>
+      <div className="flex justify-end">
         <button
           onClick={save}
           disabled={saving}
