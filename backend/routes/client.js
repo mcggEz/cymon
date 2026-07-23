@@ -468,19 +468,21 @@ router.get('/waivers', requireAuth, requireClient, async (req, res, next) => {
         .select('code, title, description, category')
         .in('category', ['admission', 'waiver'])
         .order('code', { ascending: true }),
-      supabase.from('waiver_submissions').select('document_type_code, status').eq('patient_id', patient.id),
+      supabase.from('waiver_submissions').select('document_type_code, status, due_date').eq('patient_id', patient.id),
     ]);
     if (error) return next(error);
-    const statusByCode = Object.fromEntries((subs || []).map((s) => [s.document_type_code, s.status]));
-    res.json({
-      forms: (types || []).map((t) => ({
+    const submissionByCode = Object.fromEntries((subs || []).map((s) => [s.document_type_code, s]));
+    const activeForms = (types || [])
+      .filter((t) => submissionByCode[t.code] !== undefined)
+      .map((t) => ({
         code: t.code,
         title: t.title,
         description: t.description,
         category: t.category,
-        status: statusByCode[t.code] || 'not_started',
-      })),
-    });
+        status: submissionByCode[t.code].status,
+        due_date: submissionByCode[t.code].due_date || null,
+      }));
+    res.json({ forms: activeForms });
   } catch (err) {
     next(err);
   }

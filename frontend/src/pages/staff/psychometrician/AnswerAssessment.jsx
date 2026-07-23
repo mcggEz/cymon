@@ -57,7 +57,7 @@ function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
 // The psychometrician administers a template-driven assessment for a chosen
 // patient, records Yes/No responses + remarks, and submits the scored result
 // (which then surfaces in Data Review). Opened as an overlay from Assessments.
-function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTemplateId, onClose }) {
+function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTemplateId, isClient = false, prefilledPatientName = '', prefilledTemplateName = '', onClose }) {
   const [patientId, setPatientId] = useState(prefilledPatientId || '')
   const [templateId, setTemplateId] = useState(prefilledTemplateId || '')
   const [template, setTemplate] = useState(null)
@@ -79,7 +79,9 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
     if (!id) return
     setLoadingTpl(true)
     try {
-      const d = await api.psychometrician.assessmentTemplate(id)
+      const d = isClient 
+        ? await api.client.assessmentTemplate(id)
+        : await api.psychometrician.assessmentTemplate(id)
       setTemplate(d.template)
     } catch (e) {
       setError(e.message)
@@ -112,7 +114,7 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
 
   const submit = async () => {
     setError(null)
-    if (!patientId) {
+    if (!isClient && !patientId) {
       setError('Select a patient first.')
       return
     }
@@ -129,13 +131,22 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
         const score = d.items.filter((it) => answers[it.key] === 'yes').length
         domain_scores[d.key] = { score, max: d.items.length }
       }
-      await api.psychometrician.submitAssessment(templateId, {
-        patient_id: patientId,
-        answers: answersPayload,
-        domain_scores,
-        total_score: total,
-        max_score: max,
-      })
+      if (isClient) {
+        await api.client.submitAssessment(templateId, {
+          answers: answersPayload,
+          domain_scores,
+          total_score: total,
+          max_score: max,
+        })
+      } else {
+        await api.psychometrician.submitAssessment(templateId, {
+          patient_id: patientId,
+          answers: answersPayload,
+          domain_scores,
+          total_score: total,
+          max_score: max,
+        })
+      }
       setDone(true)
     } catch (e) {
       setError(e.message)
@@ -176,26 +187,38 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
           <div className="mx-auto max-w-3xl">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={labelClass}>Patient</label>
-                <select className={selectClass} value={patientId} onChange={(e) => setPatientId(e.target.value)} disabled={!!prefilledPatientId}>
-                  <option value="">Select patient</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                <label className={labelClass}>{isClient ? 'Student' : 'Patient'}</label>
+                {isClient ? (
+                  <div className="mt-1 flex h-10 items-center rounded-md border border-purple-200 bg-purple-50 px-3 text-sm font-semibold text-purple-900">
+                    {prefilledPatientName || 'Your Child'}
+                  </div>
+                ) : (
+                  <select className={selectClass} value={patientId} onChange={(e) => setPatientId(e.target.value)} disabled={!!prefilledPatientId}>
+                    <option value="">Select patient</option>
+                    {patients.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Assessment</label>
-                <select className={selectClass} value={templateId} onChange={(e) => pickTemplate(e.target.value)} disabled={!!prefilledTemplateId}>
-                  <option value="">Select assessment</option>
-                  {activeTests.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.title}
-                    </option>
-                  ))}
-                </select>
+                {isClient ? (
+                  <div className="mt-1 flex h-10 items-center rounded-md border border-purple-200 bg-purple-50 px-3 text-sm font-semibold text-purple-900">
+                    {prefilledTemplateName || template?.title || 'Caregiver Checklist'}
+                  </div>
+                ) : (
+                  <select className={selectClass} value={templateId} onChange={(e) => pickTemplate(e.target.value)} disabled={!!prefilledTemplateId}>
+                    <option value="">Select assessment</option>
+                    {activeTests.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
 

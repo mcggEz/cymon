@@ -106,6 +106,36 @@ function Signatory({ role, name, title }) {
   )
 }
 
+function WeekTable({ week }) {
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full border-collapse">
+        <colgroup>
+          <col className="w-10" />
+          <col className="w-40" />
+          <col className="w-32" />
+          <col />
+          <col />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th className={th}>Week</th>
+            <th className={th}>Level of Needs</th>
+            <th className={th}>Targeted Domains</th>
+            <th className={th}>Name of Activity</th>
+            <th className={th}>Objectives</th>
+            <th className={th}>Instructional Materials Needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <WeekBlock week={week} />
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function SpedIepForm({ onClose }) {
   return (
     <FormShell
@@ -114,89 +144,72 @@ function SpedIepForm({ onClose }) {
       code="CMPS:SE-FO-10 rev.0 03182026"
       confidential={false}
       onClose={onClose}
+      multiPage={true}
     >
-      <table className="w-full border-collapse">
-        <tbody>
-          <tr>
-            <td className={infoLabel}>Date</td>
-            <td className={infoCell} colSpan={3}>
-              <input className={cellInput} />
-            </td>
-          </tr>
-          <tr>
-            <td className={infoLabel}>Full Name of Student</td>
-            <td className={infoCell}>
-              <input className={cellInput} />
-            </td>
-            <td className={infoLabel}>Diagnosis</td>
-            <td className={infoCell}>
-              <input className={cellInput} />
-            </td>
-          </tr>
-          <tr>
-            <td className={infoLabel}>Age/Sex</td>
-            <td className={infoCell}>
-              <input className={cellInput} />
-            </td>
-            <td className={infoLabel}>Date of Birth</td>
-            <td className={infoCell}>
-              <input className={cellInput} />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div className="mt-4 overflow-x-auto">
+      <div className="space-y-4">
         <table className="w-full border-collapse">
-          <colgroup>
-            <col className="w-10" />
-            <col className="w-40" />
-            <col className="w-32" />
-            <col />
-            <col />
-            <col />
-          </colgroup>
-          <thead>
-            <tr>
-              <th className={th}>Week</th>
-              <th className={th}>Level of Needs</th>
-              <th className={th}>Targeted Domains</th>
-              <th className={th}>Name of Activity</th>
-              <th className={th}>Objectives</th>
-              <th className={th}>Instructional Materials Needed</th>
-            </tr>
-          </thead>
           <tbody>
-            {WEEKS.map((week) => (
-              <WeekBlock key={week} week={week} />
-            ))}
+            <tr>
+              <td className={infoLabel}>Date</td>
+              <td className={infoCell} colSpan={3}>
+                <input className={cellInput} />
+              </td>
+            </tr>
+            <tr>
+              <td className={infoLabel}>Full Name of Student</td>
+              <td className={infoCell}>
+                <input className={cellInput} />
+              </td>
+              <td className={infoLabel}>Diagnosis</td>
+              <td className={infoCell}>
+                <input className={cellInput} />
+              </td>
+            </tr>
+            <tr>
+              <td className={infoLabel}>Age/Sex</td>
+              <td className={infoCell}>
+                <input className={cellInput} />
+              </td>
+              <td className={infoLabel}>Date of Birth</td>
+              <td className={infoCell}>
+                <input className={cellInput} />
+              </td>
+            </tr>
           </tbody>
         </table>
+
+        <WeekTable week={1} />
+        <WeekTable week={2} />
       </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-collapse">
-          <tbody>
-            <tr>
-              <Signatory role="Prepared by:" title="Behavioral Technician" />
-              <Signatory
-                role="Checked by:"
-                name="MARWIN A. GILBERO JR, RPm, CHRA"
-                title="SPED Program Coordinator"
-              />
-              <Signatory
-                role="Verified by:"
-                name="LEERA MAE C. GUEVARRA, RPm, CHRA"
-                title="Learning Head"
-              />
-              <Signatory
-                role="Noted by:"
-                name="DR. JINKY C. MALABANAN, RPm, RPsy, CHRA"
-                title="Chief Psychologist"
-              />
-            </tr>
-          </tbody>
-        </table>
+      <div className="space-y-4">
+        <WeekTable week={3} />
+        <WeekTable week={4} />
+
+        <div className="mt-8 overflow-x-auto">
+          <table className="w-full border-collapse">
+            <tbody>
+              <tr>
+                <Signatory role="Prepared by:" title="Behavioral Technician" />
+                <Signatory
+                  role="Checked by:"
+                  name="MARWIN A. GILBERO JR, RPm, CHRA"
+                  title="SPED Program Coordinator"
+                />
+                <Signatory
+                  role="Verified by:"
+                  name="LEERA MAE C. GUEVARRA, RPm, CHRA"
+                  title="Learning Head"
+                />
+                <Signatory
+                  role="Noted by:"
+                  name="DR. JINKY C. MALABANAN, RPm, RPsy, CHRA"
+                  title="Chief Psychologist"
+                />
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </FormShell>
   )

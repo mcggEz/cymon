@@ -183,124 +183,128 @@ function CaregiverChecklistForm({ onClose, readOnly = false }) {
       code="CMPS:SE-FO-03 rev.0 02192026"
       confidential={false}
       onClose={onClose}
+      multiPage={true}
     >
-      <fieldset disabled={readOnly} className="contents">
-      <BlankField label="Date" labelClassName="w-32" className="mt-1 max-w-md" />
+      <fieldset disabled={readOnly} className="space-y-4">
+        <BlankField label="Date" labelClassName="w-32" className="mt-1 max-w-md" />
 
-      <FormHeading>Personal Information of Student</FormHeading>
-      <div className="space-y-2">
-        <BlankField label="Full Name (LN, FN MI)" labelClassName="w-52" />
-        <BlankField label="Birthday" labelClassName="w-52" />
-        <BlankField label="Age/Sex" labelClassName="w-52" />
-        <BlankField label="Respondent" labelClassName="w-52">
-          <div className="flex flex-wrap items-center gap-4">
-            <label className={respondentBox}>
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Parent
-            </label>
-            <label className={respondentBox}>
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Guardian
-            </label>
-            <label className={respondentBox}>
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Teacher
-            </label>
-            <label className={respondentBox}>
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Others:
-            </label>
-            <input className={`${blankInput} w-40`} type="text" />
+        <FormHeading>Personal Information of Student</FormHeading>
+        <div className="space-y-2">
+          <BlankField label="Full Name (LN, FN MI)" labelClassName="w-52" />
+          <BlankField label="Birthday" labelClassName="w-52" />
+          <BlankField label="Age/Sex" labelClassName="w-52" />
+          <BlankField label="Respondent" labelClassName="w-52">
+            <div className="flex flex-wrap items-center gap-4">
+              <label className={respondentBox}>
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Parent
+              </label>
+              <label className={respondentBox}>
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Guardian
+              </label>
+              <label className={respondentBox}>
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Teacher
+              </label>
+              <label className={respondentBox}>
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Others:
+              </label>
+              <input className={`${blankInput} w-40`} type="text" />
+            </div>
+          </BlankField>
+        </div>
+
+        <FormHeading>Diagnosis</FormHeading>
+        <div className="space-y-2">
+          <BlankField label="Was the student previously diagnosed/assessed?" labelClassName="w-80">
+            <div className="flex items-center gap-6">
+              <label className={respondentBox}>
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Yes
+              </label>
+              <label className={respondentBox}>
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> No
+              </label>
+            </div>
+          </BlankField>
+          <BlankField label="Diagnosis" labelClassName="w-52" />
+          <BlankField label="Medical History" labelClassName="w-52" />
+          <BlankField label="Family History" labelClassName="w-52" />
+        </div>
+
+        <FormHeading>Instruction (Panuto)</FormHeading>
+        <p className="text-[12.5px] text-slate-800">
+          Please answer each statement with YES (OO) if the child is able to do the skill independently or
+          age-appropriate.
+        </p>
+        <p className="text-xs italic text-slate-500">
+          (Sagutin ng OO kung nagagawa ng bata ang kasanayan nang naaayon sa kanyang edad at may kaunting
+          gabay lamang.)
+        </p>
+
+        <BehaviorTable
+          title="I. CONCEPTUAL DOMAIN (Konseptwal na Kakayahan)"
+          sub="(Communication, Language, Academics)"
+          columns={YNA}
+          items={CONCEPTUAL}
+        />
+        <BehaviorTable
+          title="II. SOCIAL DOMAIN"
+          sub="(Interpersonal Skills, Emotional Regulation, Social Awareness)"
+          columns={YNA}
+          items={SOCIAL}
+        />
+      </fieldset>
+
+      <fieldset disabled={readOnly} className="space-y-4">
+        <BehaviorTable
+          title="III. PRACTICAL DOMAIN"
+          sub="(Daily Living Skills, Self-Care, Functional Independence)"
+          columns={YNA}
+          items={PRACTICAL}
+        />
+        <BehaviorTable
+          title="IV. MOTOR DEVELOPMENT DOMAIN"
+          sub="A. GROSS MOTOR SKILLS"
+          columns={YN}
+          items={GROSS_MOTOR}
+        />
+        <BehaviorTable
+          title="IV. MOTOR DEVELOPMENT DOMAIN"
+          sub="B. FINE MOTOR SKILLS"
+          columns={YNA}
+          items={FINE_MOTOR}
+        />
+
+        <RemarksTable title="PERCEPTUAL DISTURBANCES" items={PERCEPTUAL} />
+        <RemarksTable title="STIMMING" items={STIMMING} />
+
+        <p className="mt-6 text-[12.5px] italic text-slate-800 leading-snug">
+          I understand that the information I provide during this interview is essential to the accuracy of
+          my child&apos;s behavioral assessment. I commit to giving complete, and accurate responses to the
+          best of my knowledge. I acknowledge that my responses will be considered as part of the evaluation
+          process to help ensure that the results reflect my child&apos;s current functioning and needs.
+        </p>
+
+        <div className="mt-8 flex flex-col gap-6 text-sm sm:flex-row sm:justify-between sm:gap-4">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Type Caregiver Name..."
+              className="w-full bg-transparent text-sm text-slate-800 border-b border-slate-300 hover:border-slate-400 focus:border-purple-600 focus:outline-none print:border-none"
+            />
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
+              Signature over Printed Name of Caregiver / Date
+            </div>
           </div>
-        </BlankField>
-      </div>
-
-      <FormHeading>Diagnosis</FormHeading>
-      <div className="space-y-2">
-        <BlankField label="Was the student previously diagnosed/assessed?" labelClassName="w-80">
-          <div className="flex items-center gap-6">
-            <label className={respondentBox}>
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> Yes
-            </label>
-            <label className={respondentBox}>
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" /> No
-            </label>
-          </div>
-        </BlankField>
-        <BlankField label="Diagnosis" labelClassName="w-52" />
-        <BlankField label="Medical History" labelClassName="w-52" />
-        <BlankField label="Family History" labelClassName="w-52" />
-      </div>
-
-      <FormHeading>Instruction (Panuto)</FormHeading>
-      <p className="text-[12.5px] text-slate-800">
-        Please answer each statement with YES (OO) if the child is able to do the skill independently or
-        age-appropriate.
-      </p>
-      <p className="text-xs italic text-slate-500">
-        (Sagutin ng OO kung nagagawa ng bata ang kasanayan nang naaayon sa kanyang edad at may kaunting
-        gabay lamang.)
-      </p>
-
-      <BehaviorTable
-        title="I. CONCEPTUAL DOMAIN (Konseptwal na Kakayahan)"
-        sub="(Communication, Language, Academics)"
-        columns={YNA}
-        items={CONCEPTUAL}
-      />
-      <BehaviorTable
-        title="II. SOCIAL DOMAIN"
-        sub="(Interpersonal Skills, Emotional Regulation, Social Awareness)"
-        columns={YNA}
-        items={SOCIAL}
-      />
-      <BehaviorTable
-        title="III. PRACTICAL DOMAIN"
-        sub="(Daily Living Skills, Self-Care, Functional Independence)"
-        columns={YNA}
-        items={PRACTICAL}
-      />
-      <BehaviorTable
-        title="IV. MOTOR DEVELOPMENT DOMAIN"
-        sub="A. GROSS MOTOR SKILLS"
-        columns={YN}
-        items={GROSS_MOTOR}
-      />
-      <BehaviorTable
-        title="IV. MOTOR DEVELOPMENT DOMAIN"
-        sub="B. FINE MOTOR SKILLS"
-        columns={YNA}
-        items={FINE_MOTOR}
-      />
-
-      <RemarksTable title="PERCEPTUAL DISTURBANCES" items={PERCEPTUAL} />
-      <RemarksTable title="STIMMING" items={STIMMING} />
-
-      <p className="mt-6 text-[12.5px] italic text-slate-800">
-        I understand that the information I provide during this interview is essential to the accuracy of
-        my child&apos;s behavioral assessment. I commit to giving complete, and accurate responses to the
-        best of my knowledge. I acknowledge that my responses will be considered as part of the evaluation
-        process to help ensure that the results reflect my child&apos;s current functioning and needs.
-      </p>
-
-      <div className="mt-6 flex flex-col gap-6 text-sm sm:flex-row sm:justify-between sm:gap-4">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Type Caregiver Name..."
-            className="w-full bg-transparent text-sm text-slate-800 border-b border-slate-300 hover:border-slate-400 focus:border-purple-600 focus:outline-none print:border-none"
-          />
-          <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
-            Signature over Printed Name of Caregiver / Date
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Type Evaluator Name..."
+              className="w-full bg-transparent text-sm text-slate-800 border-b border-slate-300 hover:border-slate-400 focus:border-purple-600 focus:outline-none print:border-none"
+            />
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
+              Signature over Printed Name of Evaluator / Date
+            </div>
           </div>
         </div>
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Type Evaluator Name..."
-            className="w-full bg-transparent text-sm text-slate-800 border-b border-slate-300 hover:border-slate-400 focus:border-purple-600 focus:outline-none print:border-none"
-          />
-          <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
-            Signature over Printed Name of Evaluator / Date
-          </div>
-        </div>
-      </div>
       </fieldset>
     </FormShell>
   )

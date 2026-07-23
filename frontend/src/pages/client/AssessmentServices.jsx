@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
 import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
+import AnswerAssessment from '../staff/psychometrician/AnswerAssessment'
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
@@ -31,7 +32,7 @@ function Tabs({ value, onChange }) {
   )
 }
 
-function AssessmentCard({ a }) {
+function AssessmentCard({ a, onAnswer }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
       <div className="h-3 bg-gradient-to-r from-purple-600 to-purple-800" />
@@ -46,13 +47,21 @@ function AssessmentCard({ a }) {
           {a.due_date ? (
             <p className="mt-1 text-sm text-slate-600">Due {fmtDate(a.due_date)}</p>
           ) : null}
-          <div className="mt-3 flex items-center justify-between">
-            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700">
-              {a.code}
-            </span>
-            <span className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
-              Assigned by {a.assigned_by || 'Clinic Staff'}
-            </span>
+          <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700">
+                {a.code}
+              </span>
+              <span className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
+                Assigned by {a.assigned_by || 'Clinic Staff'}
+              </span>
+            </div>
+            <button
+              onClick={() => onAnswer(a)}
+              className="rounded-md bg-purple-700 hover:bg-purple-800 text-white px-3.5 py-1.5 text-xs font-semibold cursor-pointer shadow-sm transition-all"
+            >
+              Answer Form
+            </button>
           </div>
         </div>
       </div>
@@ -101,24 +110,28 @@ function AssessmentServices() {
   const [tab, setTab] = useState('all')
   const [assigned, setAssigned] = useState([])
   const [records, setRecords] = useState([])
+  const [patient, setPatient] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [answeringForm, setAnsweringForm] = useState(null)
+
+  const handleLoad = () => {
+    setLoading(true)
+    Promise.all([
+      api.client.assessments(),
+      api.client.getPatient()
+    ]).then(([d, p]) => {
+      setAssigned(d.assigned)
+      setRecords(d.records)
+      setPatient(p.patient)
+    }).catch((e) => {
+      console.error(e)
+    }).finally(() => {
+      setLoading(false)
+    })
+  }
 
   useEffect(() => {
-    let on = true
-    api.client
-      .assessments()
-      .then((d) => {
-        if (!on) return
-        setAssigned(d.assigned)
-        setRecords(d.records)
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (on) setLoading(false)
-      })
-    return () => {
-      on = false
-    }
+    handleLoad()
   }, [])
 
   return (
@@ -176,10 +189,24 @@ function AssessmentServices() {
               </div>
             ) : null}
             {!loading &&
-              assigned.map((a) => <AssessmentCard key={a.id} a={a} />)}
+              assigned.map((a) => <AssessmentCard key={a.id} a={a} onAnswer={(a) => setAnsweringForm(a)} />)}
           </div>
         )}
       </div>
+
+      {answeringForm && (
+        <AnswerAssessment
+          isClient={true}
+          prefilledPatientId={patient?.id}
+          prefilledPatientName={patient ? `${patient.first_name} ${patient.last_name}` : ''}
+          prefilledTemplateId={answeringForm.template_id}
+          prefilledTemplateName={answeringForm.title}
+          onClose={() => {
+            setAnsweringForm(null)
+            handleLoad()
+          }}
+        />
+      )}
     </>
   )
 }

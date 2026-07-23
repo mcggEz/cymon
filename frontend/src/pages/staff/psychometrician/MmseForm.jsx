@@ -217,47 +217,72 @@ function MmseForm({ onClose }) {
       code="CMPS:SE-FO-04 rev.0 02192026"
       confidential={false}
       onClose={onClose}
+      multiPage={true}
     >
-      <div className="space-y-1">
-        <BlankField label="Date" labelClassName="w-40" />
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <BlankField label="Date" labelClassName="w-40" />
 
-        <FormHeading numeral="">Personal Information of Student</FormHeading>
-        <BlankField label="Full Name (LN, FN MI)" labelClassName="w-56" />
-        <BlankField label="Age/Sex" labelClassName="w-56" />
-        <BlankField label="Birthdate" labelClassName="w-56" />
+          <FormHeading numeral="">Personal Information of Student</FormHeading>
+          <BlankField label="Full Name (LN, FN MI)" labelClassName="w-56" />
+          <BlankField label="Age/Sex" labelClassName="w-56" />
+          <BlankField label="Birthdate" labelClassName="w-56" />
 
-        <FormHeading numeral="">Diagnosis</FormHeading>
-        <BlankField
-          label="Was the student previously diagnosed/assessed?"
-          labelClassName="w-auto"
-        >
-          <span className="flex items-center gap-6 text-[12.5px] text-slate-800">
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
-              Yes
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
-              No
-            </label>
-          </span>
-        </BlankField>
-        <BlankField label="Diagnosis" labelClassName="w-56" />
-        <BlankField label="Medical History" labelClassName="w-56" />
-        <BlankField label="Family History" labelClassName="w-56" />
+          <FormHeading numeral="">Diagnosis</FormHeading>
+          <BlankField
+            label="Was the student previously diagnosed/assessed?"
+            labelClassName="w-auto"
+          >
+            <span className="flex items-center gap-6 text-[12.5px] text-slate-800">
+              <label className="flex items-center gap-1.5">
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
+                Yes
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input type="checkbox" className="h-3.5 w-3.5 accent-purple-700" />
+                No
+              </label>
+            </span>
+          </BlankField>
+          <BlankField label="Diagnosis" labelClassName="w-56" />
+          <BlankField label="Medical History" labelClassName="w-56" />
+          <BlankField label="Family History" labelClassName="w-56" />
+        </div>
+
+        <div>
+          <FormHeading numeral={DOMAINS[0].numeral}>{DOMAINS[0].heading}</FormHeading>
+          <ChecklistTable columns={DOMAINS[0].columns} categories={DOMAINS[0].categories} />
+        </div>
+
+        <div>
+          <FormHeading numeral={DOMAINS[1].numeral}>{DOMAINS[1].heading}</FormHeading>
+          <ChecklistTable columns={DOMAINS[1].columns} categories={DOMAINS[1].categories} />
+        </div>
       </div>
 
-      {DOMAINS.map((domain) => (
-        <div key={domain.heading}>
-          <FormHeading numeral={domain.numeral}>{domain.heading}</FormHeading>
-          <ChecklistTable columns={domain.columns} categories={domain.categories} />
+      <div className="space-y-4">
+        <div>
+          <FormHeading numeral={DOMAINS[2].numeral}>{DOMAINS[2].heading}</FormHeading>
+          <ChecklistTable columns={DOMAINS[2].columns} categories={DOMAINS[2].categories} />
         </div>
-      ))}
+        <div>
+          <FormHeading numeral={DOMAINS[3].numeral}>{DOMAINS[3].heading}</FormHeading>
+          <ChecklistTable columns={DOMAINS[3].columns} categories={DOMAINS[3].categories} />
+        </div>
+        <div>
+          <FormHeading numeral={DOMAINS[4].numeral}>{DOMAINS[4].heading}</FormHeading>
+          <ChecklistTable columns={DOMAINS[4].columns} categories={DOMAINS[4].categories} />
+        </div>
+        <div>
+          <FormHeading numeral={DOMAINS[5].numeral}>{DOMAINS[5].heading}</FormHeading>
+          <ChecklistTable columns={DOMAINS[5].columns} categories={DOMAINS[5].categories} />
+        </div>
 
-      <div className="mx-auto mt-6 max-w-md">
-        <input className={`${blankInput} text-center`} />
-        <div className="mt-1 text-center text-[9px] font-bold uppercase tracking-wide text-slate-700">
-          Signature over Printed Name of Evaluator / Date
+        <div className="mx-auto mt-8 max-w-md">
+          <input className={`${blankInput} text-center`} />
+          <div className="mt-1 text-center text-[9px] font-bold uppercase tracking-wide text-slate-700">
+            Signature over Printed Name of Evaluator / Date
+          </div>
         </div>
       </div>
     </FormShell>

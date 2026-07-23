@@ -105,7 +105,7 @@ async function main() {
   const tplDefs = [
     ['CMPS:SE-FO-04', 'Mini-Mental Status Examination', '🧠', MMSE_STRUCTURE, 20],
     ['CMPS:SE-FO-05', 'Child Adaptive Functioning Tool', '✕', CAFT_STRUCTURE, 15],
-    ['CMPS:SE-FO-06', 'Behavioral Assessment', '☺', BEHAV_STRUCTURE, 15],
+    ['CMPS:SE-FO-06', 'Caregiver Assessment', '☺', BEHAV_STRUCTURE, 15],
   ];
   const tpl = {};
   for (const [code, title, icon, structure, mins] of tplDefs) {

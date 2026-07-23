@@ -133,84 +133,89 @@ function AdaptiveFunctioningForm({ onClose }) {
       code="CMPS:SE-FO-05 rev.0 02192026"
       confidential={false}
       onClose={onClose}
+      multiPage={true}
     >
-      <div className="space-y-1.5">
-        <BlankField label="Name of Student:" />
-        <BlankField label="Age / Gender:" />
-        <BlankField label="Name of Guardian:" />
-        <BlankField label="Name of Assessor:" />
-      </div>
-
-      <FormHeading numeral="">Mathematics</FormHeading>
-      <AssessmentTable rows={MATHEMATICS} />
-
-      <FormHeading numeral="">Literacy (Letter Recognition)</FormHeading>
-      <AssessmentTable rows={LETTER_RECOGNITION} />
-
-      <FormHeading numeral="">Literacy (Word Recognition)</FormHeading>
-      <AssessmentTable rows={WORD_RECOGNITION} />
-
-      <FormHeading numeral="">Writing and Name Recognition</FormHeading>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              <th className={`${th} w-1/2`}>Name Recognition</th>
-              <th className={`${th} w-1/2`}>Handwriting</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className={`${rowLabelCell} align-top`}>
-                <div className="space-y-2 py-1">
-                  {['Name Recognition', 'Write Name', 'Spell Name'].map((item) => (
-                    <div key={item} className="flex items-center justify-between gap-4">
-                      <span className="text-[12.5px] text-slate-800">{item}</span>
-                      <span className="flex shrink-0 gap-4">
-                        <Check label="YES" />
-                        <Check label="NO" />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </td>
-              <td className={`${rowLabelCell} align-top`}>
-                <div className="space-y-3 py-1">
-                  <div>
-                    <div className="mb-1 text-[12.5px] font-bold text-slate-800">Dominant Hand</div>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1">
-                      <Check label="LEFT" />
-                      <Check label="RIGHT" />
-                      <Check label="BOTH" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 text-[12.5px] font-bold text-slate-800">Pencil Grip</div>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1">
-                      <Check label="FISTED" />
-                      <Check label="4-FINGER" />
-                      <Check label="STATIC TRIPOD" />
-                      <Check label="DYNAMIC TRIPOD" />
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div>
-          <div className="mt-5 border-t border-slate-700" />
-          <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
-            Assessor&apos;s Signature Over Printed Name
-          </div>
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <BlankField label="Name of Student:" />
+          <BlankField label="Age / Gender:" />
+          <BlankField label="Name of Guardian:" />
+          <BlankField label="Name of Assessor:" />
         </div>
-        <div>
-          <div className="mt-5 border-t border-slate-700" />
-          <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
-            Date
+
+        <FormHeading numeral="">Mathematics</FormHeading>
+        <AssessmentTable rows={MATHEMATICS} />
+
+        <FormHeading numeral="">Literacy (Letter Recognition)</FormHeading>
+        <AssessmentTable rows={LETTER_RECOGNITION} />
+      </div>
+
+      <div className="space-y-4">
+        <FormHeading numeral="">Literacy (Word Recognition)</FormHeading>
+        <AssessmentTable rows={WORD_RECOGNITION} />
+
+        <FormHeading numeral="">Writing and Name Recognition</FormHeading>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={`${th} w-1/2`}>Name Recognition</th>
+                <th className={`${th} w-1/2`}>Handwriting</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className={`${rowLabelCell} align-top`}>
+                  <div className="space-y-2 py-1">
+                    {['Name Recognition', 'Write Name', 'Spell Name'].map((item) => (
+                      <div key={item} className="flex items-center justify-between gap-4">
+                        <span className="text-[12.5px] text-slate-800">{item}</span>
+                        <span className="flex shrink-0 gap-4">
+                          <Check label="YES" />
+                          <Check label="NO" />
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </td>
+                <td className={`${rowLabelCell} align-top`}>
+                  <div className="space-y-3 py-1">
+                    <div>
+                      <div className="mb-1 text-[12.5px] font-bold text-slate-800">Dominant Hand</div>
+                      <div className="flex flex-wrap gap-x-5 gap-y-1">
+                        <Check label="LEFT" />
+                        <Check label="RIGHT" />
+                        <Check label="BOTH" />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="mb-1 text-[12.5px] font-bold text-slate-800">Pencil Grip</div>
+                      <div className="flex flex-wrap gap-x-5 gap-y-1">
+                        <Check label="FISTED" />
+                        <Check label="4-FINGER" />
+                        <Check label="STATIC TRIPOD" />
+                        <Check label="DYNAMIC TRIPOD" />
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <div className="mt-8 border-t border-slate-700" />
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
+              Assessor&apos;s Signature Over Printed Name
+            </div>
+          </div>
+          <div>
+            <div className="mt-8 border-t border-slate-700" />
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-700">
+              Date
+            </div>
           </div>
         </div>
       </div>

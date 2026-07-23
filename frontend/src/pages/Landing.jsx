@@ -104,7 +104,7 @@ function Landing() {
     api.publicAnnouncements()
       .then((d) => {
         if (!on) return
-        if (d.announcements) {
+        if (d.announcements && d.announcements.length > 0) {
           const mapped = d.announcements.map((a) => ({
             category: a.type ? a.type.toUpperCase() : 'PROMOTION',
             date: a.publish_date ? new Date(a.publish_date).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.') : '',
@@ -112,11 +112,13 @@ function Landing() {
             body: a.body,
           }))
           setAnnouncements(mapped)
+        } else {
+          setAnnouncements(STATIC_ANNOUNCEMENTS)
         }
       })
       .catch((err) => {
         console.error('Failed to load announcements:', err)
-        if (on) setAnnouncements([])
+        if (on) setAnnouncements(STATIC_ANNOUNCEMENTS)
       })
     return () => {
       on = false
@@ -125,7 +127,7 @@ function Landing() {
 
   return (
     <main id="top" className="min-h-screen bg-cream text-charcoal overflow-x-hidden selection:bg-violet selection:text-white">
-      {/* Custom float animation styles */}
+      {/* Custom float animation styles & flip cards */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes customFloat {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
@@ -141,6 +143,31 @@ function Landing() {
         .animate-custom-float-delay-2 {
           animation: customFloat 7s ease-in-out infinite;
           animation-delay: 3s;
+        }
+        .flip-card {
+          perspective: 1000px;
+        }
+        .flip-card-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.8s;
+          transform-style: preserve-3d;
+        }
+        .flip-card:hover .flip-card-inner {
+          transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+          border-radius: 1.5rem;
+          overflow: hidden;
+        }
+        .flip-card-back {
+          transform: rotateY(180deg);
         }
       `}} />
       {/* Sticky Header */}
@@ -302,12 +329,39 @@ function Landing() {
           </h2>
 
           <div className="grid md:grid-cols-2 gap-8 lg:gap-16 text-[#1a191f] leading-relaxed text-base md:text-lg font-light">
-            <p>
-              At ClearMind Psychological Services, we believe that achieving optimal mental wellness and developmental growth requires a collaborative circle of support. Our dedicated team brings together clinical psychologists, psychometricians, speech-language pathologists, and occupational therapists to guide clients of all ages through customized, compassionate care pathways.
-            </p>
-            <p>
-              From detailed psychological evaluations and diagnostic assessments to specialized pediatric intervention programs and classroom integration planning, we coordinate closely with families to ensure every milestone is supported. We create a safe, warm environment where clients and caregivers are equipped to thrive.
-            </p>
+            <div className="space-y-8 flex flex-col justify-between">
+              <p>
+                At ClearMind Psychological Services, we believe that achieving optimal mental wellness and developmental growth requires a collaborative circle of support. Our dedicated team brings together clinical psychologists, psychometricians, speech-language pathologists, and occupational therapists to guide clients of all ages through customized, compassionate care pathways.
+              </p>
+              {/* Flip Card 1 */}
+              <div className="flip-card w-full aspect-[4/3] max-w-lg mx-auto cursor-pointer">
+                <div className="flip-card-inner shadow-xl rounded-3xl">
+                  <div className="flip-card-front bg-[#1c1233]">
+                    <img src="/front.jpg" alt="ClearMind services" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="flip-card-back bg-[#1c1233]">
+                    <img src="/back.jpg" alt="ClearMind detail" className="w-full h-full object-contain" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-8 flex flex-col justify-between">
+              <p>
+                From detailed psychological evaluations and diagnostic assessments to specialized pediatric intervention programs and classroom integration planning, we coordinate closely with families to ensure every milestone is supported. We create a safe, warm environment where clients and caregivers are equipped to thrive.
+              </p>
+              {/* Flip Card 2 */}
+              <div className="flip-card w-full aspect-[4/3] max-w-lg mx-auto cursor-pointer">
+                <div className="flip-card-inner shadow-xl rounded-3xl">
+                  <div className="flip-card-front bg-white">
+                    <img src="/front2.png" alt="ClearMind team" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="flip-card-back bg-white">
+                    <img src="/back2.jpg" alt="ClearMind clinic" className="w-full h-full object-contain" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -559,6 +613,13 @@ function Landing() {
 
           {/* Socials & Phone block */}
           <div className="flex flex-col items-center space-y-3 pt-6 text-sm font-medium">
+            <a href="https://maps.google.com/?q=ClearMind+Psychological+Services" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline text-center max-w-sm">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>2/F Wellness Building, 123 Harmony Avenue, Quezon City</span>
+            </a>
             <a href="tel:+639929164078" className="flex items-center gap-2 hover:underline">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -578,6 +639,7 @@ function Landing() {
             <a href="#about" className="hover:text-white transition-colors">About Us</a>
             <a href="#news" className="hover:text-white transition-colors">Announcements</a>
             <a href="#appointments" className="hover:text-white transition-colors font-medium text-white/95">Appointments</a>
+            <a href="https://maps.google.com/?q=ClearMind+Psychological+Services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Location</a>
           </div>
         </div>
 
@@ -588,15 +650,7 @@ function Landing() {
           </div>
 
           {/* Split info overlays on top of giant letters */}
-          <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 z-10 text-[11px] font-mono tracking-wide text-white/70 absolute bottom-2 left-0 right-0">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <span className="font-bold text-white uppercase tracking-wider">Accredited Psychological Services Clinic</span>
-            </div>
+          <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 z-10 text-[11px] font-mono tracking-wide text-white/70 absolute bottom-2 left-0 right-0">
             <div>
               &copy; 2026 ClearMind. All rights reserved
             </div>

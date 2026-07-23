@@ -25,201 +25,260 @@ const Stat = ({ value, label, loading }) => (
 )
 
 function DraftingReports() {
-  const [active, setActive] = useState(null)
   const [rows, setRows] = useState([])
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [openForm, setOpenForm] = useState(null)
   const [query, setQuery] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [page, setPage] = useState(1)
   const [patients, setPatients] = useState([])
+  const [selectedPatientId, setSelectedPatientId] = useState('')
+  const [activeReport, setActiveReport] = useState(null)
 
-  useEffect(() => {
-    let on = true
+  const loadData = () => {
+    setLoading(true)
     api.psychometrician
       .draftingReports()
       .then((d) => {
-        if (!on) return
         setRows(d.rows)
         setSummary(d.summary)
         setPatients(d.patients || [])
       })
       .catch(() => {})
-      .finally(() => on && setLoading(false))
-    return () => {
-      on = false
-    }
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadData()
   }, [])
 
   const q = query.trim().toLowerCase()
-  const filtered = rows.filter((r) => {
-    const mq = !q || (r.name || '').toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q)
-    const ms = statusFilter === 'all' || r.status === statusFilter
-    return mq && ms
+  const filteredPatients = patients.filter((p) => {
+    const matchesSearch = !q || p.name.toLowerCase().includes(q)
+    return matchesSearch
   })
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  // Auto-select the first student from the filtered list if none is selected
+  useEffect(() => {
+    if (!loading && filteredPatients.length > 0 && !selectedPatientId) {
+      setSelectedPatientId(filteredPatients[0].id)
+    }
+  }, [loading, filteredPatients, selectedPatientId])
+
+  const selectedPatient = patients.find((p) => p.id === selectedPatientId)
+  const patientReports = selectedPatient
+    ? rows.filter(
+        (r) =>
+          r.name.toLowerCase() === selectedPatient.name.toLowerCase() &&
+          (statusFilter === 'all' || r.status === statusFilter)
+      )
+    : []
 
   return (
     <>
       <StaffHeader title="Behavioral Reports" />
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-purple-800">Behavioral Assessment Reports</h1>
-            <p className="text-sm text-slate-500">
-              Draft, submit, and review client behavioral assessment logs (CMPS:SE-FO-06).
-            </p>
-          </div>
-          <button
-            onClick={() => setOpenForm('behavioral')}
-            className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 cursor-pointer"
-          >
-            + Write Behavioral Assessment Report
-          </button>
-        </div>
-
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Stat value={summary?.draft ?? '—'} label="Draft" loading={loading} />
-          <Stat value={summary?.submitted ?? '—'} label="Submitted" loading={loading} />
-          <Stat value={summary?.approved ?? '—'} label="Approved" loading={loading} />
-        </div>
-
-        <div className="mt-5 flex gap-6">
-        <section className="min-w-0 flex-1 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3">
-            <SearchBar
-              value={query}
-              onChange={(v) => {
-                setQuery(v)
-                setPage(1)
-              }}
-              placeholder="Search by student or report…"
-              className="w-64"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value)
-                setPage(1)
-              }}
-              className="h-9 rounded-md border border-purple-200 bg-white px-3 text-sm"
-            >
-              <option value="all">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="submitted">Submitted</option>
-              <option value="approved">Approved</option>
-            </select>
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-purple-100 pb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-purple-800">Behavioral Assessment Reports</h1>
+              <p className="text-xs text-slate-500 mt-1">
+                Draft, review, and complete clinical behavioral assessment reports (CMPS:SE-FO-06) for SPED students.
+              </p>
+            </div>
+            {selectedPatient && (
+              <button
+                onClick={() => setOpenForm('behavioral')}
+                className="rounded-md bg-purple-700 hover:bg-purple-800 px-4.5 py-2 text-sm font-semibold text-white cursor-pointer shadow-sm transition-all"
+              >
+                + Write Behavioral Assessment Report
+              </button>
+            )}
           </div>
 
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100">
-                  <th className="py-3 px-4 text-left">Student</th>
-                  <th className="py-3 px-4 text-left">Report Title</th>
-                  <th className="py-3 px-4 text-left">Last Updated Date</th>
-                  <th className="py-3 px-4 text-left">Status</th>
-                  <th className="py-3 px-4 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-purple-100">
-                {loading
-                  ? Array.from({ length: 4 }).map((_, i) => (
-                      <tr key={i}>
-                        <td colSpan={5} className="py-3 px-4">
-                          <Skeleton className="h-6 w-full" />
-                        </td>
-                      </tr>
-                    ))
-                  : null}
-                {!loading && filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-6 px-4 text-center text-sm text-slate-500">
-                      No reports match your filters.
-                    </td>
-                  </tr>
-                ) : null}
-                {!loading &&
-                  pageRows.map((r) => {
-                    const meta = STATUS_META[r.status] || STATUS_META.draft
-                    const isSelected = active && active.id === r.id && active.type === r.type
-                    return (
-                      <tr
-                        key={`${r.type}-${r.id}`}
-                        className={isSelected ? 'bg-purple-100/70 transition-colors font-medium' : 'hover:bg-purple-50/50 transition-colors'}
-                      >
-                        <td className="py-3 px-4">
-                          <div className="font-medium text-purple-800">{r.name}</div>
-                          <div className="text-xs text-slate-500">ID: {r.sid}</div>
-                        </td>
-                        <td className="py-3 px-4 text-slate-700">{r.title}</td>
-                        <td className="py-3 px-4 text-slate-600">{fmtDate(r.date)}</td>
-                        <td className="py-3 px-4">
-                          <span className={`rounded-md px-2.5 py-1 text-[11px] font-semibold ${meta.tone}`}>
-                            {meta.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <RowAction variant="view" onClick={() => setActive(r)}>
-                            View
-                          </RowAction>
-                        </td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </table>
+          {/* Stats Summary cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Stat value={summary?.draft ?? '—'} label="Draft" loading={loading} />
+            <Stat value={summary?.submitted ?? '—'} label="Submitted" loading={loading} />
+            <Stat value={summary?.approved ?? '—'} label="Approved" loading={loading} />
           </div>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
-        </section>
 
-        {active ? (
-          <>
-            <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setActive(null)} aria-hidden="true" />
-            <aside className="fixed inset-y-0 right-0 z-40 w-80 bg-white p-6 shadow-xl lg:static lg:w-72 lg:shadow-none shrink-0 border-l border-slate-100 flex flex-col justify-start">
-              <h2 className="text-lg font-bold text-purple-800 border-b border-purple-50 pb-3">Report Details</h2>
-              <dl className="mt-4 space-y-4 text-xs">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Student</span>
-                  <span className="font-semibold text-purple-800 text-sm">{active.name || '—'}</span>
+          {/* Main Layout Grid */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Left Panel: Student Directory */}
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[600px] flex flex-col">
+              <div className="border-b border-purple-100 pb-3 shrink-0">
+                <h2 className="text-sm font-semibold text-purple-800">Student Directory</h2>
+                <div className="mt-3">
+                  <SearchBar
+                    value={query}
+                    onChange={setQuery}
+                    placeholder="Search students…"
+                    className="w-full"
+                  />
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500 block">ID</span>
-                  <span className="font-semibold text-slate-800">{active.sid || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Title</span>
-                  <span className="font-semibold text-slate-800">{active.title || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Date</span>
-                  <span className="font-semibold text-slate-800">{fmtDate(active.date)}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500 block">Status</span>
-                  <span className="font-semibold text-slate-800">{(STATUS_META[active.status] || STATUS_META.draft).label}</span>
-                </div>
-              </dl>
-              <div className="mt-6 border-t border-slate-100 pt-4 flex gap-2">
-                <button
-                  onClick={() => setOpenForm('viewBehavioral')}
-                  className="w-full rounded-md border border-purple-300 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 cursor-pointer"
-                >
-                  View as Form
-                </button>
               </div>
-            </aside>
-          </>
-        ) : null}
-        </div>
+              <div className="flex-1 overflow-y-auto mt-4 pr-1 space-y-2">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-16 w-full animate-pulse bg-slate-100 rounded-xl" />
+                  ))
+                ) : filteredPatients.length === 0 ? (
+                  <div className="text-center text-xs text-slate-400 py-12">No students found.</div>
+                ) : (
+                  filteredPatients.map((p) => {
+                    const isSelected = selectedPatientId === p.id
+                    const studentReports = rows.filter((r) => r.name.toLowerCase() === p.name.toLowerCase())
+                    const draftsCount = studentReports.filter((r) => r.status === 'draft').length
+                    const isPendingSign = studentReports.filter((r) => r.status === 'submitted').length > 0
 
-        {openForm === 'behavioral' ? <BehavioralAssessmentForm onClose={() => setOpenForm(null)} /> : null}
-        {openForm === 'viewBehavioral' ? (
-          <BehavioralAssessmentForm detail={active} readOnly={true} onClose={() => setOpenForm(null)} />
-        ) : null}
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedPatientId(p.id)}
+                        className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
+                          isSelected ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className={`font-semibold text-sm flex items-center gap-1.5 ${
+                            isSelected ? 'text-purple-800' : 'text-slate-800'
+                          }`}>
+                            <span>{p.name}</span>
+                            {isPendingSign && (
+                              <span className="h-2 w-2 rounded-full bg-amber-500" title="Pending Psychologist review" />
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                            <span>Reports: {studentReports.length}</span>
+                            {draftsCount > 0 && (
+                              <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">
+                                {draftsCount} Draft
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600 shrink-0 ml-2">
+                          Select &rarr;
+                        </span>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Right Panel: Student Reports Checklist */}
+            <div className="lg:col-span-2 space-y-6">
+              {selectedPatient ? (
+                <>
+                  {/* Selected Student details */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <h1 className="text-xl font-bold text-purple-800">{selectedPatient.name}</h1>
+                        <p className="text-xs text-slate-500 mt-1">
+                          View drafts and finalized behavioral assessment reports for this student.
+                        </p>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-2">
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          className="h-9 rounded-md border border-purple-200 bg-white px-3 text-xs font-semibold text-purple-700 focus:outline-none cursor-pointer"
+                        >
+                          <option value="all">All Statuses</option>
+                          <option value="draft">Draft</option>
+                          <option value="submitted">Submitted</option>
+                          <option value="approved">Approved</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reports list */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm min-h-[400px]">
+                    <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-4">
+                      Behavioral Assessment Reports ledger
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100 pb-2 text-left">
+                            <th className="pb-3 px-2">Report Title</th>
+                            <th className="pb-3 px-2">Last Updated Date</th>
+                            <th className="pb-3 px-2">Status</th>
+                            <th className="pb-3 px-2 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-purple-50/40">
+                          {patientReports.length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="py-12 text-center text-xs text-slate-400">
+                                No behavioral assessment reports found matching this criteria.
+                              </td>
+                            </tr>
+                          ) : (
+                            patientReports.map((r) => {
+                              const meta = STATUS_META[r.status] || STATUS_META.draft
+                              return (
+                                <tr key={`${r.type}-${r.id}`} className="hover:bg-purple-50/10 transition-colors">
+                                  <td className="py-3.5 px-2 font-medium text-slate-800">{r.title}</td>
+                                  <td className="py-3.5 px-2 text-xs text-slate-500">{fmtDate(r.date)}</td>
+                                  <td className="py-3.5 px-2">
+                                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${meta.tone}`}>
+                                      {meta.label}
+                                    </span>
+                                  </td>
+                                  <td className="py-3.5 px-2 text-right">
+                                    <button
+                                      onClick={() => {
+                                        setActiveReport(r)
+                                        setOpenForm('viewBehavioral')
+                                      }}
+                                      className="rounded-md border border-purple-200 hover:bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                    >
+                                      {r.status === 'draft' ? 'View & Edit' : 'View Form'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              )
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center">
+                  <svg className="h-16 w-16 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.5"
+                      d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"
+                    />
+                  </svg>
+                  <p className="mt-4 text-sm font-medium">Please select a student from the directory to track report drafts.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {openForm === 'behavioral' ? <BehavioralAssessmentForm onClose={() => setOpenForm(null)} /> : null}
+      {openForm === 'viewBehavioral' && activeReport ? (
+        <BehavioralAssessmentForm
+          detail={activeReport}
+          readOnly={activeReport.status !== 'draft'}
+          onClose={() => {
+            setOpenForm(null)
+            loadData()
+          }}
+        />
+      ) : null}
     </>
   )
 }
