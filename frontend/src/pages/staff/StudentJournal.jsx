@@ -3,6 +3,7 @@ import StaffHeader from './StaffHeader'
 import { api } from '../../lib/api'
 import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
 import SearchBar from '../../components/ui/SearchBar'
+import { useAuth } from '../../auth/useAuth'
 
 const MOOD_META = {
   very_bad: { label: 'Very Bad', color: 'bg-red-400 text-white' },
@@ -133,6 +134,7 @@ function JournalDetailModal({ log, onClose }) {
 }
 
 function StudentJournal() {
+  const { profile } = useAuth()
   const [patients, setPatients] = useState([])
   const [selectedPatientId, setSelectedPatientId] = useState('')
   const [logs, setLogs] = useState([])
@@ -202,7 +204,7 @@ function StudentJournal() {
   })
 
   const handleToggleJournalPermission = (patientId, allowBool) => {
-    api.psychologist.updateJournalPermission(patientId, allowBool)
+    api.psychometrician.updateJournalPermission(patientId, allowBool)
       .then(() => {
         setPatients((prev) =>
           prev.map((p) => (p.id === patientId ? { ...p, allow_journal_entry: allowBool } : p))
@@ -253,11 +255,11 @@ function StudentJournal() {
                         key={p.id}
                         onClick={() => setSelectedPatientId(p.id)}
                         className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
-                          isActive ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                          isActive ? 'border-purple-300 bg-purple-100 shadow-sm' : 'border-transparent'
                         }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-800' : 'text-slate-800'}`}>
+                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-900' : 'text-slate-800'}`}>
                             {p.name}
                           </div>
                           <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
@@ -267,7 +269,6 @@ function StudentJournal() {
                             </span>
                           </div>
                         </div>
-                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600">Select &rarr;</span>
                       </button>
                     )
                   })
@@ -294,16 +295,18 @@ function StudentJournal() {
                         <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${selectedPatient.allow_journal_entry ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                           {selectedPatient.allow_journal_entry ? '✓ Journal Allowed' : '🔒 Journal Locked'}
                         </span>
-                        <button
-                          onClick={() => handleToggleJournalPermission(selectedPatient.id, !selectedPatient.allow_journal_entry)}
-                          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold cursor-pointer transition-all shadow-sm ${
-                            selectedPatient.allow_journal_entry
-                              ? 'bg-rose-100 text-rose-800 hover:bg-rose-200 border border-rose-200'
-                              : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                          }`}
-                        >
-                          {selectedPatient.allow_journal_entry ? 'Lock Journal' : 'Allow Student to Answer'}
-                        </button>
+                        {window.location.pathname.includes('/psychometrician') && (
+                          <button
+                            onClick={() => handleToggleJournalPermission(selectedPatient.id, !selectedPatient.allow_journal_entry)}
+                            className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold cursor-pointer transition-all shadow-sm ${
+                              selectedPatient.allow_journal_entry
+                                ? 'bg-rose-100 text-rose-800 hover:bg-rose-200 border border-rose-200'
+                                : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            }`}
+                          >
+                            {selectedPatient.allow_journal_entry ? 'Lock Journal' : 'Allow Student to Answer'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

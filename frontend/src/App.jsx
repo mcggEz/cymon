@@ -85,7 +85,8 @@ function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<Approvals />} />
+          <Route index element={<Navigate to="approvals" replace />} />
+          <Route path="approvals" element={<Approvals />} />
           <Route path="data-review" element={<DataReview />} />
           <Route path="activity" element={<PmActivityLog />} />
           <Route path="student-journal" element={<StudentJournal />} />

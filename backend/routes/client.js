@@ -334,7 +334,7 @@ router.post('/activity-logs', requireAuth, requireClient, async (req, res, next)
     if (!patient) return;
 
     if (!patient.allow_journal_entry) {
-      return res.status(403).json({ error: 'Journal entries for this student are locked. Permission from your supervising Psychologist is required before submitting.' });
+      return res.status(403).json({ error: 'Journal entries for this student are locked. Permission from your supervising Psychometrician is required before submitting.' });
     }
 
     const { mood, task_completion, behavioral_episodes, sleep_quality, appetite, observations, log_date } = req.body || {};
@@ -371,7 +371,7 @@ router.delete('/activity-logs/:id', requireAuth, requireClient, async (req, res,
     if (!patient) return;
 
     if (!patient.allow_journal_entry) {
-      return res.status(403).json({ error: 'Journal editing for this student is locked. Permission from your supervising Psychologist is required.' });
+      return res.status(403).json({ error: 'Journal editing for this student is locked. Permission from your supervising Psychometrician is required.' });
     }
 
     const { data, error } = await supabase
@@ -471,18 +471,19 @@ router.get('/waivers', requireAuth, requireClient, async (req, res, next) => {
       supabase.from('waiver_submissions').select('document_type_code, status, due_date').eq('patient_id', patient.id),
     ]);
     if (error) return next(error);
+
     const submissionByCode = Object.fromEntries((subs || []).map((s) => [s.document_type_code, s]));
-    const activeForms = (types || [])
-      .filter((t) => submissionByCode[t.code] !== undefined)
-      .map((t) => ({
+    
+    res.json({
+      forms: (types || []).map((t) => ({
         code: t.code,
         title: t.title,
         description: t.description,
         category: t.category,
-        status: submissionByCode[t.code].status,
-        due_date: submissionByCode[t.code].due_date || null,
-      }));
-    res.json({ forms: activeForms });
+        status: submissionByCode[t.code]?.status || 'not_started',
+        due_date: submissionByCode[t.code]?.due_date || null,
+      })),
+    });
   } catch (err) {
     next(err);
   }
@@ -512,23 +513,35 @@ router.post('/waivers/:code', requireAuth, requireClient, async (req, res, next)
     const patient = await requirePatient(req, res);
     if (!patient) return;
     const { provisions_agreed, house_rules_agreed, signature_text } = req.body || {};
+
+    const { data: existing } = await supabase
+      .from('waiver_submissions')
+      .select('id')
+      .eq('patient_id', patient.id)
+      .eq('document_type_code', req.params.code)
+      .maybeSingle();
+
+    const payload = {
+      patient_id: patient.id,
+      document_type_code: req.params.code,
+      provisions_agreed: provisions_agreed || {},
+      house_rules_agreed: Boolean(house_rules_agreed),
+      signature_text: signature_text || null,
+      signed_by_profile_id: req.profile.id,
+      signed_at: new Date().toISOString(),
+      status: 'submitted',
+    };
+
+    if (existing) {
+      payload.id = existing.id;
+    }
+
     const { data, error } = await supabase
       .from('waiver_submissions')
-      .upsert(
-        {
-          patient_id: patient.id,
-          document_type_code: req.params.code,
-          provisions_agreed: provisions_agreed || {},
-          house_rules_agreed: Boolean(house_rules_agreed),
-          signature_text: signature_text || null,
-          signed_by_profile_id: req.profile.id,
-          signed_at: new Date().toISOString(),
-          status: 'submitted',
-        },
-        { onConflict: 'id' }
-      )
+      .upsert(payload, { onConflict: 'id' })
       .select('id, document_type_code, status')
       .single();
+
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json({ submission: data });
   } catch (err) {
@@ -556,9 +569,33 @@ router.get('/assessments', requireAuth, requireClient, async (req, res, next) =>
         .order('created_at', { ascending: false }),
       supabase.from('assessment_templates').select('id, title, icon, document_type_code, structure, est_minutes'),
     ]);
+
+    let permissions = [];
+    try {
+      const { data, error } = await supabase
+        .from('assessment_permissions')
+        .select('template_id, status')
+        .eq('patient_id', patient.id)
+        .eq('status', 'granted');
+      if (error) throw error;
+      permissions = data || [];
+    } catch (dbErr) {
+      if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
+        const { localPermissionsStore } = require('../lib/permissions');
+        permissions = Array.from(localPermissionsStore.values()).filter(
+          (p) => p.patient_id === patient.id && p.status === 'granted'
+        );
+      } else {
+        throw dbErr;
+      }
+    }
+
+    const grantedTemplateIds = new Set(permissions.map((p) => p.template_id));
+    const activeAssignments = (assignments || []).filter((a) => grantedTemplateIds.has(a.template_id));
+
     const tplById = Object.fromEntries((templates || []).map((t) => [t.id, t]));
     res.json({
-      assigned: (assignments || []).map((a) => {
+      assigned: activeAssignments.map((a) => {
         const t = tplById[a.template_id] || {};
         return {
           id: a.id,
@@ -586,6 +623,13 @@ router.get('/assessments', requireAuth, requireClient, async (req, res, next) =>
           by: s.respondent_name || 'Clinician',
         };
       }),
+      templates: (templates || []).map((t) => ({
+        id: t.id,
+        title: t.title,
+        code: t.document_type_code,
+        icon: t.icon,
+        est_minutes: t.est_minutes,
+      })),
     });
   } catch (err) {
     next(err);
@@ -598,8 +642,34 @@ router.post('/assessments/:templateId/submit', requireAuth, requireClient, async
   try {
     const patient = await requirePatient(req, res);
     if (!patient) return;
+
+    let hasPermission = false;
+    try {
+      const { data: perm } = await supabase
+        .from('assessment_permissions')
+        .select('id')
+        .eq('patient_id', patient.id)
+        .eq('template_id', req.params.templateId)
+        .eq('status', 'granted')
+        .maybeSingle();
+      if (perm) hasPermission = true;
+    } catch (dbErr) {
+      if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
+        const { localPermissionsStore } = require('../lib/permissions');
+        const key = `${patient.id}-${req.params.templateId}`;
+        const mockPerm = localPermissionsStore.get(key);
+        if (mockPerm && mockPerm.status === 'granted') hasPermission = true;
+      } else {
+        throw dbErr;
+      }
+    }
+
+    if (!hasPermission) {
+      return res.status(403).json({ error: 'Permission from your supervising Psychologist/Admin is required to submit this assessment.' });
+    }
+
     const { answers = {}, domain_scores = {}, total_score, max_score } = req.body || {};
-    
+
     const { data, error } = await supabase
       .from('assessment_submissions')
       .insert({

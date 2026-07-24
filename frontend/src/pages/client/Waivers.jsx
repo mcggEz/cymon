@@ -5,11 +5,11 @@ import Skeleton from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 
 const STATUS_META = {
-  submitted: { label: 'Submitted', cls: 'bg-sky-100 text-sky-800' },
-  approved: { label: 'Approved', cls: 'bg-emerald-100 text-emerald-800' },
-  pending_signature: { label: 'Pending Signature', cls: 'bg-amber-100 text-amber-800' },
-  overdue: { label: 'Overdue', cls: 'bg-rose-100 text-rose-800 animate-pulse' },
-  not_started: { label: 'Not Started', cls: 'bg-slate-100 text-slate-600' },
+  submitted: { label: 'Submitted & Answered', cls: 'bg-sky-100 text-sky-800 border border-sky-200' },
+  approved: { label: 'Approved & Completed', cls: 'bg-emerald-100 text-emerald-800 border border-emerald-255' },
+  pending_signature: { label: 'Pending Signature (Not Answered)', cls: 'bg-amber-100 text-amber-850 border border-amber-200' },
+  overdue: { label: 'Overdue (Action Required)', cls: 'bg-rose-100 text-rose-800 border border-rose-200 animate-pulse' },
+  not_started: { label: 'Not Answered Yet', cls: 'bg-slate-100 text-slate-600 border border-slate-200' },
 }
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—')
@@ -17,28 +17,40 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'num
 function Waivers() {
   const navigate = useNavigate()
   const [forms, setForms] = useState([])
-  const [patient, setPatient] = useState(null)
-  const [guardian, setGuardian] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const EXPECTED_FORMS = [
+    { code: 'CMPS:SE-FO-01', title: 'Student Admission Form', description: 'Personal info, parents details, diagnosis, disability, enrollment program selection.' },
+    { code: 'CMPS:SE-FO-02', title: 'SPED Consent and Waiver', description: 'Parent / caregiver consent for the Special Education Program.' },
+    { code: 'CMPS:SE-FO-12', title: 'SummerScape Waiver', description: 'SummerScape program waiver.' },
+    { code: 'CMPS:SE-FO-13', title: 'SummerScape Enrollment', description: 'SummerScape program enrollment form.' }
+  ]
 
   useEffect(() => {
     let on = true
     setLoading(true)
-    Promise.all([
-      api.client.getPatient().catch((err) => {
-        console.error('Failed to load patient:', err)
-        return { patient: null, guardian: null }
-      }),
-      api.client.waivers().catch((err) => {
-        console.error('Failed to load waivers:', err)
-        return { forms: [] }
-      })
-    ])
-      .then(([patientData, waiversData]) => {
+    api.client.waivers()
+      .then((waiversData) => {
         if (!on) return
-        setPatient(patientData?.patient || null)
-        setGuardian(patientData?.guardian || null)
-        setForms(waiversData?.forms || [])
+        const apiForms = waiversData?.forms || []
+        const mapped = EXPECTED_FORMS.map((ef) => {
+          const apiF = apiForms.find((af) => af.code === ef.code)
+          return {
+            ...ef,
+            status: apiF?.status || 'not_started',
+            due_date: apiF?.due_date || null,
+          }
+        })
+        setForms(mapped)
+      })
+      .catch((err) => {
+        console.error('Failed to load waivers:', err)
+        const fallback = EXPECTED_FORMS.map((ef) => ({
+          ...ef,
+          status: 'not_started',
+          due_date: null,
+        }))
+        setForms(fallback)
       })
       .finally(() => {
         if (on) setLoading(false)
@@ -52,30 +64,6 @@ function Waivers() {
     <>
       <PageHeader title="Consents & Waivers" />
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {loading ? (
-          <div className="rounded-2xl border border-purple-100 bg-white p-6 shadow-sm">
-            <Skeleton className="h-12 w-3/4 mb-4" />
-            <Skeleton className="h-6 w-1/2" />
-          </div>
-        ) : patient ? (
-          <div className="rounded-2xl border border-purple-100 bg-white p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-xl font-bold text-purple-900">{patient.first_name} {patient.last_name}</h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Parent/Guardian: <span className="font-semibold text-slate-700">{guardian?.full_name || '—'}</span>
-                {guardian?.email && (
-                  <>
-                    {' '}· Email: <span className="font-semibold text-slate-700">{guardian.email}</span>
-                  </>
-                )}
-              </p>
-            </div>
-            <span className="inline-flex rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700">
-              Student ID: {patient.patient_id}
-            </span>
-          </div>
-        ) : null}
-
         <div className="rounded-3xl border border-purple-100 bg-white p-6 shadow-sm min-h-[460px]">
           <h3 className="text-xs font-bold text-purple-900 uppercase tracking-widest mb-6">
             Waivers &amp; Consent Forms
@@ -127,30 +115,29 @@ function Waivers() {
                         </td>
                         <td className="py-3.5 px-2 text-right">
                           <div className="flex gap-2 justify-end items-center">
-                            {isSigned && (
+                            {isSigned ? (
                               <button
                                 onClick={() => navigate(`/client/waivers/${encodeURIComponent(f.code)}`)}
-                                className="rounded-md border border-purple-200 hover:bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                className="rounded-lg border border-purple-200 hover:bg-purple-50 px-4 py-1.5 text-xs font-bold text-purple-750 cursor-pointer shadow-sm transition-colors"
                               >
                                 View Signed
                               </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => navigate(`/client/waivers/${encodeURIComponent(f.code)}?view=true`)}
+                                  className="rounded-lg border border-purple-200 hover:bg-purple-50 px-3.5 py-1.5 text-xs font-bold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                >
+                                  View Form
+                                </button>
+                                <button
+                                  onClick={() => navigate(`/client/waivers/${encodeURIComponent(f.code)}`)}
+                                  className="rounded-lg bg-purple-700 hover:bg-purple-800 text-white px-4 py-1.5 text-xs font-bold cursor-pointer shadow-sm transition-colors"
+                                >
+                                  Sign &amp; Submit
+                                </button>
+                              </>
                             )}
-                            <button
-                              disabled
-                              className="px-3 py-1.5 text-xs font-semibold text-slate-300 cursor-not-allowed"
-                            >
-                              Remind
-                            </button>
-                            <button
-                              onClick={() => navigate(`/client/waivers/${encodeURIComponent(f.code)}`)}
-                              className={`rounded-lg px-4 py-1.5 text-xs font-bold cursor-pointer shadow-sm transition-colors ${
-                                isSigned 
-                                  ? 'bg-purple-800 hover:bg-purple-900 text-white' 
-                                  : 'bg-purple-300 hover:bg-purple-400 text-purple-900'
-                              }`}
-                            >
-                              Process
-                            </button>
                           </div>
                         </td>
                       </tr>

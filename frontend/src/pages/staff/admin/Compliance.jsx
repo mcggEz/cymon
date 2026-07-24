@@ -32,57 +32,321 @@ function toRow(r) {
   }
 }
 
+const PROVISIONS = [
+  {
+    title: '1. Consent to Enrollment and Participation',
+    body: 'I voluntarily enroll my child in the Special Education Program (SPED) of ClearMind Psychological Services (CMPS) and agree to comply with the policies, schedules, and procedures of the program.',
+  },
+  {
+    title: '2. Authority to Provide Services',
+    body: 'I authorize the SPED teachers, therapists, and clinicians of CMPS to provide developmental, behavioral, and therapeutic interventions appropriate to my child\'s needs.',
+  },
+  {
+    title: '3. Confidentiality of Records',
+    body: 'I understand that my child\'s records will be kept confidential in accordance with the Data Privacy Act of 2012 and will only be released with my written consent.',
+  },
+  {
+    title: '4. Photo & Video Release',
+    body: 'I grant permission to CMPS to use photos / videos of my child for documentation and program promotion purposes only.',
+  },
+  {
+    title: '5. Liability Waiver',
+    body: 'I acknowledge that I have read and understood the program guidelines and release CMPS from liability for incidents beyond reasonable care.',
+  },
+  {
+    title: '6. Financial Commitment',
+    body: 'I commit to the tuition, materials, and assessment fees scheduled for the SPED program and understand the refund and cancellation policy.',
+  },
+]
+
+const RULES = [
+  'Attendance: Regular attendance is required for steady progress.',
+  'Punctuality: Arrive 10 minutes before the scheduled session.',
+  'Behavior: Aggressive or disruptive behavior must be discussed with the program lead.',
+  'Materials: Bring assigned materials and learning aids each session.',
+  'Communication: Email or message the assigned clinician for concerns.',
+  'Policy Updates: CMPS may amend the program policies; updates will be communicated in writing.',
+]
+
+const SUMMERSCAPE_PROVISIONS = [
+  {
+    title: '1. Consent to Enrollment and Activity Participation',
+    body: 'I voluntarily enroll my child in the SummerScape Program of ClearMind Psychological Services (CMPS) and agree to comply with the guidelines, schedules, and policies of the program.',
+  },
+  {
+    title: '2. Program Schedule and Payment Conditions',
+    body: 'I acknowledge that the SummerScape Program consists of ten (10) scheduled sessions, and that missed sessions are non-transferable, non-refundable, and non-convertible to cash.',
+  },
+  {
+    title: '3. Disclosure of Special Needs and Health Conditions',
+    body: 'I affirm that I have fully disclosed all relevant medical conditions, allergies, or special behavioral needs of my child to CMPS to ensure a safe environment.',
+  },
+  {
+    title: '4. Data Privacy and Safe Video Monitoring',
+    body: 'I consent to data collection for safety and program administration under the Data Privacy Act of 2012, including CCTV monitoring in clinic play and activity areas.',
+  },
+  {
+    title: '5. Liability Release for Recreational Outings',
+    body: 'I release CMPS staff and organizers from liability for any minor accidents, slips, or falls that may occur during the play-based physical activities of the program.',
+  },
+]
+
+const SUMMERSCAPE_RULES = [
+  'Attendance: Arrive on time to ensure maximum engagement in group games.',
+  'Safety first: Follow facilitator instructions and program play rules.',
+  'Cooperation: Actively communicate with clinic specialists for updates.',
+]
+
 function WaiverViewModal({ row, onClose }) {
+  const [detail, setDetail] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  const isAdmission = row.code === 'CMPS:SE-FO-01' || row.code === 'CMPS:SE-FO-13'
+  const isSummerScape = row.code === 'CMPS:SE-FO-12'
+  const isSPED = row.code === 'CMPS:SE-FO-02'
+
+  useEffect(() => {
+    if (isAdmission) {
+      setLoading(true)
+      api.admin.patient(row.sid)
+        .then(setDetail)
+        .catch((e) => console.error('Failed to load patient detail:', e))
+        .finally(() => setLoading(false))
+    }
+  }, [row.sid, isAdmission])
+
   const sa = row.provisions_agreed || {}
   const signature = sa.signature_image || null
+  const isSigned = row.status === 'submitted' || row.status === 'approved'
+
+  const provisionsList = isSummerScape ? SUMMERSCAPE_PROVISIONS : PROVISIONS
+  const rulesList = isSummerScape ? SUMMERSCAPE_RULES : RULES
 
   return (
-    <Modal title={row.doc} subtitle={`Form: ${row.code} · Student ID: ${row.sid}`} onClose={onClose}>
-      <div className="space-y-5">
-        <section className="rounded-2xl border border-purple-200 bg-purple-50 p-5 text-sm">
-          <div className="font-semibold text-purple-800">Acknowledgement Summary</div>
-          <div className="mt-3 grid grid-cols-2 gap-4 text-xs">
+    <Modal title={row.doc} subtitle={`Form: ${row.code} · Student ID: ${row.sid}`} onClose={onClose} maxWidth="max-w-4xl">
+      <div className="space-y-6">
+        {/* Status bar */}
+        <div className={`p-4 rounded-xl border flex items-center justify-between text-sm ${
+          isSigned 
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+            : 'bg-amber-50 border-amber-200 text-amber-800'
+        }`}>
+          <div>
+            <span className="font-bold uppercase tracking-wider text-xs mr-2 px-2 py-0.5 rounded bg-white shadow-sm border border-current">
+              {row.label || (isSigned ? 'SIGNED' : 'PENDING')}
+            </span>
+            <span className="font-medium">
+              {isSigned 
+                ? `Submitted & Signed by parent on ${row.due}` 
+                : 'Pending Parent Signature / Completed Form'}
+            </span>
+          </div>
+          {isSigned && (
+            <span className="text-xs text-emerald-600 font-bold">✓ Complete</span>
+          )}
+        </div>
+
+        {/* Admission Form details */}
+        {isAdmission && (
+          <div className="space-y-5">
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-6 w-1/4" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            ) : detail ? (
+              <>
+                <section className="rounded-2xl border border-purple-100 bg-slate-50/50 p-5 space-y-3">
+                  <div className="text-sm font-semibold text-purple-900 border-b border-purple-100/60 pb-2">Personal Information</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <span className="text-slate-500 block font-medium">Last Name</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.patient?.last_name || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">First Name</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.patient?.first_name || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Middle Name</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.patient?.middle_name || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Birthdate</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.patient?.date_of_birth || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Sex</span>
+                      <span className="font-semibold text-slate-800 text-sm capitalize">{detail.patient?.sex || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Nickname</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.patient?.nick_name || '—'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-500 block font-medium">Present Address</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.patient?.home_address || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Citizenship</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.patient?.citizenship || '—'}</span>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-purple-100 bg-slate-50/50 p-5 space-y-3">
+                  <div className="text-sm font-semibold text-purple-900 border-b border-purple-100/60 pb-2">Parent / Guardian Information</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    {detail.guardians?.map((g, index) => (
+                      <div key={index} className="border-l-2 border-purple-200 pl-3 space-y-1">
+                        <div className="font-bold text-purple-950 text-[13px]">{g.relationship || 'Guardian'}</div>
+                        <div>
+                          <span className="text-slate-500 mr-1 font-medium">Full Name:</span>
+                          <span className="font-semibold text-slate-800">{g.full_name || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 mr-1 font-medium">Occupation:</span>
+                          <span className="font-semibold text-slate-800">{g.occupation || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 mr-1 font-medium">Contact:</span>
+                          <span className="font-semibold text-slate-800">{g.contact_number || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 mr-1 font-medium">Email:</span>
+                          <span className="font-semibold text-slate-800">{g.email || '—'}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {(!detail.guardians || detail.guardians.length === 0) && (
+                      <div className="text-slate-400 italic">No parent info registered yet.</div>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-purple-100 bg-slate-50/50 p-5 space-y-3">
+                  <div className="text-sm font-semibold text-purple-900 border-b border-purple-100/60 pb-2">Clinical Details</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-slate-500 block font-medium">Primary Diagnosis</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.clinical?.primary_diagnosis || 'None'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block font-medium">Disability/Impairment</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.clinical?.secondary_diagnosis || 'None'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-500 block font-medium">Allergies</span>
+                      <span className="font-semibold text-slate-800 text-sm">{detail.clinical?.allergies || 'None'}</span>
+                    </div>
+                  </div>
+                </section>
+              </>
+            ) : (
+              <div className="text-center text-slate-400 italic py-6">No patient profile data available for Student ID: {row.sid}</div>
+            )}
+          </div>
+        )}
+
+        {/* SPED or SummerScape Consent Form clauses */}
+        {(isSPED || isSummerScape) && (
+          <div className="space-y-5">
+            {/* Nature and Scope description */}
+            <section className="rounded-2xl border border-purple-200 bg-purple-50 p-5 text-sm text-slate-700">
+              <div className="font-semibold text-purple-800">Nature and Scope of the Program</div>
+              <p className="mt-2 leading-relaxed">
+                The {isSummerScape ? 'SummerScape' : 'Special Education (SPED)'} Program of ClearMind Psychological Services is designed
+                to provide developmental, academic, and behavioral support for children. By signing this consent, the parent/caregiver agrees to the terms
+                and provisions outlined below.
+              </p>
+            </section>
+
+            {/* Provisions checklist */}
+            <section className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm space-y-4">
+              <div className="text-base font-semibold text-purple-900 border-b border-purple-50 pb-2">
+                Provisions & Agreements
+              </div>
+              <div className="space-y-4 mt-2">
+                {provisionsList.map((p) => {
+                  const key = p.title.split('.')[0]
+                  const hasAgreed = isSigned && (sa[key] !== false)
+                  return (
+                    <div key={p.title} className="border-l-2 border-purple-300 pl-3 py-1 space-y-1">
+                      <div className="text-sm font-semibold text-purple-800 flex items-center gap-2">
+                        {p.title}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          hasAgreed 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : 'bg-slate-100 text-slate-400'
+                        }`}>
+                          {hasAgreed ? '✓ Parent Agreed' : 'Pending'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">{p.body}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+
+            {/* Clinic House Rules */}
+            <section className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm space-y-3">
+              <div className="text-base font-semibold text-purple-900 border-b border-purple-50 pb-2">
+                Clinic House Rules
+              </div>
+              <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600 leading-relaxed">
+                {rulesList.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+              <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50/60 border border-emerald-100 rounded-lg p-2.5">
+                {isSigned ? (
+                  <>✓ Parent acknowledged and agreed to abide by all house rules.</>
+                ) : (
+                  <span className="text-slate-400 font-normal">Parent signature will acknowledge agreement to abide by these rules.</span>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* E-Signature and Acknowledgement fields block */}
+        <section className="rounded-2xl border border-purple-100 bg-slate-50/50 p-5 space-y-4">
+          <div className="text-sm font-semibold text-purple-900 border-b border-purple-100/60 pb-2">
+            Parent / Guardian Signatures
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="text-slate-500 block">Parent / Guardian Name</span>
-              <span className="font-bold text-slate-800">{sa.parent_name || row.signature_text || '—'}</span>
+              <span className="text-slate-500 block font-medium">Parent / Guardian Name</span>
+              <span className="font-bold text-slate-800 text-sm">{sa.parent_name || row.signature_text || '—'}</span>
             </div>
             <div>
-              <span className="text-slate-500 block">Signed Date</span>
-              <span className="font-bold text-slate-800">
+              <span className="text-slate-500 block font-medium">Signed Date</span>
+              <span className="font-bold text-slate-800 text-sm">
                 {sa.date ? fmtDue(sa.date) : (row.signed_at ? fmtDue(row.signed_at) : '—')}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block">Student Name</span>
-              <span className="font-bold text-slate-800">{sa.child_name || row.student || '—'}</span>
+              <span className="text-slate-500 block font-medium">Student Name</span>
+              <span className="font-bold text-slate-800 text-sm">{sa.child_name || row.student || '—'}</span>
             </div>
             <div>
-              <span className="text-slate-500 block">Relationship</span>
-              <span className="font-bold text-slate-800">{sa.relationship || '—'}</span>
+              <span className="text-slate-500 block font-medium">Relationship</span>
+              <span className="font-bold text-slate-800 text-sm">{sa.relationship || '—'}</span>
             </div>
           </div>
-        </section>
 
-        {row.code !== 'CMPS:SE-FO-01' && row.code !== 'CMPS:SE-FO-13' && (
-          <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm space-y-2">
-            <div className="font-semibold text-purple-800 text-sm">Agreements & Provisions</div>
-            <p className="text-xs text-slate-600">
-              The parent agreed to the nature of the program, authority to provide services, confidentiality guidelines, health and safety policies, and financial commitments.
-            </p>
-            <div className="mt-2 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded px-2.5 py-1 inline-flex items-center gap-1.5">
-              ✓ Agreed to all clauses & house rules
+          <div className="mt-3">
+            <div className="text-xs text-slate-500 font-medium mb-1.5">E-Signature Image</div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 flex justify-center max-w-md">
+              {signature ? (
+                <img src={signature} alt="Parent Signature" className="max-h-24 object-contain mx-auto" />
+              ) : (
+                <span className="text-xs text-slate-400 italic">No signature image available (form not signed yet)</span>
+              )}
             </div>
-          </section>
-        )}
-
-        <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-          <div className="font-semibold text-purple-800 text-sm">E-Signature Image</div>
-          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 flex justify-center">
-            {signature ? (
-              <img src={signature} alt="Parent Signature" className="max-h-28 object-contain mx-auto" />
-            ) : (
-              <span className="text-xs text-slate-400 italic">No signature image available</span>
-            )}
           </div>
         </section>
       </div>
@@ -288,12 +552,12 @@ function Compliance() {
                         key={s.sid}
                         onClick={() => setSelectedStudentSid(s.sid)}
                         className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
-                          isSelected ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                          isSelected ? 'border-purple-300 bg-purple-100 shadow-sm' : 'border-transparent'
                         }`}
                       >
                         <div className="min-w-0 flex-1">
                           <div className={`font-semibold text-sm flex items-center gap-1.5 ${
-                            isSelected ? 'text-purple-800' : 'text-slate-800'
+                            isSelected ? 'text-purple-900' : 'text-slate-800'
                           }`}>
                             <span>{s.name}</span>
                             {hasOverdue ? (
@@ -304,9 +568,6 @@ function Compliance() {
                           </div>
                           <div className="text-[11px] text-slate-400 mt-0.5">ID: {s.sid}</div>
                         </div>
-                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600 shrink-0 ml-2">
-                          Select &rarr;
-                        </span>
                       </button>
                     )
                   })
@@ -391,14 +652,12 @@ function Compliance() {
                                   </td>
                                   <td className="py-3.5 px-2 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                      {(w.status === 'submitted' || w.status === 'approved') && (
-                                        <button
-                                          onClick={() => setViewWaiver(w)}
-                                          className="rounded-md border border-purple-200 hover:bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700 cursor-pointer shadow-sm transition-colors"
-                                        >
-                                          View Signed
-                                        </button>
-                                      )}
+                                      <button
+                                        onClick={() => setViewWaiver(w)}
+                                        className="rounded-md border border-purple-200 hover:bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                      >
+                                        View Form
+                                      </button>
                                       <button
                                         onClick={() => remind(w)}
                                         disabled={isBusy || w.status === 'not_started'}

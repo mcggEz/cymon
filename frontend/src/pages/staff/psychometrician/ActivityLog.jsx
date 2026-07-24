@@ -139,18 +139,17 @@ function ActivityLog() {
                         key={p.id}
                         onClick={() => setSelectedPatientId(p.id)}
                         className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
-                          isActive ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                          isActive ? 'border-purple-300 bg-purple-100 shadow-sm' : 'border-transparent'
                         }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-800' : 'text-slate-800'}`}>
+                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-900' : 'text-slate-800'}`}>
                             {p.name}
                           </div>
                           <div className="text-[11px] text-slate-400 mt-0.5">
                             ID: {p.patient_id || 'N/A'}
                           </div>
                         </div>
-                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600">Select &rarr;</span>
                       </button>
                     )
                   })

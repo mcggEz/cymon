@@ -1,118 +1,27 @@
 import { useEffect, useState } from 'react'
 import PageHeader from './PageHeader'
-import Skeleton from '../../components/ui/Skeleton'
+import Skeleton, { SkeletonText } from '../../components/ui/Skeleton'
 import { api } from '../../lib/api'
 import AnswerAssessment from '../staff/psychometrician/AnswerAssessment'
 
 const fmtDate = (d) =>
-  d ? new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
-
-function Tabs({ value, onChange }) {
-  return (
-    <div className="grid grid-cols-2 rounded-xl bg-purple-100 p-1 text-sm font-semibold">
-      {[
-        { id: 'all', label: 'ALL ASSESSMENTS' },
-        { id: 'records', label: 'Assessment Records' },
-      ].map((t) => {
-        const active = value === t.id
-        return (
-          <button
-            key={t.id}
-            onClick={() => onChange(t.id)}
-            className={[
-              'rounded-lg py-2.5 transition',
-              active ? 'bg-purple-700 text-white shadow' : 'text-purple-700 hover:bg-white/40',
-            ].join(' ')}
-          >
-            {t.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function AssessmentCard({ a, onAnswer }) {
-  return (
-    <article className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
-      <div className="h-3 bg-gradient-to-r from-purple-600 to-purple-800" />
-      <div className="flex items-start gap-4 p-5">
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div className="text-base font-semibold text-purple-800">{a.title}</div>
-            <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700">
-              {a.status === 'in_progress' ? 'In Progress' : 'New'}
-            </span>
-          </div>
-          {a.due_date ? (
-            <p className="mt-1 text-sm text-slate-600">Due {fmtDate(a.due_date)}</p>
-          ) : null}
-          <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700">
-                {a.code}
-              </span>
-              <span className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
-                Assigned by {a.assigned_by || 'Clinic Staff'}
-              </span>
-            </div>
-            <button
-              onClick={() => onAnswer(a)}
-              className="rounded-md bg-purple-700 hover:bg-purple-800 text-white px-3.5 py-1.5 text-xs font-semibold cursor-pointer shadow-sm transition-all"
-            >
-              Answer Form
-            </button>
-          </div>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-// The professional scoring guide (score, interpretation, level) stays confidential
-// to the clinic. Patients only see that the assessment is Done and may request a
-// viewing, which is subject to clinic approval.
-function RecordCard({ r }) {
-  const [requested, setRequested] = useState(false)
-  return (
-    <article className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
-      <div className="h-3 bg-gradient-to-r from-purple-600 to-purple-800" />
-      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-base font-semibold text-purple-800">{r.title}</div>
-          <div className="text-xs text-slate-500">
-            Administered by: {r.by || 'Clinician'} · Submitted: {fmtDate(r.submitted_at)}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Done
-          </span>
-          {requested ? (
-            <span className="rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-              Request sent — pending clinic approval
-            </span>
-          ) : (
-            <button
-              onClick={() => setRequested(true)}
-              className="rounded-md border border-purple-300 px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-50"
-            >
-              Request for Viewing
-            </button>
-          )}
-        </div>
-      </div>
-    </article>
-  )
-}
+  d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
 
 function AssessmentServices() {
-  const [tab, setTab] = useState('all')
   const [assigned, setAssigned] = useState([])
   const [records, setRecords] = useState([])
+  const [templates, setTemplates] = useState([])
   const [patient, setPatient] = useState(null)
   const [loading, setLoading] = useState(true)
   const [answeringForm, setAnsweringForm] = useState(null)
+  const [requestedIds, setRequestedIds] = useState(new Set())
+
+  const EXPECTED_ASSESSMENTS = [
+    { code: 'CMPS:SE-FO-03', title: 'Caregiver Observation Checklist', est_minutes: 15 },
+    { code: 'CMPS:SE-FO-04', title: 'Mini-Mental Status Examination', est_minutes: 20 },
+    { code: 'CMPS:SE-FO-05', title: 'Child Adaptive Functioning Tool', est_minutes: 25 },
+    { code: 'CMPS:SE-FO-06', title: 'Behavioral Assessment Report', est_minutes: 30 }
+  ]
 
   const handleLoad = () => {
     setLoading(true)
@@ -120,11 +29,26 @@ function AssessmentServices() {
       api.client.assessments(),
       api.client.getPatient()
     ]).then(([d, p]) => {
-      setAssigned(d.assigned)
-      setRecords(d.records)
+      setAssigned(d.assigned || [])
+      setRecords(d.records || [])
+      
+      const apiTemplates = d.templates || []
+      const mapped = EXPECTED_ASSESSMENTS.map((ea) => {
+        const matchedApiTpl = apiTemplates.find((at) => at.code === ea.code)
+        return {
+          ...ea,
+          id: matchedApiTpl?.id || `mock_${ea.code}`,
+        }
+      })
+      setTemplates(mapped)
       setPatient(p.patient)
     }).catch((e) => {
-      console.error(e)
+      console.error('Failed to load assessments:', e)
+      const fallback = EXPECTED_ASSESSMENTS.map((ea) => ({
+        ...ea,
+        id: `mock_${ea.code}`,
+      }))
+      setTemplates(fallback)
     }).finally(() => {
       setLoading(false)
     })
@@ -137,61 +61,135 @@ function AssessmentServices() {
   return (
     <>
       <PageHeader title="Assessment Services" />
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="rounded-xl bg-purple-200/70 px-4 py-2 text-sm text-purple-900">
-          These assessments are administered by your clinician during sessions. You can see what has
-          been assigned to your child here; official results are shared with you after clinical review.
-        </div>
-
-        <div className="mt-5">
-          <Tabs value={tab} onChange={setTab} />
-        </div>
-
-        {tab === 'records' ? (
-          <>
-            <div className="mt-5 rounded-2xl bg-amber-50 p-5">
-              <div className="text-amber-700">
-                <span className="text-base font-bold">Official Clinical Results</span>
-              </div>
-              <p className="mt-2 text-sm text-slate-700">
-                To protect your child&apos;s sensitive data, scores, official interpretations,
-                diagnoses, and program recommendations are kept confidential and discussed onsite.
-                Use <span className="font-semibold">Request for Viewing</span> to ask the clinic for
-                access — subject to approval.
-              </p>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-4">
-              {loading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-24 w-full" rounded="rounded-2xl" />
-                  ))
-                : null}
-              {!loading && records.length === 0 ? (
-                <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
-                  No submitted assessments yet.
-                </div>
-              ) : null}
-              {!loading &&
-                records.map((r) => <RecordCard key={r.id} r={r} />)}
-            </div>
-          </>
-        ) : (
-          <div className="mt-5 flex flex-col gap-4">
-            {loading
-              ? Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-24 w-full" rounded="rounded-2xl" />
-                ))
-              : null}
-            {!loading && assigned.length === 0 ? (
-              <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
-                No assessments assigned right now.
-              </div>
-            ) : null}
-            {!loading &&
-              assigned.map((a) => <AssessmentCard key={a.id} a={a} onAnswer={(a) => setAnsweringForm(a)} />)}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Unified Table Container */}
+        <div className="rounded-3xl border border-purple-100 bg-white p-6 shadow-sm min-h-[460px]">
+          <div className="border-b border-purple-50 pb-4 mb-4">
+            <h3 className="text-sm font-bold text-purple-950">Assessments &amp; Diagnostics Catalog</h3>
+            <p className="text-[11px] text-slate-400">View diagnostic history, submit questionnaires, or request record viewings</p>
           </div>
-        )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-purple-100 text-xs font-bold text-purple-800 uppercase tracking-wider">
+                  <th className="py-3 px-2">Document Title</th>
+                  <th className="py-3 px-2">Form Code</th>
+                  <th className="py-3 px-2">Due Date</th>
+                  <th className="py-3 px-2">Status</th>
+                  <th className="py-3 px-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-purple-50/50">
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="py-4 px-2"><Skeleton className="h-5 w-2/3" /></td>
+                      <td className="py-4 px-2"><Skeleton className="h-5 w-20" /></td>
+                      <td className="py-4 px-2"><Skeleton className="h-5 w-32" /></td>
+                      <td className="py-4 px-2"><Skeleton className="h-6 w-16" rounded="rounded-full" /></td>
+                      <td className="py-4 px-2 text-right"><Skeleton className="h-8 w-24 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : templates.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-xs text-slate-400">
+                      No clinical assessments registered in the catalog.
+                    </td>
+                  </tr>
+                ) : (
+                  templates.map((t) => {
+                    // Check if there is a completed record (submission)
+                    const record = records.find((r) => r.template_id === t.id)
+                    // Check if there is an active assignment
+                    const assignment = assigned.find((a) => a.template_id === t.id)
+
+                    let statusBadge = null
+                    let actionCell = null
+                    let dueDate = '—'
+                    let isDone = false
+
+                    if (record) {
+                      isDone = true
+                      statusBadge = (
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-205">
+                          Approved &amp; Completed
+                        </span>
+                      )
+                      
+                      const isReq = requestedIds.has(t.id)
+                      actionCell = isReq ? (
+                        <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1">
+                          Request Pending
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setRequestedIds((prev) => {
+                              const next = new Set(prev)
+                              next.add(t.id)
+                              return next
+                            })
+                          }}
+                          className="rounded-lg border border-purple-200 hover:bg-purple-50 text-purple-750 px-4 py-1.5 text-xs font-bold cursor-pointer shadow-sm transition-colors"
+                        >
+                          Request for Viewing
+                        </button>
+                      )
+                    } else if (assignment) {
+                      dueDate = assignment.due_date ? fmtDate(assignment.due_date) : '—'
+                      statusBadge = (
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          Pending Action
+                        </span>
+                      )
+                      actionCell = (
+                        <button
+                          onClick={() => setAnsweringForm(assignment)}
+                          className="rounded-lg bg-purple-700 hover:bg-purple-800 text-white px-4 py-1.5 text-xs font-bold cursor-pointer shadow-sm transition-colors"
+                        >
+                          Answer Form
+                        </button>
+                      )
+                    } else {
+                      statusBadge = (
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                          Not Administered
+                        </span>
+                      )
+                      actionCell = (
+                        <span className="text-xs text-slate-400 font-medium italic">
+                          No action required
+                        </span>
+                      )
+                    }
+
+                    const dateColor = isDone ? 'text-emerald-600 font-semibold' : 'text-slate-500'
+
+                    return (
+                      <tr key={t.id} className="hover:bg-purple-50/10 transition-colors">
+                        <td className="py-3.5 px-2">
+                          <div className="font-semibold text-slate-800">{t.title}</div>
+                          {t.est_minutes ? (
+                            <div className="text-xs text-slate-400 mt-0.5">Est. Time: {t.est_minutes} minutes</div>
+                          ) : null}
+                        </td>
+                        <td className="py-3.5 px-2 text-xs text-slate-500 font-medium">{t.code}</td>
+                        <td className={`py-3.5 px-2 text-xs font-medium ${dateColor}`}>{dueDate}</td>
+                        <td className="py-3.5 px-2">{statusBadge}</td>
+                        <td className="py-3.5 px-2 text-right">
+                          <div className="flex gap-2 justify-end items-center">
+                            {actionCell}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {answeringForm && (

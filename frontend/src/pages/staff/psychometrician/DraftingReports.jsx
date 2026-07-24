@@ -137,12 +137,12 @@ function DraftingReports() {
                         key={p.id}
                         onClick={() => setSelectedPatientId(p.id)}
                         className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
-                          isSelected ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                          isSelected ? 'border-purple-300 bg-purple-100 shadow-sm' : 'border-transparent'
                         }`}
                       >
                         <div className="min-w-0 flex-1">
                           <div className={`font-semibold text-sm flex items-center gap-1.5 ${
-                            isSelected ? 'text-purple-800' : 'text-slate-800'
+                            isSelected ? 'text-purple-900' : 'text-slate-800'
                           }`}>
                             <span>{p.name}</span>
                             {isPendingSign && (
@@ -158,9 +158,6 @@ function DraftingReports() {
                             )}
                           </div>
                         </div>
-                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600 shrink-0 ml-2">
-                          Select &rarr;
-                        </span>
                       </button>
                     )
                   })

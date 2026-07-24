@@ -139,8 +139,6 @@ export const api = {
     roster: () => request('/api/psychologist/roster', { auth: true }),
     updateRoster: (id, payload) =>
       request(`/api/psychologist/roster/${id}`, { method: 'PATCH', body: payload, auth: true }),
-    updateJournalPermission: (patient_id, allow_journal_entry) =>
-      request('/api/psychologist/journal-permission', { method: 'PATCH', body: { patient_id, allow_journal_entry }, auth: true }),
     mainstreaming: () => request('/api/psychologist/mainstreaming', { auth: true }),
     addMainstreaming: (payload) =>
       request('/api/psychologist/mainstreaming', { method: 'POST', body: payload, auth: true }),
@@ -154,6 +152,8 @@ export const api = {
       request(`/api/psychologist/reports/${id}`, { method: 'PATCH', body: payload, auth: true }),
     grantAssessmentPermission: (payload) =>
       request('/api/psychologist/assessments/grant-permission', { method: 'POST', body: payload, auth: true }),
+    updateSubmission: (id, payload) =>
+      request(`/api/psychologist/submissions/${id}`, { method: 'PATCH', body: payload, auth: true }),
   },
   psychometrician: {
     tasks: () => request('/api/psychometrician/tasks', { auth: true }),
@@ -179,5 +179,7 @@ export const api = {
     studentJournal: (patientId) => request(`/api/psychometrician/student-journal/${patientId}`, { auth: true }),
     requestAssessmentPermission: (payload) =>
       request('/api/psychometrician/assessments/request-permission', { method: 'POST', body: payload, auth: true }),
+    updateJournalPermission: (patient_id, allow_journal_entry) =>
+      request('/api/psychometrician/journal-permission', { method: 'PATCH', body: { patient_id, allow_journal_entry }, auth: true }),
   },
 }

@@ -271,27 +271,6 @@ function HomeProgress() {
             />
           </div>
         </section>
-
-        <section className="mt-5">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold text-purple-800">Clinic Updates</div>
-            <ul className="mt-3 space-y-3 text-sm">
-              {loading ? (
-                <li><SkeletonText lines={3} /></li>
-              ) : (data?.announcements || []).length === 0 ? (
-                <li className="text-slate-500">No recent updates.</li>
-              ) : (
-                (data?.announcements || []).map((a) => (
-                  <li key={a.id} className="border-l-2 border-purple-400 pl-3">
-                    <div className="font-semibold text-slate-800">{a.title}</div>
-                    {a.body && <p className="text-xs text-slate-600 mt-1">{a.body}</p>}
-                    <div className="text-[10px] text-slate-400 mt-1">{fmtDate(a.publish_date)}</div>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-        </section>
       </div>
     </>
   )

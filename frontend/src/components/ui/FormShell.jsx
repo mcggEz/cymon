@@ -65,6 +65,33 @@ function FormShell({
       aria-label={title}
     >
       <style>{`
+        @media screen {
+          .form-article {
+            position: relative;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 30px rgba(56,34,79,0.04);
+            border: 1px solid #f3e8ff;
+            border-radius: 1rem;
+            padding: 2rem !important;
+            max-width: 900px;
+            width: 100%;
+            font-size: 14.5px !important;
+            line-height: 1.6 !important;
+            color: #1e1b4b !important;
+            margin-bottom: 0.5rem;
+          }
+          .form-article-page-header {
+            display: flex !important;
+            justify-content: space-between;
+            border-bottom: 2px solid #f3e8ff;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 12px !important;
+            font-weight: 600;
+            color: #8b5cf6;
+          }
+        }
+
         @media print {
           #root { display: none !important; }
           #form-portal { position: static !important; background: #fff !important; }
@@ -83,6 +110,33 @@ function FormShell({
             min-width: 0 !important;
             width: 100% !important;
             table-layout: auto !important;
+          }
+
+          /* Force exact print-page aspect ratio and letterhead background */
+          .form-article {
+            position: relative !important;
+            aspect-ratio: 17/22 !important;
+            width: 100% !important;
+            max-width: none !important;
+            background-image: url(/cmps-letterhead.png) !important;
+            background-size: 100% 100% !important;
+            background-repeat: no-repeat !important;
+            background-position: top center !important;
+            padding-left: 9.5% !important;
+            padding-right: 9.5% !important;
+            padding-bottom: 8.5% !important;
+            padding-top: 13% !important;
+            font-size: 11.5px !important;
+            line-height: 1.35 !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            margin-bottom: 0 !important;
+          }
+          
+          .form-article-page-header {
+            display: flex !important;
           }
         }
       `}</style>
@@ -117,76 +171,94 @@ function FormShell({
       </div>
 
       <div
-        className="flex-1 overflow-y-auto bg-slate-500/30 p-4 sm:p-8 print:overflow-visible print:bg-white print:p-0 flex flex-col gap-6 items-center print:gap-0 print:block"
+        className="flex-1 overflow-y-auto bg-[#F5F1FA] p-4 sm:p-6 print:overflow-visible print:bg-white print:p-0 flex flex-col items-center print:block"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose()
         }}
       >
-        {multiPage ? (
-          pages.map((pageContent, idx) => {
-            const isFirst = idx === 0
-            return (
-              <article
-                key={idx}
-                className="print-page-break relative aspect-[17/22] w-full max-w-[816px] bg-white px-[9.5%] pb-[8.5%] pt-[13%] text-[12px] sm:text-[11.5px] leading-snug text-slate-900 shadow-xl ring-1 ring-black/5 print:max-w-none print:shadow-none print:ring-0"
-                style={{
-                  backgroundImage: 'url(/cmps-letterhead.png)',
-                  backgroundSize: '100% 100%',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'top center',
-                }}
-              >
-                {isFirst ? (
-                  <>
-                    {code ? <div className="text-right text-[10px] font-bold text-purple-700">{code}</div> : null}
-                    <div className="text-center">
-                      <h1 className="text-base font-bold uppercase tracking-wide text-purple-800">{title}</h1>
-                      {subtitle ? (
-                        <div className="text-[13px] font-bold uppercase tracking-wide text-purple-800">{subtitle}</div>
-                      ) : null}
-                      {confidential ? <div className="text-[11px] font-bold text-purple-700">(Highly Confidential)</div> : null}
-                    </div>
-                    <div className="mt-2">{pageContent}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between border-b border-purple-200 pb-1 mb-3 text-[10px] text-purple-600 font-semibold tracking-wide print:mt-4">
-                      <span>{title} {subtitle ? ` - ${subtitle}` : ''}</span>
-                      <span>Page {idx + 1}</span>
-                    </div>
-                    <div className="mt-2">{pageContent}</div>
-                  </>
-                )}
-              </article>
-            )
-          })
-        ) : (
-          <article
-            className="relative aspect-[17/22] w-full max-w-[816px] bg-white px-[9.5%] pb-[8.5%] pt-[13%] text-[12px] sm:text-[11.5px] leading-snug text-slate-900 shadow-xl ring-1 ring-black/5 print:max-w-none print:shadow-none print:ring-0"
-            style={{
-              backgroundImage: 'url(/cmps-letterhead.png)',
-              backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'top center',
-            }}
-          >
-            {code ? <div className="text-right text-[10px] font-bold text-purple-700">{code}</div> : null}
-            <div className="text-center">
-              <h1 className="text-base font-bold uppercase tracking-wide text-purple-800">{title}</h1>
-              {subtitle ? (
-                <div className="text-[13px] font-bold uppercase tracking-wide text-purple-800">{subtitle}</div>
-              ) : null}
-              {confidential ? <div className="text-[11px] font-bold text-purple-700">(Highly Confidential)</div> : null}
+        <div className="w-full max-w-[900px] flex flex-col gap-6 print:block print:max-w-none print:gap-0">
+          {/* Screen-only Brand Header */}
+          <header className="w-full mb-2 flex justify-between items-start border-b border-purple-200 pb-4 flex-wrap gap-4 print:hidden">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-800 to-purple-500 flex items-center justify-center text-white font-serif font-semibold text-lg shrink-0">
+                CM
+              </div>
+              <div>
+                <div className="font-serif font-bold text-base text-purple-950 leading-tight">ClearMind Psychological Services</div>
+                <div className="text-[11px] text-purple-600 italic">Clarity of Mind, Journey to Wellness.</div>
+              </div>
             </div>
-            <div className="mt-2">{children}</div>
-          </article>
-        )}
+            <div className="text-right text-[11px] text-slate-500 leading-normal font-medium">
+              <div>Blk 1 Lot 7 Palmsville Subdivision</div>
+              <div>Brgy. Banlic, Cabuyao City, Laguna 4025</div>
+              <div>clearmind.psychservices@gmail.com · (+639)92-916-4078</div>
+              {code && <div className="font-mono text-purple-700 font-bold mt-1 text-[10px]">{code}</div>}
+            </div>
+          </header>
 
-        {actions ? (
-          <div className="sticky bottom-4 z-20 mx-auto w-full max-w-[816px] rounded-xl border border-purple-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm print:hidden">
-            {actions}
-          </div>
-        ) : null}
+          {multiPage ? (
+            pages.map((pageContent, idx) => {
+              const isFirst = idx === 0
+              return (
+                <article key={idx} className="form-article print-page-break">
+                  <img
+                    src="/cmps-letterhead.png"
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-fill hidden print:block pointer-events-none select-none"
+                    style={{ zIndex: -1 }}
+                    aria-hidden="true"
+                  />
+                  {isFirst ? (
+                    <>
+                      {code ? <div className="text-right text-[10px] font-bold text-purple-700 print:block hidden">{code}</div> : null}
+                      <div className="text-center">
+                        <h1 className="text-base font-bold uppercase tracking-wide text-purple-800">{title}</h1>
+                        {subtitle ? (
+                          <div className="text-[13px] font-bold uppercase tracking-wide text-purple-800">{subtitle}</div>
+                        ) : null}
+                        {confidential ? <div className="text-[11px] font-bold text-purple-700">(Highly Confidential)</div> : null}
+                      </div>
+                      <div className="mt-2">{pageContent}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="form-article-page-header">
+                        <span>{title} {subtitle ? ` - ${subtitle}` : ''}</span>
+                        <span>Page {idx + 1}</span>
+                      </div>
+                      <div className="mt-2">{pageContent}</div>
+                    </>
+                  )}
+                </article>
+              )
+            })
+          ) : (
+            <article className="form-article">
+              <img
+                src="/cmps-letterhead.png"
+                alt=""
+                className="absolute inset-0 w-full h-full object-fill hidden print:block pointer-events-none select-none"
+                style={{ zIndex: -1 }}
+                aria-hidden="true"
+              />
+              {code ? <div className="text-right text-[10px] font-bold text-purple-700 print:block hidden">{code}</div> : null}
+              <div className="text-center">
+                <h1 className="text-base font-bold uppercase tracking-wide text-purple-800">{title}</h1>
+                {subtitle ? (
+                  <div className="text-[13px] font-bold uppercase tracking-wide text-purple-800">{subtitle}</div>
+                ) : null}
+                {confidential ? <div className="text-[11px] font-bold text-purple-700">(Highly Confidential)</div> : null}
+              </div>
+              <div className="mt-2">{children}</div>
+            </article>
+          )}
+
+          {actions ? (
+            <div className="sticky bottom-4 z-20 mx-auto w-full max-w-[900px] rounded-xl border border-purple-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm print:hidden">
+              {actions}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>,
     document.body

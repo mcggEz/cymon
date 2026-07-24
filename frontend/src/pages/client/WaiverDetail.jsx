@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import PageHeader from './PageHeader'
 import Input from '../../components/ui/Input'
 import Checkbox from '../../components/ui/Checkbox'
@@ -137,7 +137,9 @@ function WaiverDetail() {
     }
   }, [code])
 
-  const isReadOnly = submission && (submission.status === 'submitted' || submission.status === 'approved')
+  const [searchParams] = useSearchParams()
+  const isViewMode = searchParams.get('view') === 'true'
+  const isReadOnly = isViewMode || (submission && (submission.status === 'submitted' || submission.status === 'approved'))
   const isSummerScape = code === 'CMPS:SE-FO-12'
   const isAdmissionForm = code === 'CMPS:SE-FO-01' || code === 'CMPS:SE-FO-13'
 

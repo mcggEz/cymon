@@ -32,56 +32,21 @@ const PRIORITY_LABEL = { high: 'High Priority', normal: 'Medium Priority', low: 
 router.get('/approvals', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
-      .from('assessment_reports')
-      .select('id, patient_id, title, document_type_code, report_type, priority, created_at, patients(id, first_name, middle_name, last_name, clinic_id)')
-      .eq('status', 'ready_for_review')
-      .neq('report_type', 'behavioral')
-      .order('created_at', { ascending: false });
-    if (error) return next(error);
+    const [{ data, error }, { data: subsData, error: subsError }] = await Promise.all([
+      supabase
+        .from('assessment_reports')
+        .select('id, patient_id, title, document_type_code, report_type, priority, created_at, patients(id, first_name, middle_name, last_name, clinic_id)')
+        .eq('status', 'ready_for_review')
+        .neq('report_type', 'behavioral')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('assessment_submissions')
+        .select('id, status, total_score, max_score, submitted_at, respondent_name, patients(id, first_name, middle_name, last_name, clinic_id), assessment_templates(id, title, document_type_code)')
+        .order('created_at', { ascending: false })
+    ]);
 
-    let perms = [];
-    try {
-      const { data: dbPerms, error: dbErr } = await supabase
-        .from('assessment_permissions')
-        .select('id, patient_id, template_id, status, created_at, requested_by_id, patients(id, first_name, last_name), profiles!requested_by_id(display_name), assessment_templates(title, document_type_code)')
-        .eq('clinic_id', req.profile.clinic_id)
-        .eq('status', 'pending');
-      if (dbErr) throw dbErr;
-      perms = dbPerms || [];
-    } catch (dbErr) {
-      if (dbErr.code === 'PGRST205' || dbErr.message?.includes('assessment_permissions')) {
-        console.warn('[db] falling back to local memory store for approvals');
-        const pending = Array.from(localPermissionsStore.values()).filter(p => p.clinic_id === req.profile.clinic_id && p.status === 'pending');
-        const patientIds = pending.map(p => p.patient_id);
-        const requesterIds = pending.map(p => p.requested_by_id);
-        const templateIds = pending.map(p => p.template_id);
-        
-        const [{ data: pts }, { data: reqs }, { data: tpls }] = await Promise.all([
-          supabase.from('patients').select('id, first_name, last_name').in('id', patientIds),
-          supabase.from('profiles').select('id, display_name').in('id', requesterIds),
-          supabase.from('assessment_templates').select('id, title, document_type_code').in('id', templateIds)
-        ]);
-        
-        perms = pending.map(p => {
-          const patient = (pts || []).find(pt => pt.id === p.patient_id);
-          const requester = (reqs || []).find(r => r.id === p.requested_by_id);
-          const template = (tpls || []).find(t => t.id === p.template_id);
-          return {
-            id: p.id,
-            patient_id: p.patient_id,
-            template_id: p.template_id,
-            status: p.status,
-            created_at: p.created_at || new Date().toISOString(),
-            patients: patient ? { first_name: patient.first_name, last_name: patient.last_name } : null,
-            profiles: requester ? { display_name: requester.display_name } : null,
-            assessment_templates: template ? { title: template.title, document_type_code: template.document_type_code } : null
-          };
-        });
-      } else {
-        throw dbErr;
-      }
-    }
+    if (error) return next(error);
+    if (subsError) return next(subsError);
 
     res.json({
       reports: inClinic(data, req.profile.clinic_id).map((r) => ({
@@ -92,14 +57,15 @@ router.get('/approvals', async (req, res, next) => {
         date: r.created_at,
         priority: PRIORITY_LABEL[r.priority] || 'Medium Priority',
       })),
-      permissions: perms.map((p) => ({
-        id: p.id,
-        patient_id: p.patient_id,
-        template_id: p.template_id,
-        student_name: p.patients ? `${p.patients.first_name} ${p.patients.last_name}` : 'Student',
-        assessment_name: p.assessment_templates ? `${p.assessment_templates.title} (${p.assessment_templates.document_type_code})` : 'Standard Test',
-        requested_by: p.profiles?.display_name || 'Psychometrician',
-        date: p.created_at,
+      submissions: inClinic(subsData || [], req.profile.clinic_id).map((s) => ({
+        id: s.id,
+        patient_id: s.patients?.id,
+        student_name: s.patients ? `${s.patients.first_name} ${s.patients.last_name}` : 'Student',
+        assessment_name: s.assessment_templates ? `${s.assessment_templates.title} (${s.assessment_templates.document_type_code})` : 'Standard Test',
+        submitted_by: s.respondent_name || 'Psychometrician',
+        date: s.submitted_at || s.created_at,
+        status: s.status,
+        score: s.total_score !== null ? `${s.total_score}/${s.max_score}` : '—'
       })),
     });
   } catch (err) {
@@ -150,28 +116,6 @@ router.post('/assessments/grant-permission', async (req, res, next) => {
         throw dbErr;
       }
     }
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.patch('/journal-permission', async (req, res, next) => {
-  if (!ensureConfigured(res)) return;
-  try {
-    const { patient_id, allow_journal_entry } = req.body || {};
-    if (!patient_id || typeof allow_journal_entry !== 'boolean') {
-      return res.status(400).json({ error: 'patient_id and allow_journal_entry boolean are required' });
-    }
-    const { data, error } = await supabase
-      .from('patients')
-      .update({ allow_journal_entry })
-      .eq('id', patient_id)
-      .eq('clinic_id', req.profile.clinic_id)
-      .select('id, patient_id, first_name, last_name, allow_journal_entry')
-      .maybeSingle();
-    if (error) return res.status(400).json({ error: error.message });
-    if (!data) return res.status(404).json({ error: 'Patient not found' });
-    res.json({ patient: data });
   } catch (err) {
     next(err);
   }
@@ -514,6 +458,32 @@ router.patch('/roster/:patientId', async (req, res, next) => {
       body: `${patient.first_name}'s support level and milestone progress were updated by your clinician.`,
       link: '/client/home',
     });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/submissions/:id', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { status } = req.body || {};
+    if (!status || !['scored', 'revalidation', 'submitted'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    const { data: sub } = await supabase
+      .from('assessment_submissions')
+      .select('id, patients(clinic_id)')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (!sub || !sub.patients || sub.patients.clinic_id !== req.profile.clinic_id) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    const { error } = await supabase
+      .from('assessment_submissions')
+      .update({ status })
+      .eq('id', req.params.id);
+    if (error) return res.status(400).json({ error: error.message });
     res.json({ ok: true });
   } catch (err) {
     next(err);

@@ -202,9 +202,9 @@ function DailyActivity() {
           <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-sm flex items-start gap-3 animate-fadeIn mb-2">
             <div className="text-2xl shrink-0">🔒</div>
             <div>
-              <div className="font-bold text-sm">Journal Writing Locked by Psychologist</div>
+              <div className="font-bold text-sm">Journal Writing Locked by Psychometrician</div>
               <div className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
-                Students and caregivers are not permitted to submit or edit daily journal entries unless allowed by your supervising Psychologist. If you need to log entries, please request your Psychologist to grant journal writing permissions.
+                Students and caregivers are not permitted to submit or edit daily journal entries unless allowed by your supervising Psychometrician. If you need to log entries, please request your Psychometrician to grant journal writing permissions.
               </div>
             </div>
           </div>

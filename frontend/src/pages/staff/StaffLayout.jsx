@@ -85,7 +85,11 @@ function StaffLayout({ user, nav, profileTo, outletContext }) {
   const roleChip = multiRole ? (
     <button
       type="button"
-      onClick={() => setRoleOpen((o) => !o)}
+      onClick={(e) => {
+        e.stopPropagation()
+        e.preventDefault()
+        setRoleOpen((o) => !o)
+      }}
       aria-expanded={roleOpen}
       className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white hover:bg-white/25"
     >

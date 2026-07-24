@@ -6,7 +6,7 @@ import Skeleton from '../../../components/ui/Skeleton'
 const selectClass = 'mt-1 h-10 w-full rounded-md border border-purple-200 bg-white px-3 text-sm disabled:bg-purple-50 disabled:text-slate-500'
 const labelClass = 'text-[11px] font-semibold uppercase tracking-wide text-purple-800'
 
-function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
+function DomainCard({ domain, answers, remarks, onAnswer, onRemark, readOnly = false }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-sm">
       <header className="flex items-center justify-between bg-purple-700 px-4 py-2 text-white">
@@ -22,20 +22,30 @@ function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
             <div className="flex gap-1.5">
               <button
                 type="button"
-                onClick={() => onAnswer(it.key, 'yes')}
+                onClick={() => !readOnly && onAnswer(it.key, 'yes')}
+                disabled={readOnly}
                 className={[
-                  'rounded-md px-3 py-1 text-xs font-medium',
-                  answers[it.key] === 'yes' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700',
+                  'rounded-md px-3 py-1 text-xs font-medium transition-all',
+                  answers[it.key] === 'yes'
+                    ? 'bg-green-500 text-white'
+                    : readOnly
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer',
                 ].join(' ')}
               >
                 Yes
               </button>
               <button
                 type="button"
-                onClick={() => onAnswer(it.key, 'no')}
+                onClick={() => !readOnly && onAnswer(it.key, 'no')}
+                disabled={readOnly}
                 className={[
-                  'rounded-md px-3 py-1 text-xs font-medium',
-                  answers[it.key] === 'no' ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700',
+                  'rounded-md px-3 py-1 text-xs font-medium transition-all',
+                  answers[it.key] === 'no'
+                    ? 'bg-rose-500 text-white'
+                    : readOnly
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-rose-100 text-rose-700 hover:bg-rose-200 cursor-pointer',
                 ].join(' ')}
               >
                 No
@@ -43,9 +53,10 @@ function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
             </div>
             <input
               value={remarks[it.key] || ''}
-              onChange={(e) => onRemark(it.key, e.target.value)}
-              placeholder="Remarks…"
-              className="h-8 rounded-md border border-purple-200 bg-purple-50 px-2 text-xs"
+              onChange={(e) => !readOnly && onRemark(it.key, e.target.value)}
+              disabled={readOnly}
+              placeholder={readOnly ? '—' : 'Remarks…'}
+              className="h-8 rounded-md border border-purple-200 bg-purple-50 px-2 text-xs disabled:bg-slate-50 disabled:text-slate-500"
             />
           </div>
         ))}
@@ -54,10 +65,18 @@ function DomainCard({ domain, answers, remarks, onAnswer, onRemark }) {
   )
 }
 
-// The psychometrician administers a template-driven assessment for a chosen
-// patient, records Yes/No responses + remarks, and submits the scored result
-// (which then surfaces in Data Review). Opened as an overlay from Assessments.
-function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTemplateId, isClient = false, prefilledPatientName = '', prefilledTemplateName = '', onClose }) {
+function AnswerAssessment({
+  tests,
+  patients,
+  prefilledPatientId,
+  prefilledTemplateId,
+  isClient = false,
+  prefilledPatientName = '',
+  prefilledTemplateName = '',
+  onClose,
+  readOnly = false,
+  submission = null
+}) {
   const [patientId, setPatientId] = useState(prefilledPatientId || '')
   const [templateId, setTemplateId] = useState(prefilledTemplateId || '')
   const [template, setTemplate] = useState(null)
@@ -73,8 +92,10 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
   const pickTemplate = async (id) => {
     setTemplateId(id)
     setTemplate(null)
-    setAnswers({})
-    setRemarks({})
+    if (!submission) {
+      setAnswers({})
+      setRemarks({})
+    }
     setError(null)
     if (!id) return
     setLoadingTpl(true)
@@ -96,6 +117,21 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
     }
   }, [prefilledTemplateId])
 
+  useEffect(() => {
+    if (submission) {
+      const initialAnswers = {}
+      const initialRemarks = {}
+      if (submission.answers) {
+        Object.entries(submission.answers).forEach(([key, val]) => {
+          initialAnswers[key] = val?.response || ''
+          initialRemarks[key] = val?.remarks || ''
+        })
+      }
+      setAnswers(initialAnswers)
+      setRemarks(initialRemarks)
+    }
+  }, [submission])
+
   const structure = useMemo(() => template?.structure || [], [template])
   const { total, max } = useMemo(() => {
     let t = 0
@@ -113,6 +149,7 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
   const setRemark = (key, val) => setRemarks((r) => ({ ...r, [key]: val }))
 
   const submit = async () => {
+    if (readOnly) return
     setError(null)
     if (!isClient && !patientId) {
       setError('Select a patient first.')
@@ -163,10 +200,12 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
       aria-label="Administer assessment"
     >
       <div className="flex items-center justify-between gap-3 border-b border-slate-700 bg-slate-900 px-4 py-3 text-white">
-        <div className="text-sm font-semibold">Administer Assessment</div>
+        <div className="text-sm font-semibold">
+          {readOnly ? 'View Assessment' : 'Administer Assessment'}
+        </div>
         <button
           onClick={onClose}
-          className="rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+          className="rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 cursor-pointer transition-all"
         >
           Close
         </button>
@@ -177,7 +216,7 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
           <div className="mx-auto max-w-md rounded-2xl border border-purple-200 bg-white p-6 text-center shadow-sm">
             <div className="text-lg font-semibold text-purple-800">Assessment recorded</div>
             <p className="mt-1 text-sm text-slate-600">
-              The submission was saved and now appears in Data Review.
+              The submission was saved.
             </p>
             <Button className="mt-4" onClick={onClose}>
               Done
@@ -193,7 +232,7 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
                     {prefilledPatientName || 'Your Child'}
                   </div>
                 ) : (
-                  <select className={selectClass} value={patientId} onChange={(e) => setPatientId(e.target.value)} disabled={!!prefilledPatientId}>
+                  <select className={selectClass} value={patientId} onChange={(e) => setPatientId(e.target.value)} disabled={true}>
                     <option value="">Select patient</option>
                     {patients.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -210,7 +249,7 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
                     {prefilledTemplateName || template?.title || 'Caregiver Checklist'}
                   </div>
                 ) : (
-                  <select className={selectClass} value={templateId} onChange={(e) => pickTemplate(e.target.value)} disabled={!!prefilledTemplateId}>
+                  <select className={selectClass} value={templateId} onChange={(e) => pickTemplate(e.target.value)} disabled={true}>
                     <option value="">Select assessment</option>
                     {activeTests.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -234,7 +273,7 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
                 : null}
               {!loadingTpl && template && structure.length === 0 ? (
                 <div className="rounded-2xl border border-purple-200 bg-white p-5 text-sm text-slate-500">
-                  This assessment has no question structure to administer.
+                  This assessment has no question structure to display.
                 </div>
               ) : null}
               {!loadingTpl &&
@@ -246,6 +285,7 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
                     remarks={remarks}
                     onAnswer={setAnswer}
                     onRemark={setRemark}
+                    readOnly={readOnly}
                   />
                 ))}
             </div>
@@ -263,15 +303,17 @@ function AnswerAssessment({ tests, patients, prefilledPatientId, prefilledTempla
                     {total} / {max}
                   </div>
                 </div>
-                <Button
-                  className="mt-4"
-                  fullWidth
-                  size="lg"
-                  onClick={submit}
-                  disabled={submitting || !patientId}
-                >
-                  {submitting ? 'Submitting…' : 'Submit Assessment'}
-                </Button>
+                {!readOnly && (
+                  <Button
+                    className="mt-4"
+                    fullWidth
+                    size="lg"
+                    onClick={submit}
+                    disabled={submitting || !patientId}
+                  >
+                    {submitting ? 'Submitting…' : 'Submit Assessment'}
+                  </Button>
+                )}
               </>
             ) : null}
           </div>

@@ -5,44 +5,44 @@ import StaffHeader from '../StaffHeader'
 import Skeleton from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import { api } from '../../../lib/api'
-import MmseForm from '../psychometrician/MmseForm'
-import AdaptiveFunctioningForm from '../psychometrician/AdaptiveFunctioningForm'
-import CaregiverChecklistForm from '../psychometrician/CaregiverChecklistForm'
-import AnswerAssessment from '../psychometrician/AnswerAssessment'
 import { useAuth } from '../../../auth/useAuth'
+import BehavioralAssessmentForm from '../psychometrician/BehavioralAssessmentForm'
 
-const priorityTone = {
-  'High Priority': 'bg-rose-100 text-rose-700',
-  'Medium Priority': 'bg-amber-100 text-amber-700',
-  'Low Priority': 'bg-sky-100 text-sky-700',
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—')
+
+const STATUS_META = {
+  draft: { label: 'DRAFT', tone: 'bg-amber-100 text-amber-700 border border-amber-200' },
+  submitted: { label: 'SUBMITTED', tone: 'bg-sky-100 text-sky-700 border border-sky-200' },
+  approved: { label: 'APPROVED', tone: 'bg-emerald-100 text-emerald-700 border border-emerald-200' },
 }
-
-const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '')
 
 function Approvals() {
   const { profile } = useAuth()
-  const [tests, setTests] = useState([])
   const [patients, setPatients] = useState([])
-  const [permissions, setPermissions] = useState([])
+  const [submissions, setSubmissions] = useState([])
+  const [reports, setReports] = useState([])
+  const [activeReport, setActiveReport] = useState(null)
   const [selectedPatientId, setSelectedPatientId] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [query, setQuery] = useState('')
   const [showOnlyPending, setShowOnlyPending] = useState(false)
   const [openForm, setOpenForm] = useState(null)
-  const [answerPrefill, setAnswerPrefill] = useState(null)
   const navigate = useNavigate()
 
   const loadData = async () => {
     try {
-      const assessmentsData = await api.psychometrician.assessments()
+      const approvalsData = await api.psychologist.approvals()
+      setSubmissions(approvalsData.submissions || [])
       
-      setTests(assessmentsData.tests || [])
-      setPatients(assessmentsData.patients || [])
-      setPermissions(assessmentsData.permissions || [])
+      const rosterData = await api.psychometrician.assessments()
+      setPatients(rosterData.patients || [])
+
+      const draftingData = await api.psychometrician.draftingReports()
+      setReports(draftingData.rows || [])
     } catch (e) {
       console.error(e)
-      toast.error('Error loading assessments data')
+      toast.error('Error loading data')
     }
   }
 
@@ -57,41 +57,28 @@ function Approvals() {
     }
   }, [])
 
-  // Smart auto-selection of the first patient with a pending permission request
+  // Smart auto-selection of the first patient with a pending submission
   useEffect(() => {
     if (!loading && patients.length > 0 && !selectedPatientId) {
       const pendingPatient = patients.find(p => {
-        const hasPerm = permissions.some(pm => pm.patient_id === p.id && pm.status === 'pending')
-        return hasPerm
+        const hasPending = submissions.some(s => s.patient_id === p.id && s.status === 'submitted')
+        return hasPending
       })
       setSelectedPatientId(pendingPatient ? pendingPatient.id : patients[0].id)
     }
-  }, [loading, patients, permissions, selectedPatientId])
+  }, [loading, patients, submissions, selectedPatientId])
 
-  const handlePermission = async (patientId, templateId, status) => {
-    const key = `${patientId}_${templateId}`
-    setBusyId(key)
+  const handleUpdateStatus = async (id, status) => {
+    setBusyId(id)
     try {
-      await api.psychologist.grantAssessmentPermission({ patient_id: patientId, template_id: templateId, status })
-      toast.success(status === 'granted' ? 'Assessment permission granted.' : 'Assessment permission denied.')
+      await api.psychologist.updateSubmission(id, { status })
+      toast.success(status === 'scored' ? 'Assessment approved and signed.' : 'Assessment sent back for revalidation.')
       await loadData()
     } catch (e) {
-      toast.error(`Error: ${e.message}`)
+      toast.error(`Error updating status: ${e.message}`)
     } finally {
       setBusyId(null)
     }
-  }
-
-  const getPermissionStatus = (patientId, templateId) => {
-    const found = permissions.find((p) => p.patient_id === patientId && p.template_id === templateId)
-    return found ? found.status : 'none'
-  }
-
-  const getManualFormName = (code) => {
-    if (code?.includes('FO-04')) return 'mmse'
-    if (code?.includes('FO-05')) return 'adaptive'
-    if (code?.includes('FO-06')) return 'caregiver'
-    return null
   }
 
   const q = query.trim().toLowerCase()
@@ -100,42 +87,31 @@ function Approvals() {
     if (!matchesSearch) return false
 
     if (showOnlyPending) {
-      const hasPerm = permissions.some(pm => pm.patient_id === p.id && pm.status === 'pending')
-      return hasPerm
+      const hasPending = submissions.some(s => s.patient_id === p.id && s.status === 'submitted')
+      return hasPending
     }
     return true
   })
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
-  const activeTests = tests.filter((t) => t.active !== false)
-  const patientPendingPerms = permissions.filter(pm => pm.patient_id === selectedPatientId && pm.status === 'pending')
+  const patientSubmissions = submissions.filter(s => s.patient_id === selectedPatientId)
+  const patientPendingSubmissions = patientSubmissions.filter(s => s.status === 'submitted')
+  const totalPendingSubmissions = submissions.filter(s => s.status === 'submitted').length
 
-  const totalPendingPermissions = permissions.filter(pm => pm.status === 'pending').length
-
-  const handleRequestPermission = async (patientId, templateId) => {
-    const key = `${patientId}_${templateId}`
-    setBusyId(key)
-    try {
-      await api.psychometrician.requestAssessmentPermission({ patient_id: patientId, template_id: templateId })
-      toast.success('Assessment authorization request sent to Admin.')
-      await loadData()
-    } catch (e) {
-      toast.error(`Error: ${e.message}`)
-    } finally {
-      setBusyId(null)
-    }
-  }
+  const patientReports = selectedPatient
+    ? reports.filter((r) => r.name.toLowerCase() === selectedPatient.name.toLowerCase())
+    : []
 
   return (
     <>
       <StaffHeader title="Approvals" />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-7xl mx-auto">
-          {totalPendingPermissions > 0 && (
+          {totalPendingSubmissions > 0 && (
             <div className="rounded-xl bg-purple-100 px-4 py-3 text-sm text-purple-800 mb-6 shadow-sm animate-fadeIn">
-              <span className="font-bold">{totalPendingPermissions} Permission Request{totalPendingPermissions === 1 ? '' : 's'} Pending Admin Review!</span>
+              <span className="font-bold">{totalPendingSubmissions} Assessment Submission{totalPendingSubmissions === 1 ? '' : 's'} Pending Psychologist Approval!</span>
               <div className="mt-0.5 text-xs text-purple-700/80">
-                You can track the authorization status of standardized templates for each student in the directory below.
+                You can review, sign, or send back completed standardized assessment reports for revalidation below.
               </div>
             </div>
           )}
@@ -144,7 +120,7 @@ function Approvals() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             
             {/* Left Panel: Student Directory */}
-            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[680px] flex flex-col">
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[740px] flex flex-col">
               <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
                 Student Directory
               </h2>
@@ -162,7 +138,7 @@ function Approvals() {
                     onChange={(e) => setShowOnlyPending(e.target.checked)}
                     className="rounded border-purple-300 text-purple-700 focus:ring-purple-500 h-4 w-4"
                   />
-                  Show only pending items
+                  Show only pending submissions
                 </label>
               </div>
               <div className="flex-1 overflow-y-auto mt-4 pr-1 space-y-2">
@@ -177,31 +153,30 @@ function Approvals() {
                 ) : (
                   filteredPatients.map((p) => {
                     const isActive = selectedPatientId === p.id
-                    const studentPendingPerms = permissions.filter(pm => pm.patient_id === p.id && pm.status === 'pending')
-                    const hasPerm = studentPendingPerms.length > 0
+                    const patientPending = submissions.filter(s => s.patient_id === p.id && s.status === 'submitted')
+                    const hasPending = patientPending.length > 0
 
                     return (
                       <button
                         key={p.id}
                         onClick={() => setSelectedPatientId(p.id)}
                         className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
-                          isActive ? 'border-purple-300 bg-purple-50/40 shadow-sm' : 'border-transparent'
+                          isActive ? 'border-purple-300 bg-purple-100 shadow-sm text-purple-955 font-bold animate-fadeIn' : 'border-transparent'
                         }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-800' : 'text-slate-800'}`}>
+                          <div className={`font-semibold text-sm ${isActive ? 'text-purple-950 font-bold' : 'text-slate-800'}`}>
                             {p.name}
                           </div>
                           <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
                             <span>ID: {p.patient_id || 'N/A'}</span>
-                            {hasPerm && (
-                              <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-bold text-rose-700">
-                                Pending Access
+                            {hasPending && (
+                              <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-bold text-rose-700 animate-pulse">
+                                Pending Approval
                               </span>
                             )}
                           </div>
                         </div>
-                        <span className="font-bold group-hover:underline text-[10px] uppercase text-purple-600 shrink-0 ml-2">Select &rarr;</span>
                       </button>
                     )
                   })
@@ -221,107 +196,158 @@ function Approvals() {
                           {selectedPatient.name}
                         </h1>
                         <p className="text-xs text-slate-500 mt-1">
-                          Manage and administer standardized assessment services for this student.
+                          Manage and approve completed standardized assessment reports for this student.
                         </p>
                       </div>
                       <div className="flex gap-2 flex-wrap justify-end items-center">
-                        {patientPendingPerms.length > 0 && (
-                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 animate-pulse">
-                            {patientPendingPerms.length} Request{patientPendingPerms.length === 1 ? '' : 's'} Pending Review
-                          </span>
-                        )}
+                        <button
+                          onClick={() => setOpenForm('behavioral')}
+                          className="rounded-md bg-purple-750 hover:bg-purple-800 px-3.5 py-1.5 text-xs font-semibold text-white cursor-pointer shadow-sm transition-all"
+                        >
+                          + Write Behavioral Assessment Report
+                        </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Standardized Assessment Permissions Panel */}
-                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm min-h-[250px]">
+                  {/* Standardized Assessment Submissions Panel */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
                     <div className="space-y-4">
                       <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-2">
-                        Standardized Assessment Permissions
+                        Standardized Assessment Submissions
                       </h3>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
                             <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100 pb-2 text-left">
                               <th className="pb-3 px-2">Assessment Tool</th>
-                              <th className="pb-3 px-2">Code / Duration</th>
+                              <th className="pb-3 px-2">Submitter / Date</th>
+                              <th className="pb-3 px-2">Score</th>
                               <th className="pb-3 px-2">Status</th>
                               <th className="pb-3 px-2 text-right">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-purple-50/40">
-                            {activeTests.length === 0 ? (
+                            {patientSubmissions.length === 0 ? (
                               <tr>
-                                <td colSpan={4} className="py-8 text-center text-xs text-slate-400">
-                                  No assessment templates configured.
+                                <td colSpan={5} className="py-8 text-center text-xs text-slate-400">
+                                  No assessment submissions recorded for this student.
                                 </td>
                               </tr>
                             ) : (
-                              activeTests.map((t) => {
-                                const status = getPermissionStatus(selectedPatientId, t.id)
-                                const reqKey = `${selectedPatientId}_${t.id}`
-                                const isBusy = busyId === reqKey || busyId === permissions.find(p => p.patient_id === selectedPatientId && p.template_id === t.id && p.status === 'pending')?.id
-
+                              patientSubmissions.map((s) => {
+                                const isBusy = busyId === s.id
                                 return (
-                                  <tr key={t.id} className="hover:bg-purple-50/10 transition-colors">
+                                  <tr key={s.id} className="hover:bg-purple-50/10 transition-colors">
                                     <td className="py-3 px-2">
-                                      <div className="font-semibold text-slate-800">{t.title}</div>
-                                      <div className="text-[11px] text-slate-400">{t.desc}</div>
+                                      <div className="font-semibold text-slate-800">{s.assessment_name}</div>
                                     </td>
-                                    <td className="py-3 px-2 text-xs text-slate-600">
-                                      <div>{t.code}</div>
-                                      <div className="text-[10px] text-purple-600 font-medium">{t.duration || 'Standard'}</div>
+                                    <td className="py-3 px-2 text-xs text-slate-650">
+                                      <div>{s.submitted_by}</div>
+                                      <div className="text-[10px] text-purple-650 font-medium">{fmtDate(s.date)}</div>
                                     </td>
+                                    <td className="py-3 px-2 text-xs font-semibold text-slate-700">{s.score}</td>
                                     <td className="py-3 px-2">
-                                      {status === 'granted' ? (
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                                      {s.status === 'scored' ? (
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 border border-emerald-200">
                                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                          Authorized
+                                          Approved &amp; Signed
                                         </span>
-                                      ) : status === 'pending' ? (
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 animate-pulse">
-                                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                                          Pending Admin Review
+                                      ) : s.status === 'revalidation' ? (
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800 animate-pulse border border-rose-200">
+                                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                          Revalidation Required
                                         </span>
                                       ) : (
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
-                                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                                          Not Requested
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 animate-pulse border border-amber-200">
+                                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                          Pending Approval
                                         </span>
                                       )}
                                     </td>
                                     <td className="py-3 px-2 text-right">
-                                      {status === 'granted' ? (
-                                        <div className="flex items-center justify-end gap-2">
-                                          {getManualFormName(t.code) && (
+                                      <div className="flex items-center justify-end gap-2">
+                                        {s.status === 'submitted' && (
+                                          <>
                                             <button
-                                              onClick={() => setOpenForm(getManualFormName(t.code))}
-                                              className="rounded-md border border-purple-200 hover:bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700 cursor-pointer"
+                                              disabled={isBusy}
+                                              onClick={() => handleUpdateStatus(s.id, 'scored')}
+                                              className="rounded-md bg-emerald-600 hover:bg-emerald-700 px-3 py-1 text-xs font-semibold text-white cursor-pointer shadow-sm disabled:opacity-50"
                                             >
-                                              Manual Sheet
+                                              {isBusy ? 'Saving...' : 'Approve & Sign'}
                                             </button>
-                                          )}
-                                          <button
-                                            onClick={() => setAnswerPrefill({ patientId: selectedPatientId, templateId: t.id })}
-                                            className="rounded-md bg-purple-700 hover:bg-purple-800 px-3 py-1 text-xs font-semibold text-white cursor-pointer shadow-sm animate-fadeIn"
-                                          >
-                                            Answer Assessment
-                                          </button>
-                                        </div>
-                                      ) : status === 'none' ? (
-                                        <button
-                                          disabled={isBusy}
-                                          onClick={() => handleRequestPermission(selectedPatientId, t.id)}
-                                          className="text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1.5 rounded-md cursor-pointer transition-colors shadow-sm disabled:opacity-50"
-                                        >
-                                          {isBusy ? 'Requesting...' : '+ Request Authorization'}
-                                        </button>
-                                      ) : (
-                                        <span className="text-xs text-slate-400 italic font-medium px-2.5">
-                                          Requested
-                                        </span>
-                                      )}
+                                            <button
+                                              disabled={isBusy}
+                                              onClick={() => handleUpdateStatus(s.id, 'revalidation')}
+                                              className="rounded-md border border-rose-300 hover:bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 cursor-pointer disabled:opacity-50"
+                                            >
+                                              {isBusy ? 'Saving...' : 'Revalidate'}
+                                            </button>
+                                          </>
+                                        )}
+                                        {s.status === 'revalidation' && (
+                                          <span className="text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-100 px-2 py-1 rounded-md">Sent for Revalidation</span>
+                                        )}
+                                        {s.status === 'scored' && (
+                                          <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-md">Signed</span>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Behavioral Assessment Reports Panel */}
+                  <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-2">
+                        Behavioral Assessment Reports ledger
+                      </h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100 pb-2 text-left">
+                              <th className="pb-3 px-2">Report Title</th>
+                              <th className="pb-3 px-2">Last Updated Date</th>
+                              <th className="pb-3 px-2">Status</th>
+                              <th className="pb-3 px-2 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-purple-50/40">
+                            {patientReports.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="py-8 text-center text-xs text-slate-400">
+                                  No behavioral assessment reports drafted for this student.
+                                </td>
+                              </tr>
+                            ) : (
+                              patientReports.map((r) => {
+                                const meta = STATUS_META[r.status] || STATUS_META.draft
+                                return (
+                                  <tr key={`${r.type}-${r.id}`} className="hover:bg-purple-50/10 transition-colors">
+                                    <td className="py-3 px-2 font-medium text-slate-800">{r.title}</td>
+                                    <td className="py-3 px-2 text-xs text-slate-505">{fmtDate(r.date)}</td>
+                                    <td className="py-3 px-2">
+                                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${meta.tone}`}>
+                                        {meta.label}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-2 text-right">
+                                      <button
+                                        onClick={() => {
+                                          setActiveReport(r)
+                                          setOpenForm('viewBehavioral')
+                                        }}
+                                        className="rounded-md border border-purple-200 hover:bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                      >
+                                        {r.status === 'draft' ? 'View & Edit' : 'View Form'}
+                                      </button>
                                     </td>
                                   </tr>
                                 )
@@ -338,7 +364,7 @@ function Approvals() {
                   <svg className="h-16 w-16 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
                   </svg>
-                  <p className="mt-4 text-sm font-medium">Please select a student from the directory to configure authorizations and clinical approvals.</p>
+                  <p className="mt-4 text-sm font-medium">Please select a student from the directory to configure clinical approvals.</p>
                 </div>
               )}
             </div>
@@ -347,24 +373,24 @@ function Approvals() {
         </div>
       </div>
 
-      {/* Manual Printable / Sheet Forms Overlay */}
-      {openForm === 'mmse' ? <MmseForm onClose={() => setOpenForm(null)} /> : null}
-      {openForm === 'adaptive' ? <AdaptiveFunctioningForm onClose={() => setOpenForm(null)} /> : null}
-      {openForm === 'caregiver' ? <CaregiverChecklistForm onClose={() => setOpenForm(null)} /> : null}
-
-      {/* Interactive Answer Assessment Overlay */}
-      {answerPrefill && (
-        <AnswerAssessment
-          tests={tests}
-          patients={patients}
-          prefilledPatientId={answerPrefill.patientId}
-          prefilledTemplateId={answerPrefill.templateId}
+      {openForm === 'behavioral' ? (
+        <BehavioralAssessmentForm 
           onClose={() => {
-            setAnswerPrefill(null)
+            setOpenForm(null)
+            loadData()
+          }} 
+        />
+      ) : null}
+      {openForm === 'viewBehavioral' && activeReport ? (
+        <BehavioralAssessmentForm
+          detail={activeReport}
+          readOnly={activeReport.status !== 'draft'}
+          onClose={() => {
+            setOpenForm(null)
             loadData()
           }}
         />
-      )}
+      ) : null}
     </>
   )
 }

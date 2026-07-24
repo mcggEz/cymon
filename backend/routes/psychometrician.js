@@ -106,7 +106,7 @@ router.get('/tasks', async (req, res, next) => {
 router.get('/assessments', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const [{ data: tests }, { data: sessions }, { data: roster }, { data: employees }] = await Promise.all([
+    const [{ data: tests }, { data: sessions }, { data: roster }, { data: employees }, { data: subs }] = await Promise.all([
       supabase.from('assessment_templates').select('id, document_type_code, title, est_minutes, icon, is_active, document_types(description)').order('title', { ascending: true }),
       supabase
         .from('appointments')
@@ -126,6 +126,10 @@ router.get('/assessments', async (req, res, next) => {
         .eq('clinic_id', req.profile.clinic_id)
         .neq('role', 'client')
         .order('display_name', { ascending: true }),
+      supabase
+        .from('assessment_submissions')
+        .select('id, patient_id, template_id, status, total_score, max_score, created_at, respondent_name')
+        .order('created_at', { ascending: false })
     ]);
 
     let permissions = [];
@@ -173,6 +177,14 @@ router.get('/assessments', async (req, res, next) => {
       employees: (employees || []).map((e) => ({
         id: e.id,
         name: `${e.display_name} (${e.role.replace('_', ' ').toUpperCase()})`,
+      })),
+      submissions: inClinic(subs || [], req.profile.clinic_id).map((s) => ({
+        id: s.id,
+        patient_id: s.patient_id,
+        template_id: s.template_id,
+        status: s.status,
+        score: s.total_score !== null ? `${s.total_score}/${s.max_score}` : '—',
+        respondent: s.respondent_name
       })),
     });
   } catch (err) {
@@ -582,7 +594,7 @@ router.patch('/submissions/:id', async (req, res, next) => {
     }
     const upd = {};
     if (status !== undefined) {
-      if (!['submitted', 'processed', 'scored', 'flagged', 'draft'].includes(status)) {
+      if (!['submitted', 'processed', 'scored', 'flagged', 'draft', 'revalidation'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
       }
       upd.status = status;
@@ -730,6 +742,28 @@ router.get('/student-journal/:patientId', async (req, res, next) => {
     if (lError) return next(lError);
     
     res.json({ logs: logs || [], patientName: `${patient.first_name} ${patient.last_name}` });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/journal-permission', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { patient_id, allow_journal_entry } = req.body || {};
+    if (!patient_id || typeof allow_journal_entry !== 'boolean') {
+      return res.status(400).json({ error: 'patient_id and allow_journal_entry boolean are required' });
+    }
+    const { data, error } = await supabase
+      .from('patients')
+      .update({ allow_journal_entry })
+      .eq('id', patient_id)
+      .eq('clinic_id', req.profile.clinic_id)
+      .select('id, patient_id, first_name, last_name, allow_journal_entry')
+      .maybeSingle();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Patient not found' });
+    res.json({ patient: data });
   } catch (err) {
     next(err);
   }
