@@ -27,7 +27,7 @@ const emptyRow = () => ({
   outcome: '',
 })
 
-function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false, initialPatientId = '', initialPeriod = '' }) {
+function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = null, readOnly = false, initialPatientId = '', initialPeriod = '', inline = false }) {
   const [rows, setRows] = useState(() => [emptyRow(), emptyRow(), emptyRow()])
   const [patientId, setPatientId] = useState(() => detail?.patient_id || initialPatientId || '')
   const [period, setPeriod] = useState(() => detail?.period || initialPeriod || '')
@@ -85,6 +85,7 @@ function ProgressSummaryReportForm({ patients = [], onSaved, onClose, detail = n
       actions={actions}
       onClose={onClose}
       multiPage={true}
+      inline={inline}
     >
       <div>
         {/* Reporting period + client information header */}

@@ -489,11 +489,11 @@ function Compliance() {
     : []
 
   return (
-    <>
+    <div className="flex-1 flex flex-col overflow-hidden">
       <StaffHeader title="Compliance &amp; Waivers" />
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div>
+      <div className="flex-1 p-6 overflow-hidden flex flex-col">
+        <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col overflow-hidden space-y-4">
+          <div className="shrink-0">
             <h1 className="text-2xl font-bold text-purple-800">Compliance &amp; Waiver Tracking</h1>
             <p className="text-xs text-slate-500 mt-1">
               Monitor student registration forms, parent consent waivers, and signature status.
@@ -529,9 +529,9 @@ function Compliance() {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 flex-1 overflow-hidden min-h-0">
             {/* Left Panel: Student Directory */}
-            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[600px] flex flex-col">
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-full flex flex-col overflow-hidden">
               <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
                 Student Directory
               </h2>
@@ -576,9 +576,9 @@ function Compliance() {
             </div>
 
             {/* Right Panel: Selected Student Details & Waivers */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
               {selectedStudent ? (
-                <>
+                <div className="flex-1 overflow-y-auto pr-1 space-y-6">
                   {/* Student Summary Card */}
                   <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -682,9 +682,9 @@ function Compliance() {
                       </table>
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center">
+                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-505 shadow-sm flex flex-col items-center justify-center h-full">
                   <svg className="h-16 w-16 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
@@ -701,7 +701,7 @@ function Compliance() {
         </div>
       </div>
       {viewWaiver ? <WaiverViewModal row={viewWaiver} onClose={() => setViewWaiver(null)} /> : null}
-    </>
+    </div>
   )
 }
 

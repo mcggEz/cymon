@@ -71,7 +71,7 @@ function Signatory({ role, name, title, license }) {
   )
 }
 
-function BehavioralAssessmentForm({ onClose, readOnly = false }) {
+function BehavioralAssessmentForm({ onClose, readOnly = false, inline = false }) {
   return (
     <FormShell
       title="BEHAVIORAL ASSESSMENT REPORT"
@@ -79,6 +79,7 @@ function BehavioralAssessmentForm({ onClose, readOnly = false }) {
       code="CMPS:SE-FO-06 rev.0 03032026"
       onClose={onClose}
       multiPage={true}
+      inline={inline}
     >
       <fieldset disabled={readOnly} className="space-y-4">
         <FormHeading numeral="I">Personal Information</FormHeading>

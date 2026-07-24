@@ -56,6 +56,8 @@ function toRow(p) {
     tone: p.status === 'active' ? 'emerald' : 'amber',
     form: FORM_LABEL[p.admission_form_status] || p.admission_form_status,
     formTone: p.admission_form_status === 'complete' ? 'text-emerald-600' : 'text-amber-600',
+    treating_psychologist_id: p.treating_psychologist_id,
+    treating_psychometrician_id: p.treating_psychometrician_id,
   }
 }
 
@@ -67,10 +69,26 @@ function EditPatientModal({ row, onClose, onSaved }) {
     date_of_birth: row.date_of_birth || '',
     sex: row.rawSex || '',
     status: row.rawStatus || '',
+    treating_psychologist_id: row.treating_psychologist_id || '',
+    treating_psychometrician_id: row.treating_psychometrician_id || '',
   })
+  const [employees, setEmployees] = useState([])
+  const [loadingEmployees, setLoadingEmployees] = useState(true)
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+
+  useEffect(() => {
+    api.admin.employees()
+      .then((data) => {
+        setEmployees(data.employees || [])
+      })
+      .catch(() => {})
+      .finally(() => setLoadingEmployees(false))
+  }, [])
+
+  const psychologists = employees.filter(e => e.role === 'psychologist' || (e.extra_roles || []).includes('psychologist'))
+  const psychometricians = employees.filter(e => e.role === 'psychometrician' || (e.extra_roles || []).includes('psychometrician'))
 
   const submit = async (e) => {
     e.preventDefault()
@@ -120,6 +138,35 @@ function EditPatientModal({ row, onClose, onSaved }) {
           <Select label="Status" value={f.status} onChange={(e) => set('status', e.target.value)}>
             <option value="active">Active</option>
             <option value="pending">Pending</option>
+          </Select>
+        </Section>
+
+        <Section title="Staff Assignments" hint="Assign clinical personnel responsible for this student">
+          <Select
+            label="Assigned Psychologist"
+            value={f.treating_psychologist_id}
+            onChange={(e) => set('treating_psychologist_id', e.target.value)}
+            disabled={loadingEmployees}
+          >
+            <option value="">Unassigned</option>
+            {psychologists.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="Assigned Psychometrician"
+            value={f.treating_psychometrician_id}
+            onChange={(e) => set('treating_psychometrician_id', e.target.value)}
+            disabled={loadingEmployees}
+          >
+            <option value="">Unassigned</option>
+            {psychometricians.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
           </Select>
         </Section>
 
@@ -423,6 +470,8 @@ function Patients() {
                 <Field label="Enrollment (IEP)" value={detail?.clinical?.iep_level} />
                 <Field label="Allergies" value={detail?.clinical?.allergies} />
                 <Field label="Admission Form" value={active.form} />
+                <Field label="Assigned Psychologist" value={detail?.patient?.treating_psychologist?.display_name || 'Unassigned'} />
+                <Field label="Assigned Psychometrician" value={detail?.patient?.treating_psychometrician?.display_name || 'Unassigned'} />
               </dl>
 
               <div className="mt-5 border-t border-slate-100 pt-4">

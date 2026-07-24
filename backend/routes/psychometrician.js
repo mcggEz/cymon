@@ -46,7 +46,48 @@ function ageFromDob(dob) {
 }
 
 const name = patientName;
-const inClinic = (rows, clinic) => (rows || []).filter((r) => r.patients && r.patients.clinic_id === clinic);
+const inClinic = (rows, clinic, profile) => {
+  if (!rows) return [];
+  return rows.filter((r) => {
+    if (!r.patients || r.patients.clinic_id !== clinic) return false;
+    if (!profile) return true;
+    const roles = [profile.role, ...(profile.extra_roles || [])];
+    if (roles.includes('admin')) return true;
+    let matched = false;
+    let checkedAny = false;
+    if (roles.includes('psychologist')) {
+      checkedAny = true;
+      if (r.patients.treating_psychologist_id === profile.id) matched = true;
+    }
+    if (roles.includes('psychometrician')) {
+      checkedAny = true;
+      if (r.patients.treating_psychometrician_id === profile.id) matched = true;
+    }
+    if (!checkedAny) return true;
+    return matched;
+  });
+};
+
+async function authorizePatient(patientId, profile) {
+  const { data: pt, error } = await supabase
+    .from('patients')
+    .select('id, clinic_id, caregiver_id, first_name, treating_psychologist_id, treating_psychometrician_id')
+    .eq('id', patientId)
+    .maybeSingle();
+  if (error || !pt || pt.clinic_id !== profile.clinic_id) {
+    throw new Error('Patient not found');
+  }
+  const roles = [profile.role, ...(profile.extra_roles || [])];
+  if (!roles.includes('admin')) {
+    if (roles.includes('psychologist') && pt.treating_psychologist_id !== profile.id) {
+      throw new Error('Patient is not assigned to you');
+    }
+    if (roles.includes('psychometrician') && pt.treating_psychometrician_id !== profile.id) {
+      throw new Error('Patient is not assigned to you');
+    }
+  }
+  return pt;
+}
 
 router.get('/tasks', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
@@ -54,19 +95,20 @@ router.get('/tasks', async (req, res, next) => {
     const [{ data: appts, error: apptErr }, { data: assigns, error: assignErr }] = await Promise.all([
       supabase
         .from('appointments')
-        .select('id, starts_at, session_type, location, status, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex, clinic_id)')
+        .select('id, starts_at, session_type, location, status, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .eq('clinic_id', req.profile.clinic_id)
         .order('starts_at', { ascending: true }),
       supabase
         .from('assessment_assignments')
-        .select('id, status, due_date, template_id, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex, clinic_id), assessment_templates(title, document_type_code)')
+        .select('id, status, due_date, template_id, patients(first_name, middle_name, last_name, patient_id, date_of_birth, sex, clinic_id, treating_psychologist_id, treating_psychometrician_id), assessment_templates(title, document_type_code)')
         .in('status', ['assigned', 'in_progress'])
         .order('due_date', { ascending: true }),
     ]);
     if (apptErr) return next(apptErr);
     if (assignErr) return next(assignErr);
 
-    const tasks = (appts || []).map((a) => {
+    const clinicTasks = inClinic(appts || [], req.profile.clinic_id, req.profile);
+    const tasks = clinicTasks.map((a) => {
       const dt = new Date(a.starts_at);
       const p = a.patients;
       const sexInit = p?.sex ? p.sex[0].toUpperCase() : '';
@@ -81,7 +123,7 @@ router.get('/tasks', async (req, res, next) => {
       };
     });
 
-    const clinicAssigns = (assigns || []).filter((g) => g.patients && g.patients.clinic_id === req.profile.clinic_id);
+    const clinicAssigns = inClinic(assigns || [], req.profile.clinic_id, req.profile);
     const assessments = clinicAssigns.map((g) => {
       const p = g.patients;
       const sexInit = p?.sex ? p.sex[0].toUpperCase() : '';
@@ -106,20 +148,30 @@ router.get('/tasks', async (req, res, next) => {
 router.get('/assessments', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
+    let patientsQuery = supabase
+      .from('patients')
+      .select('id, patient_id, first_name, middle_name, last_name, treating_psychologist_id, treating_psychometrician_id')
+      .eq('clinic_id', req.profile.clinic_id)
+      .is('deleted_at', null);
+
+    const roles = [req.profile.role, ...(req.profile.extra_roles || [])];
+    if (!roles.includes('admin')) {
+      if (roles.includes('psychologist')) {
+        patientsQuery = patientsQuery.eq('treating_psychologist_id', req.profile.id);
+      } else if (roles.includes('psychometrician')) {
+        patientsQuery = patientsQuery.eq('treating_psychometrician_id', req.profile.id);
+      }
+    }
+
     const [{ data: tests }, { data: sessions }, { data: roster }, { data: employees }, { data: subs }] = await Promise.all([
       supabase.from('assessment_templates').select('id, document_type_code, title, est_minutes, icon, is_active, document_types(description)').order('title', { ascending: true }),
       supabase
         .from('appointments')
-        .select('id, starts_at, patients(first_name, middle_name, last_name)')
+        .select('id, starts_at, patients(first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .eq('clinic_id', req.profile.clinic_id)
         .order('starts_at', { ascending: true })
         .limit(6),
-      supabase
-        .from('patients')
-        .select('id, patient_id, first_name, middle_name, last_name')
-        .eq('clinic_id', req.profile.clinic_id)
-        .is('deleted_at', null)
-        .order('first_name', { ascending: true }),
+      patientsQuery.order('first_name', { ascending: true }),
       supabase
         .from('profiles')
         .select('id, display_name, role')
@@ -128,7 +180,7 @@ router.get('/assessments', async (req, res, next) => {
         .order('display_name', { ascending: true }),
       supabase
         .from('assessment_submissions')
-        .select('id, patient_id, template_id, status, total_score, max_score, created_at, respondent_name')
+        .select('id, patient_id, template_id, status, total_score, max_score, created_at, respondent_name, answers, patients(clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .order('created_at', { ascending: false })
     ]);
 
@@ -159,7 +211,7 @@ router.get('/assessments', async (req, res, next) => {
         icon: t.icon,
         active: t.is_active,
       })),
-      sessions: (sessions || []).map((s) => ({
+      sessions: inClinic(sessions || [], req.profile.clinic_id, req.profile).map((s) => ({
         id: s.id,
         label: `${name(s.patients)} (${new Date(s.starts_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} Session)`,
       })),
@@ -178,11 +230,12 @@ router.get('/assessments', async (req, res, next) => {
         id: e.id,
         name: `${e.display_name} (${e.role.replace('_', ' ').toUpperCase()})`,
       })),
-      submissions: inClinic(subs || [], req.profile.clinic_id).map((s) => ({
+      submissions: inClinic(subs || [], req.profile.clinic_id, req.profile).map((s) => ({
         id: s.id,
         patient_id: s.patient_id,
         template_id: s.template_id,
         status: s.status,
+        answers: s.answers,
         score: s.total_score !== null ? `${s.total_score}/${s.max_score}` : '—',
         respondent: s.respondent_name
       })),
@@ -198,13 +251,11 @@ router.post('/assessments/request-permission', async (req, res, next) => {
     const { patient_id, template_id } = req.body || {};
     if (!patient_id || !template_id) return res.status(400).json({ error: 'Patient ID and Template ID are required' });
 
-    const { data: pt } = await supabase
-      .from('patients')
-      .select('id, clinic_id')
-      .eq('id', patient_id)
-      .maybeSingle();
-    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
 
     try {
@@ -282,11 +333,11 @@ router.get('/reports', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('assessment_reports')
-      .select('id, title, status, completeness, report_type, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
+      .select('id, title, status, completeness, report_type, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
       .eq('report_type', 'behavioral')
       .order('updated_at', { ascending: false });
     if (error) return next(error);
-    const rows = inClinic(data, req.profile.clinic_id);
+    const rows = inClinic(data, req.profile.clinic_id, req.profile);
     res.json({
       summary: {
         inProgress: rows.filter((r) => ['draft', 'in_progress'].includes(r.status)).length,
@@ -309,21 +360,31 @@ router.get('/reports', async (req, res, next) => {
 router.get('/activity-logs', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
+    let patientsQuery = supabase
+      .from('patients')
+      .select('id, first_name, middle_name, last_name, treating_psychologist_id, treating_psychometrician_id')
+      .eq('clinic_id', req.profile.clinic_id)
+      .is('deleted_at', null);
+
+    const roles = [req.profile.role, ...(req.profile.extra_roles || [])];
+    if (!roles.includes('admin')) {
+      if (roles.includes('psychologist')) {
+        patientsQuery = patientsQuery.eq('treating_psychologist_id', req.profile.id);
+      } else if (roles.includes('psychometrician')) {
+        patientsQuery = patientsQuery.eq('treating_psychometrician_id', req.profile.id);
+      }
+    }
+
     const [{ data, error }, { data: roster }] = await Promise.all([
       supabase
         .from('session_logs')
-        .select('id, patient_id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .select('id, patient_id, session_number, session_date, activity_title, target_domain, objectives, procedure, observations, status, patients(first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .order('session_date', { ascending: false }),
-      supabase
-        .from('patients')
-        .select('id, first_name, middle_name, last_name')
-        .eq('clinic_id', req.profile.clinic_id)
-        .is('deleted_at', null)
-        .order('first_name', { ascending: true }),
+      patientsQuery.order('first_name', { ascending: true }),
     ]);
     if (error) return next(error);
     res.json({
-      rows: inClinic(data, req.profile.clinic_id).map((r) => ({
+      rows: inClinic(data, req.profile.clinic_id, req.profile).map((r) => ({
         id: r.id,
         patient_id: r.patient_id,
         name: name(r.patients),
@@ -352,13 +413,11 @@ router.post('/activity-logs', async (req, res, next) => {
     if (!patient_id || !activity_title) {
       return res.status(400).json({ error: 'Patient and activity title are required' });
     }
-    const { data: pt } = await supabase
-      .from('patients')
-      .select('id, clinic_id')
-      .eq('id', patient_id)
-      .maybeSingle();
-    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
     const safeStatus = ['draft', 'pending'].includes(status) ? status : 'draft';
     
@@ -431,13 +490,11 @@ router.post('/assessments/:templateId/submit', async (req, res, next) => {
   try {
     const { patient_id, answers = {}, domain_scores = {}, total_score, max_score } = req.body || {};
     if (!patient_id) return res.status(400).json({ error: 'patient_id is required' });
-    const { data: pt } = await supabase
-      .from('patients')
-      .select('id, clinic_id')
-      .eq('id', patient_id)
-      .maybeSingle();
-    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
     const { data, error } = await supabase
       .from('assessment_submissions')
@@ -477,13 +534,11 @@ router.post('/assignments', async (req, res, next) => {
     if (!patient_id || !template_id) {
       return res.status(400).json({ error: 'patient_id and template_id are required' });
     }
-    const { data: pt } = await supabase
-      .from('patients')
-      .select('id, clinic_id, caregiver_id, first_name')
-      .eq('id', patient_id)
-      .maybeSingle();
-    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
     const { data, error } = await supabase
       .from('assessment_assignments')
@@ -657,22 +712,32 @@ const PROGRESS_STATUS = {
 router.get('/drafting-reports', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
+    let ptsQuery = supabase
+      .from('patients')
+      .select('id, first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id')
+      .eq('clinic_id', req.profile.clinic_id);
+
+    const roles = [req.profile.role, ...(req.profile.extra_roles || [])];
+    if (!roles.includes('admin')) {
+      if (roles.includes('psychologist')) {
+        ptsQuery = ptsQuery.eq('treating_psychologist_id', req.profile.id);
+      } else if (roles.includes('psychometrician')) {
+        ptsQuery = ptsQuery.eq('treating_psychometrician_id', req.profile.id);
+      }
+    }
+
     const [{ data: behavioral, error: e2 }, { data: pts, error: e3 }] = await Promise.all([
       supabase
         .from('assessment_reports')
-        .select('id, title, status, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id)')
+        .select('id, title, status, updated_at, patients(first_name, middle_name, last_name, patient_id, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .eq('report_type', 'behavioral')
         .order('updated_at', { ascending: false }),
-      supabase
-        .from('patients')
-        .select('id, first_name, middle_name, last_name, clinic_id')
-        .eq('clinic_id', req.profile.clinic_id)
-        .order('first_name'),
+      ptsQuery.order('first_name'),
     ]);
     if (e2) return next(e2);
     if (e3) return next(e3);
 
-    const rows = inClinic(behavioral, req.profile.clinic_id).map((r) => ({
+    const rows = inClinic(behavioral, req.profile.clinic_id, req.profile).map((r) => ({
       id: r.id,
       type: 'behavioral',
       typeLabel: 'Behavioral Assessment Report',
@@ -704,12 +769,22 @@ router.get('/drafting-reports', async (req, res, next) => {
 router.get('/patients', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data: list, error } = await supabase
+    let q = supabase
       .from('patients')
-      .select('id, first_name, middle_name, last_name, patient_id')
+      .select('id, first_name, middle_name, last_name, patient_id, treating_psychologist_id, treating_psychometrician_id')
       .eq('clinic_id', req.profile.clinic_id)
-      .is('deleted_at', null)
-      .order('first_name', { ascending: true });
+      .is('deleted_at', null);
+
+    const roles = [req.profile.role, ...(req.profile.extra_roles || [])];
+    if (!roles.includes('admin')) {
+      if (roles.includes('psychologist')) {
+        q = q.eq('treating_psychologist_id', req.profile.id);
+      } else if (roles.includes('psychometrician')) {
+        q = q.eq('treating_psychometrician_id', req.profile.id);
+      }
+    }
+
+    const { data: list, error } = await q.order('first_name', { ascending: true });
     if (error) return next(error);
     res.json({ patients: (list || []).map(p => ({ id: p.id, name: name(p), patient_id: p.patient_id })) });
   } catch (err) {
@@ -723,15 +798,13 @@ router.get('/student-journal/:patientId', async (req, res, next) => {
   try {
     const { patientId } = req.params;
     
-    // Verify patient belongs to the same clinic
-    const { data: patient, error: pError } = await supabase
-      .from('patients')
-      .select('id, clinic_id, first_name, last_name')
-      .eq('id', patientId)
-      .single();
-      
-    if (pError || !patient) return res.status(404).json({ error: 'Patient not found' });
-    if (patient.clinic_id !== req.profile.clinic_id) return res.status(403).json({ error: 'Forbidden' });
+    // Verify patient assignment/clinic
+    let patient;
+    try {
+      patient = await authorizePatient(patientId, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
+    }
     
     const { data: logs, error: lError } = await supabase
       .from('daily_activity_logs')
@@ -754,16 +827,120 @@ router.patch('/journal-permission', async (req, res, next) => {
     if (!patient_id || typeof allow_journal_entry !== 'boolean') {
       return res.status(400).json({ error: 'patient_id and allow_journal_entry boolean are required' });
     }
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
+    }
     const { data, error } = await supabase
       .from('patients')
       .update({ allow_journal_entry })
       .eq('id', patient_id)
-      .eq('clinic_id', req.profile.clinic_id)
       .select('id, patient_id, first_name, last_name, allow_journal_entry')
       .maybeSingle();
     if (error) return res.status(400).json({ error: error.message });
     if (!data) return res.status(404).json({ error: 'Patient not found' });
     res.json({ patient: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/iep', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    let ptsQuery = supabase
+      .from('patients')
+      .select('id, first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id')
+      .eq('clinic_id', req.profile.clinic_id);
+
+    const roles = [req.profile.role, ...(req.profile.extra_roles || [])];
+    if (!roles.includes('admin')) {
+      if (roles.includes('psychologist')) {
+        ptsQuery = ptsQuery.eq('treating_psychologist_id', req.profile.id);
+      } else if (roles.includes('psychometrician')) {
+        ptsQuery = ptsQuery.eq('treating_psychometrician_id', req.profile.id);
+      }
+    }
+
+    const [{ data: ieps, error: e2 }, { data: pts, error: e3 }] = await Promise.all([
+      supabase
+        .from('assessment_reports')
+        .select('id, title, status, updated_at, content, patient_id, noted_by_id, prepared_by_id, patients(first_name, middle_name, last_name, patient_id, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
+        .eq('report_type', 'iep')
+        .order('updated_at', { ascending: false }),
+      ptsQuery.order('first_name'),
+    ]);
+    if (e2) return next(e2);
+    if (e3) return next(e3);
+
+    res.json({
+      rows: inClinic(ieps, req.profile.clinic_id, req.profile).map((r) => ({
+        id: r.id,
+        type: 'iep',
+        name: name(r.patients),
+        sid: r.patients.patient_id,
+        title: r.title || 'SPED Individualized Educational Plan',
+        date: r.updated_at,
+        status: r.status,
+        content: r.content,
+        patient_id: r.patient_id,
+      })),
+      patients: (pts || []).map((p) => ({
+        id: p.id,
+        name: name(p),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/iep', async (req, res, next) => {
+  if (!ensureConfigured(res)) return;
+  try {
+    const { id, patient_id, title, status, content } = req.body || {};
+    if (!patient_id || !title) return res.status(400).json({ error: 'Patient and title are required' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
+    }
+
+    let result;
+    if (id) {
+      const { data, error } = await supabase
+        .from('assessment_reports')
+        .update({
+          patient_id,
+          title,
+          status: status || 'draft',
+          content: content || null,
+        })
+        .eq('id', id)
+        .select('id')
+        .single();
+      if (error) return res.status(400).json({ error: error.message });
+      result = data;
+    } else {
+      const { data, error } = await supabase
+        .from('assessment_reports')
+        .insert({
+          patient_id,
+          report_type: 'iep',
+          title,
+          status: status || 'draft',
+          content: content || null,
+          prepared_by_id: req.profile.id,
+        })
+        .select('id')
+        .single();
+      if (error) return res.status(400).json({ error: error.message });
+      result = data;
+    }
+    res.json({ iep: result });
   } catch (err) {
     next(err);
   }

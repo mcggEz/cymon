@@ -210,7 +210,7 @@ function ChecklistTable({ columns, categories }) {
   )
 }
 
-function MmseForm({ onClose }) {
+function MmseForm({ onClose, inline = false }) {
   return (
     <FormShell
       title="Mini-Mental Status Examination"
@@ -218,6 +218,7 @@ function MmseForm({ onClose }) {
       confidential={false}
       onClose={onClose}
       multiPage={true}
+      inline={inline}
     >
       <div className="space-y-4">
         <div className="space-y-1">

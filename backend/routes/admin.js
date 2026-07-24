@@ -87,7 +87,7 @@ router.get('/patients', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('patients')
-      .select('id, patient_id, first_name, middle_name, last_name, date_of_birth, sex, status, admission_form_status')
+      .select('id, patient_id, first_name, middle_name, last_name, date_of_birth, sex, status, admission_form_status, treating_psychologist_id, treating_psychometrician_id')
       .eq('clinic_id', req.profile.clinic_id)
       .is('deleted_at', null)
       .order('patient_id', { ascending: true });
@@ -106,6 +106,8 @@ router.get('/patients', async (req, res, next) => {
         sex: p.sex,
         status: p.status,
         admission_form_status: p.admission_form_status,
+        treating_psychologist_id: p.treating_psychologist_id,
+        treating_psychometrician_id: p.treating_psychometrician_id,
       })),
     });
   } catch (err) {
@@ -116,7 +118,7 @@ router.get('/patients', async (req, res, next) => {
 router.patch('/patients/:id', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { first_name, middle_name, last_name, date_of_birth, sex, status } = req.body || {};
+    const { first_name, middle_name, last_name, date_of_birth, sex, status, treating_psychologist_id, treating_psychometrician_id } = req.body || {};
     const patch = {};
     if (first_name !== undefined) patch.first_name = first_name;
     if (middle_name !== undefined) patch.middle_name = middle_name || null;
@@ -129,6 +131,8 @@ router.patch('/patients/:id', async (req, res, next) => {
       }
       patch.status = status;
     }
+    if (treating_psychologist_id !== undefined) patch.treating_psychologist_id = treating_psychologist_id || null;
+    if (treating_psychometrician_id !== undefined) patch.treating_psychometrician_id = treating_psychometrician_id || null;
     if (Object.keys(patch).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }

@@ -181,5 +181,8 @@ export const api = {
       request('/api/psychometrician/assessments/request-permission', { method: 'POST', body: payload, auth: true }),
     updateJournalPermission: (patient_id, allow_journal_entry) =>
       request('/api/psychometrician/journal-permission', { method: 'PATCH', body: { patient_id, allow_journal_entry }, auth: true }),
+    iep: () => request('/api/psychometrician/iep', { auth: true }),
+    addIepReport: (payload) =>
+      request('/api/psychometrician/iep', { method: 'POST', body: payload, auth: true }),
   },
 }

@@ -83,15 +83,15 @@ function Assessments() {
     : []
 
   return (
-    <>
+    <div className="flex-1 flex flex-col overflow-hidden">
       <StaffHeader title="Assessment Services" />
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="flex-1 p-6 overflow-hidden flex flex-col">
+        <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col overflow-hidden">
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 flex-1 overflow-hidden min-h-0">
             
             {/* Left Panel: Student Directory */}
-            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[740px] flex flex-col">
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-full flex flex-col overflow-hidden">
               <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
                 Student Directory
               </h2>
@@ -139,9 +139,79 @@ function Assessments() {
             </div>
 
             {/* Right Panel: Student Actions */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
               {selectedPatient ? (
-                <>
+                openForm || answerPrefill ? (
+                  <div className="flex flex-col h-full overflow-hidden">
+                    <div className="mb-4 shrink-0">
+                      <button
+                        onClick={() => {
+                          setOpenForm(null)
+                          setAnswerPrefill(null)
+                        }}
+                        className="flex items-center gap-2 rounded-lg border border-purple-200 bg-white px-3.5 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-50 shadow-sm cursor-pointer transition-colors"
+                      >
+                        &larr; Back to Dashboard Tables
+                      </button>
+                    </div>
+                    <div className="flex-1 min-h-0 rounded-2xl border border-purple-200 overflow-hidden bg-white shadow-sm">
+                      {openForm === 'mmse' && (
+                        <MmseForm
+                          inline={true}
+                          onClose={() => setOpenForm(null)}
+                        />
+                      )}
+                      {openForm === 'adaptive' && (
+                        <AdaptiveFunctioningForm
+                          inline={true}
+                          onClose={() => setOpenForm(null)}
+                        />
+                      )}
+                      {openForm === 'caregiver' && (
+                        <CaregiverChecklistForm
+                          inline={true}
+                          onClose={() => setOpenForm(null)}
+                        />
+                      )}
+                      {openForm === 'behavioral' && (
+                        <BehavioralAssessmentForm
+                          inline={true}
+                          onClose={() => {
+                            setOpenForm(null)
+                            load()
+                          }}
+                        />
+                      )}
+                      {openForm === 'viewBehavioral' && activeReport && (
+                        <BehavioralAssessmentForm
+                          detail={activeReport}
+                          readOnly={activeReport.status !== 'draft'}
+                          inline={true}
+                          onClose={() => {
+                            setOpenForm(null)
+                            load()
+                          }}
+                        />
+                      )}
+                      {answerPrefill && (
+                        <AnswerAssessment
+                          tests={tests}
+                          patients={patients}
+                          prefilledPatientId={answerPrefill.patientId}
+                          prefilledTemplateId={answerPrefill.templateId}
+                          submission={answerPrefill.submission}
+                          readOnly={answerPrefill.readOnly}
+                          inline={true}
+                          onClose={() => {
+                            setAnswerPrefill(null)
+                            load()
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto pr-1 space-y-6">
                   {/* Selected Student header */}
                   <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -203,7 +273,15 @@ function Assessments() {
                                     </span>
                                   )
                                   actionBtn = (
-                                    <span className="text-xs text-emerald-600 font-semibold px-2">Approved</span>
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => setAnswerPrefill({ patientId: selectedPatientId, templateId: t.id, submission: sub, readOnly: true })}
+                                        className="rounded-md border border-purple-200 hover:bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                      >
+                                        View Form
+                                      </button>
+                                      <span className="text-xs text-emerald-600 font-semibold px-2">Approved</span>
+                                    </div>
                                   )
                                 } else if (sub.status === 'revalidation') {
                                   statusBadge = (
@@ -213,12 +291,20 @@ function Assessments() {
                                     </span>
                                   )
                                   actionBtn = (
-                                    <button
-                                      onClick={() => setAnswerPrefill({ patientId: selectedPatientId, templateId: t.id })}
-                                      className="rounded-md bg-purple-700 hover:bg-purple-800 px-3 py-1 text-xs font-semibold text-white cursor-pointer shadow-sm"
-                                    >
-                                      Answer (Revalidate)
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => setAnswerPrefill({ patientId: selectedPatientId, templateId: t.id, submission: sub, readOnly: true })}
+                                        className="rounded-md border border-purple-200 hover:bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                      >
+                                        View Form
+                                      </button>
+                                      <button
+                                        onClick={() => setAnswerPrefill({ patientId: selectedPatientId, templateId: t.id })}
+                                        className="rounded-md bg-purple-700 hover:bg-purple-800 px-3 py-1 text-xs font-semibold text-white cursor-pointer shadow-sm animate-pulse"
+                                      >
+                                        Answer (Revalidate)
+                                      </button>
+                                    </div>
                                   )
                                 } else {
                                   statusBadge = (
@@ -228,7 +314,15 @@ function Assessments() {
                                     </span>
                                   )
                                   actionBtn = (
-                                    <span className="text-xs text-slate-400 font-medium italic px-2">Awaiting Approval</span>
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => setAnswerPrefill({ patientId: selectedPatientId, templateId: t.id, submission: sub, readOnly: true })}
+                                        className="rounded-md border border-purple-200 hover:bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 cursor-pointer shadow-sm transition-colors"
+                                      >
+                                        View Form
+                                      </button>
+                                      <span className="text-xs text-slate-400 font-medium italic px-2">Awaiting Approval</span>
+                                    </div>
                                   )
                                 }
                               } else {
@@ -338,9 +432,10 @@ function Assessments() {
                       </div>
                     </div>
                   </div>
-                </>
+                  </div>
+                )
               ) : (
-                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center">
+                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center h-full">
                   <svg className="h-16 w-16 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
                   </svg>
@@ -352,45 +447,7 @@ function Assessments() {
           </div>
         </div>
       </div>
-
-      {/* Manual Printable / Sheet Forms Overlay */}
-      {openForm === 'mmse' ? <MmseForm onClose={() => setOpenForm(null)} /> : null}
-      {openForm === 'adaptive' ? <AdaptiveFunctioningForm onClose={() => setOpenForm(null)} /> : null}
-      {openForm === 'caregiver' ? <CaregiverChecklistForm onClose={() => setOpenForm(null)} /> : null}
-
-      {/* Interactive Answer Assessment Overlay */}
-      {answerPrefill && (
-        <AnswerAssessment
-          tests={tests}
-          patients={patients}
-          prefilledPatientId={answerPrefill.patientId}
-          prefilledTemplateId={answerPrefill.templateId}
-          onClose={() => {
-            setAnswerPrefill(null)
-            load()
-          }}
-        />
-      )}
-
-      {openForm === 'behavioral' ? (
-        <BehavioralAssessmentForm 
-          onClose={() => {
-            setOpenForm(null)
-            load()
-          }} 
-        />
-      ) : null}
-      {openForm === 'viewBehavioral' && activeReport ? (
-        <BehavioralAssessmentForm
-          detail={activeReport}
-          readOnly={activeReport.status !== 'draft'}
-          onClose={() => {
-            setOpenForm(null)
-            load()
-          }}
-        />
-      ) : null}
-    </>
+    </div>
   )
 }
 

@@ -214,21 +214,21 @@ function StudentJournal() {
   }
 
   return (
-    <>
+    <div className="flex-1 flex flex-col overflow-hidden">
       <StaffHeader title="Student Journal Logs" />
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="flex-1 p-6 overflow-hidden flex flex-col">
+        <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col overflow-hidden">
           {error && (
-            <div className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-800 border border-red-100">
+            <div className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-800 border border-red-100 shrink-0">
               {error}
             </div>
           )}
 
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 flex-1 overflow-hidden min-h-0">
             
             {/* Left Panel: Students List */}
-            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[650px] flex flex-col">
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-full flex flex-col overflow-hidden">
               <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
                 Enrolled Students
               </h2>
@@ -277,9 +277,9 @@ function StudentJournal() {
             </div>
 
             {/* Right Panel: Student Journal logs */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
               {selectedPatient ? (
-                <>
+                <div className="flex-1 overflow-y-auto pr-1 space-y-6">
                   {/* Selected Student header */}
                   <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -389,9 +389,9 @@ function StudentJournal() {
                       </table>
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center">
+                <div className="rounded-2xl border border-purple-200 bg-white p-12 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center h-full">
                   <svg className="h-16 w-16 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
@@ -407,7 +407,7 @@ function StudentJournal() {
       {activeLog && (
         <JournalDetailModal log={activeLog} onClose={() => setActiveLog(null)} />
       )}
-    </>
+    </div>
   )
 }
 

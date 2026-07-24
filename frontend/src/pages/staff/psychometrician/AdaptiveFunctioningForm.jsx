@@ -126,7 +126,7 @@ function AssessmentTable({ rows }) {
   )
 }
 
-function AdaptiveFunctioningForm({ onClose }) {
+function AdaptiveFunctioningForm({ onClose, inline = false }) {
   return (
     <FormShell
       title="Child Adaptive Functioning Assessment Tool"
@@ -134,6 +134,7 @@ function AdaptiveFunctioningForm({ onClose }) {
       confidential={false}
       onClose={onClose}
       multiPage={true}
+      inline={inline}
     >
       <div className="space-y-4">
         <div className="space-y-1.5">

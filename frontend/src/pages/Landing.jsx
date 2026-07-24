@@ -187,7 +187,7 @@ function Landing() {
             }`}
           >
             <img src="/logo-cymon.png" alt="ClearMind" className="h-10 w-10 rounded-lg object-cover" />
-            <span className="text-xl font-bold tracking-wider">ClearMind</span>
+            <span className="text-xl tracking-wider" style={{ fontFamily: 'Against' }}>ClearMind</span>
           </a>
 
           {/* Desktop Nav in Capsule */}
@@ -213,12 +213,12 @@ function Landing() {
               Announcements
             </a>
             <a
-              href="#appointments"
+              href="#contact"
               className={`text-sm font-semibold tracking-wide hover:text-violet transition-colors duration-300 ${
                 scrolled ? 'text-charcoal' : 'text-slate-200'
               }`}
             >
-              Appointments
+              Contact Us
             </a>
           </nav>
 
@@ -272,11 +272,11 @@ function Landing() {
             Announcements
           </a>
           <a
-            href="#appointments"
+            href="#contact"
             onClick={() => setMobileMenuOpen(false)}
             className="text-white text-xl font-semibold tracking-wide hover:text-violet"
           >
-            Appointments
+            Contact Us
           </a>
           <button
             onClick={() => {
@@ -298,7 +298,7 @@ function Landing() {
         <div className="relative z-20 mx-auto w-full max-w-7xl py-12 flex flex-col items-start justify-center">
           {/* Left-aligned Text Content */}
           <div className="text-left flex flex-col items-start max-w-3xl">
-            <h1 className="font-sans text-4xl font-normal leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl">
+            <h1 className="text-4xl font-normal leading-[1.03] tracking-tight text-white min-[360px]:text-5xl sm:text-6xl lg:text-7xl" style={{ fontFamily: 'Against' }}>
               Clarity of Mind, <span className="text-violet">Journey to Wellness.</span>
             </h1>
 
@@ -414,7 +414,6 @@ function Landing() {
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center space-y-2">
             <h2 className="text-3xl md:text-4xl font-bold text-charcoal tracking-tight">Our Commitments</h2>
-            <p className="text-xs font-mono text-violet uppercase tracking-widest">C.L.E.A.R.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {[
@@ -443,7 +442,6 @@ function Landing() {
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center space-y-2">
             <h2 className="text-3xl md:text-4xl font-bold text-charcoal tracking-tight">Our Approach</h2>
-            <p className="text-xs font-mono text-violet uppercase tracking-widest">M.I.N.D.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -578,7 +576,7 @@ function Landing() {
       </section>
 
       {/* Footer (Recreation of LESA.app website footer style) */}
-      <footer id="appointments" className="relative text-white pt-20 pb-8 px-6 lg:px-16 overflow-hidden border-t border-white/5 flex flex-col items-center" style={{ background: 'linear-gradient(155deg, #17141f 0%, #221a37 55%, #2b1c44 100%)' }}>
+      <footer id="contact" className="relative text-white pt-20 pb-8 px-6 lg:px-16 overflow-hidden border-t border-white/5 flex flex-col items-center" style={{ background: 'linear-gradient(155deg, #17141f 0%, #221a37 55%, #2b1c44 100%)' }}>
         {/* Abstract background curves */}
         <svg className="absolute left-0 top-6 w-56 h-56 opacity-30 select-none pointer-events-none" viewBox="0 0 100 100" fill="none">
           <path d="M-10 30 Q35 45 65 15" stroke="#facc15" strokeWidth="4" strokeLinecap="round" />
@@ -638,14 +636,14 @@ function Landing() {
             <a href="#top" className="hover:text-white transition-colors">Home</a>
             <a href="#about" className="hover:text-white transition-colors">About Us</a>
             <a href="#news" className="hover:text-white transition-colors">Announcements</a>
-            <a href="#appointments" className="hover:text-white transition-colors font-medium text-white/95">Appointments</a>
+            <a href="#contact" className="hover:text-white transition-colors font-medium text-white/95">Contact Us</a>
             <a href="https://maps.google.com/?q=ClearMind+Psychological+Services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Location</a>
           </div>
         </div>
 
         {/* Large watermark text at the bottom */}
         <div className="w-full relative select-none pointer-events-none mt-auto flex flex-col items-center">
-          <div className="text-[17vw] font-black text-white opacity-20 leading-none tracking-tighter uppercase select-none font-sans text-center mt-6 select-none pointer-events-none">
+          <div className="text-[17vw] text-white opacity-40 leading-none tracking-tighter uppercase select-none text-center mt-6 select-none pointer-events-none" style={{ fontFamily: 'Against', fontWeight: 'bold' }}>
             CLEARMIND
           </div>
 

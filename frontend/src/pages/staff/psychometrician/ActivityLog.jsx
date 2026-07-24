@@ -104,15 +104,15 @@ function ActivityLog() {
   }
 
   return (
-    <>
+    <div className="flex-1 flex flex-col overflow-hidden">
       <StaffHeader title="Daily Activity Report Logs" />
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="flex-1 p-6 overflow-hidden flex flex-col">
+        <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col overflow-hidden">
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 flex-1 overflow-hidden min-h-0">
             
             {/* Left Panel: Students List */}
-            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-[650px] flex flex-col">
+            <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-full flex flex-col overflow-hidden">
               <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
                 Enrolled Students
               </h2>
@@ -158,9 +158,9 @@ function ActivityLog() {
             </div>
 
             {/* Right Panel: Daily Logs Dashboard */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
               {selectedPatient ? (
-                <>
+                <div className="flex-1 overflow-y-auto pr-1 space-y-6">
                   {/* Selected Student header */}
                   <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -241,15 +241,16 @@ function ActivityLog() {
                       </table>
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="rounded-2xl border-2 border-dashed border-purple-200 p-12 text-center text-slate-500 bg-white">
+                <div className="rounded-2xl border-2 border-dashed border-purple-200 p-12 text-center text-slate-500 bg-white h-full flex flex-col items-center justify-center">
                   Please select a student from the list to view or log daily activity reports.
                 </div>
               )}
             </div>
           </div>
         </div>
+      </div>
 
         {openForm === 'dailyActivity' ? (
           <DailyActivityReportForm
@@ -268,8 +269,7 @@ function ActivityLog() {
             onClose={() => setOpenForm(null)}
           />
         ) : null}
-      </div>
-    </>
+    </div>
   )
 }
 

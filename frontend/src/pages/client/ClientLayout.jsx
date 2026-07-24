@@ -77,10 +77,15 @@ function Sidebar({ open, collapsed, onNavigate, name, patientId }) {
         ))}
       </nav>
 
-      <div className={['flex items-center justify-center gap-2.5 pb-5 pt-4', collapsed ? 'px-5 lg:px-2' : 'px-5'].join(' ')}>
+      <div className={['flex items-center gap-2.5 pb-5 pt-4', collapsed ? 'px-5 lg:px-2 justify-center' : 'px-5 justify-start'].join(' ')}>
         <img src="/logo-cymon.png" alt="CyMon" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
-        <div className={['font-serif text-2xl font-semibold italic text-white', collapsed ? 'lg:hidden' : ''].join(' ')}>
-          CyMon
+        <div className={['flex flex-col text-left leading-none', collapsed ? 'lg:hidden' : ''].join(' ')}>
+          <div className="text-lg text-white" style={{ fontFamily: 'Against' }}>
+            CyMon
+          </div>
+          <div className="text-[8px] tracking-[0.18em] text-slate-400 font-sans uppercase select-none mt-0.5 font-bold">
+            ClearMind
+          </div>
         </div>
       </div>
     </aside>

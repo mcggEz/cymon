@@ -40,6 +40,7 @@ import PmActivityLog from './pages/staff/psychometrician/ActivityLog'
 import DraftingReports from './pages/staff/psychometrician/DraftingReports'
 import StudentJournal from './pages/staff/StudentJournal'
 import StaffProfile from './pages/staff/MyProfile'
+import IepSped from './pages/staff/psychometrician/IepSped'
 
 function App() {
   useEffect(() => {
@@ -107,6 +108,7 @@ function App() {
           <Route path="assessments" element={<PmAssessments />} />
           <Route path="data-review" element={<DataReview />} />
           <Route path="activity" element={<PmActivityLog />} />
+          <Route path="iep" element={<IepSped />} />
           <Route path="student-journal" element={<StudentJournal />} />
           <Route path="profile" element={<StaffProfile />} />
           <Route path="progress" element={<Progress />} />

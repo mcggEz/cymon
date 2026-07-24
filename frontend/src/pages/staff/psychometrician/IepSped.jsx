@@ -1,56 +1,33 @@
 import { useEffect, useState } from 'react'
-import { toast } from 'react-hot-toast'
 import StaffHeader from '../StaffHeader'
+import { api } from '../../../lib/api'
 import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton'
 import SearchBar from '../../../components/ui/SearchBar'
 import RowAction from '../../../components/ui/RowAction'
-import ProgressSummaryReportForm from './ProgressSummaryReportForm'
-import { api } from '../../../lib/api'
-
-const tone = {
-  emerald: 'bg-emerald-100 text-emerald-700',
-  amber: 'bg-amber-100 text-amber-700 hover:bg-amber-200/60',
-  sky: 'bg-sky-100 text-sky-700 hover:bg-sky-200/60',
-}
+import IepSpedForm from './IepSpedForm'
+import { toast } from 'react-hot-toast'
 
 const STATUS_META = {
-  approved: { label: 'Approved', tone: 'sky' },
-  ready_for_review: { label: 'Ready', tone: 'sky' },
-  draft: { label: 'Draft', tone: 'amber' },
-  in_progress: { label: 'In Progress', tone: 'amber' },
+  draft: { label: 'Draft', tone: 'bg-amber-100 text-amber-700 hover:bg-amber-200/60' },
+  ready_for_review: { label: 'Under Review', tone: 'bg-sky-100 text-sky-700 hover:bg-sky-200/60' },
+  approved: { label: 'Approved', tone: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200/60' },
+  revise_requested: { label: 'Needs Revision', tone: 'bg-rose-100 text-rose-700 hover:bg-rose-200/60' },
 }
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-]
-
-function Progress() {
+function IepSped() {
   const [active, setActive] = useState(null)
-  const [items, setItems] = useState([])
+  const [openForm, setOpenForm] = useState(false)
+  const [rows, setRows] = useState([])
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState('')
   const [selectedPatientId, setSelectedPatientId] = useState('')
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
-  const [openForm, setOpenForm] = useState(false)
-  const [formPrefill, setFormPrefill] = useState({ patientId: '', period: '' })
+  const [query, setQuery] = useState('')
 
   const load = () =>
-    api.psychologist
-      .progress()
+    api.psychometrician
+      .iep()
       .then((d) => {
-        setItems(d.items || [])
+        setRows(d.rows || [])
         setPatients(d.patients || [])
         if (d.patients && d.patients.length > 0 && !selectedPatientId) {
           setSelectedPatientId(d.patients[0].id)
@@ -68,35 +45,38 @@ function Progress() {
     }
   }, [])
 
-  const prevYear = () => setSelectedYear((y) => y - 1)
-  const nextYear = () => setSelectedYear((y) => y + 1)
-
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
-  const patientReports = items.filter((i) => i.patient_id === selectedPatientId)
+  const patientLogs = rows.filter((r) => r.patient_id === selectedPatientId)
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(query.trim().toLowerCase())
   )
 
-  const handleOpenAddForm = (periodStr) => {
-    setFormPrefill({ patientId: selectedPatientId, period: periodStr })
+  const handleOpenAddForm = () => {
+    setActive(null)
     setOpenForm(true)
   }
 
-  const handleOpenEdit = (report) => {
-    setActive(report)
+  const handleOpenEdit = (log) => {
+    setActive(log)
     setOpenForm(true)
+  }
+
+  const handleSaved = () => {
+    setOpenForm(false)
+    setActive(null)
+    load()
   }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <StaffHeader title="Monthly Summary Progress Reports" />
+      <StaffHeader title="Individualized Education Plan (IEP)" />
       <div className="flex-1 p-6 overflow-hidden flex flex-col">
         <div className="max-w-7xl w-full mx-auto flex-1 flex flex-col overflow-hidden">
           {/* Main Layout Grid */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 flex-1 overflow-hidden min-h-0">
             
-            {/* Left Panel: Students List */}
+            {/* Left Panel: Students List - Do not hide on form render */}
             <div className="rounded-2xl bg-white border border-purple-200 p-5 shadow-sm h-full flex flex-col overflow-hidden">
               <h2 className="text-sm font-semibold text-purple-800 border-b border-purple-100 pb-3 shrink-0">
                 Enrolled Students
@@ -122,9 +102,14 @@ function Progress() {
                     return (
                       <button
                         key={p.id}
-                        onClick={() => setSelectedPatientId(p.id)}
+                        onClick={() => {
+                          setSelectedPatientId(p.id)
+                          // Close form to show dashboard details on click change
+                          setOpenForm(false)
+                          setActive(null)
+                        }}
                         className={`w-full flex items-center justify-between rounded-xl border p-3.5 text-left transition-all hover:bg-purple-50/50 cursor-pointer group ${
-                          isActive ? 'border-purple-300 bg-purple-100 shadow-sm' : 'border-transparent'
+                          isActive ? 'border-purple-300 bg-purple-100 shadow-sm text-purple-950 font-bold' : 'border-transparent'
                         }`}
                       >
                         <div className="min-w-0 flex-1">
@@ -142,9 +127,35 @@ function Progress() {
               </div>
             </div>
 
-            {/* Right Panel: Monthly Summary Progress Dashboard */}
+            {/* Right Panel: Forms and Logs */}
             <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
-              {selectedPatient ? (
+              {openForm && selectedPatient ? (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="mb-4">
+                    <button
+                      onClick={() => {
+                        setOpenForm(false)
+                        setActive(null)
+                      }}
+                      className="rounded-lg border border-purple-200 bg-white px-4 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-50 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      &larr; Back to Dashboard Tables
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <IepSpedForm
+                      patient={selectedPatient}
+                      report={active}
+                      onSaved={handleSaved}
+                      onClose={() => {
+                        setOpenForm(false)
+                        setActive(null)
+                      }}
+                      inline={true}
+                    />
+                  </div>
+                </div>
+              ) : selectedPatient ? (
                 <div className="flex-1 overflow-y-auto pr-1 space-y-6">
                   {/* Selected Student header */}
                   <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
@@ -154,55 +165,63 @@ function Progress() {
                           {selectedPatient.name}
                         </h1>
                         <p className="text-xs text-slate-500 mt-1">
-                          Track and draft Monthly Progress Summary Reports (PSR) synthesizing child trajectory milestones.
+                          Manage SPED Individualized Educational Plan progress and activity plans.
                         </p>
                       </div>
                       <button
-                        onClick={() => handleOpenAddForm(`${MONTHS[new Date().getMonth()]} ${selectedYear}`)}
+                        onClick={handleOpenAddForm}
                         className="rounded-md bg-purple-700 px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 cursor-pointer"
                       >
-                        + New Progress Report
+                        + Write IEP Plan
                       </button>
                     </div>
                   </div>
 
-                  {/* Reports list */}
+                  {/* Student History Logs list */}
                   <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
                     <h3 className="text-sm font-semibold text-purple-800 uppercase tracking-wider mb-3">
-                      Progress Reports History
+                      IEP Plan History
                     </h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-xs font-semibold tracking-wider text-purple-700 border-b border-purple-100">
-                            <th className="py-2.5 px-3 text-left">Period</th>
+                            <th className="py-2.5 px-3 text-left">Plan Title</th>
+                            <th className="py-2.5 px-3 text-left">Last Updated</th>
                             <th className="py-2.5 px-3 text-left">Status</th>
                             <th className="py-2.5 px-3 text-left">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-purple-50/40">
-                          {patientReports.length === 0 ? (
+                          {patientLogs.length === 0 ? (
                             <tr>
-                              <td colSpan={3} className="py-8 text-center text-xs text-slate-400">
-                                No monthly progress reports recorded for this student yet.
+                              <td colSpan={4} className="py-8 text-center text-xs text-slate-400">
+                                No IEP plans recorded for this student yet.
                               </td>
                             </tr>
                           ) : (
-                            patientReports.map((report) => {
-                              const meta = STATUS_META[report.status] || STATUS_META.draft
+                            patientLogs.map((log) => {
+                              const meta = STATUS_META[log.status] || STATUS_META.draft
                               return (
-                                <tr key={report.id} className="hover:bg-purple-50/20 transition-colors">
+                                <tr key={log.id} className="hover:bg-purple-50/20 transition-colors">
                                   <td className="py-3 px-3 text-slate-800 font-semibold">
-                                    {report.period || '—'}
+                                    {log.title}
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-600 text-xs">
+                                    {new Date(log.date).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                    })}
                                   </td>
                                   <td className="py-3 px-3">
-                                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone[meta.tone].split(' ')[0]} ${tone[meta.tone].split(' ')[1]}`}>
+                                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.tone.split(' ')[0]} ${meta.tone.split(' ')[1]}`}>
                                       {meta.label}
                                     </span>
                                   </td>
                                   <td className="py-3 px-3">
-                                    <RowAction variant="view" onClick={() => handleOpenEdit(report)}>
-                                      Open
+                                    <RowAction variant="edit" onClick={() => handleOpenEdit(log)}>
+                                      Edit / View
                                     </RowAction>
                                   </td>
                                 </tr>
@@ -216,33 +235,16 @@ function Progress() {
                 </div>
               ) : (
                 <div className="rounded-2xl border-2 border-dashed border-purple-200 p-12 text-center text-slate-500 bg-white h-full flex flex-col items-center justify-center">
-                  Please select a student from the list to view or log monthly summary progress.
+                  Please select a student from the list to view or prepare IEP records.
                 </div>
               )}
             </div>
+
           </div>
         </div>
       </div>
-
-        {openForm ? (
-          <ProgressSummaryReportForm
-            patients={patients}
-            initialPatientId={formPrefill.patientId}
-            initialPeriod={formPrefill.period}
-            detail={active}
-            onSaved={() => {
-              load()
-              setActive(null)
-              setOpenForm(false)
-            }}
-            onClose={() => {
-              setActive(null)
-              setOpenForm(false)
-            }}
-          />
-        ) : null}
     </div>
   )
 }
 
-export default Progress
+export default IepSped

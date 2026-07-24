@@ -1,8 +1,6 @@
 @font-face {
   font-family: 'Against';
-  src: url('/Against.woff2') format('woff2'),
-       url('/Against.woff') format('woff'),
-       url('/Against.ttf') format('truetype');
+  src: url('/against regular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

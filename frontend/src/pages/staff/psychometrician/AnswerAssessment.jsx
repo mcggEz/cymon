@@ -50,6 +50,23 @@ function DomainCard({ domain, answers, remarks, onAnswer, onRemark, readOnly = f
               >
                 No
               </button>
+              {domain.key !== 'stimming' && domain.key !== 'perceptual' && (
+                <button
+                  type="button"
+                  onClick={() => !readOnly && onAnswer(it.key, 'na')}
+                  disabled={readOnly}
+                  className={[
+                    'rounded-md px-3 py-1 text-xs font-medium transition-all',
+                    answers[it.key] === 'na'
+                      ? 'bg-slate-500 text-white'
+                      : readOnly
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      : 'bg-slate-100 text-slate-650 hover:bg-slate-200 cursor-pointer',
+                  ].join(' ')}
+                >
+                  N/A
+                </button>
+              )}
             </div>
             <input
               value={remarks[it.key] || ''}
@@ -75,7 +92,8 @@ function AnswerAssessment({
   prefilledTemplateName = '',
   onClose,
   readOnly = false,
-  submission = null
+  submission = null,
+  inline = false
 }) {
   const [patientId, setPatientId] = useState(prefilledPatientId || '')
   const [templateId, setTemplateId] = useState(prefilledTemplateId || '')
@@ -194,7 +212,11 @@ function AnswerAssessment({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-slate-900/80"
+      className={
+        inline
+          ? 'relative flex flex-col bg-[#F5F1FA] h-full w-full overflow-y-auto'
+          : 'fixed inset-0 z-50 flex flex-col bg-slate-900/80'
+      }
       role="dialog"
       aria-modal="true"
       aria-label="Administer assessment"
@@ -292,17 +314,6 @@ function AnswerAssessment({
 
             {structure.length > 0 ? (
               <>
-                <div className="mt-6 flex items-center justify-between rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Overall Score
-                    </div>
-                    <div className="text-xs text-slate-500">Counts the indicators marked &ldquo;Yes&rdquo;.</div>
-                  </div>
-                  <div className="text-3xl font-bold text-purple-800">
-                    {total} / {max}
-                  </div>
-                </div>
                 {!readOnly && (
                   <Button
                     className="mt-4"

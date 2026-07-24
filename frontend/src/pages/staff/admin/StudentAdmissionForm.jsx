@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import FormShell from '../../../components/ui/FormShell'
 import FormHeading from '../../../components/ui/FormHeading'
 import BlankField from '../../../components/ui/BlankField'
@@ -64,11 +64,27 @@ function StudentAdmissionForm({ onSaved, onClose }) {
     iepLevel: '',
     accountEmail: '',
     accountPassword: genPassword(),
+    treating_psychologist_id: '',
+    treating_psychometrician_id: '',
   })
+  const [employees, setEmployees] = useState([])
+  const [loadingEmployees, setLoadingEmployees] = useState(true)
   const [photo, setPhoto] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [created, setCreated] = useState(null)
+
+  useEffect(() => {
+    api.admin.employees()
+      .then((data) => {
+        setEmployees(data.employees || [])
+      })
+      .catch(() => {})
+      .finally(() => setLoadingEmployees(false))
+  }, [])
+
+  const psychologists = employees.filter(e => e.role === 'psychologist' || (e.extra_roles || []).includes('psychologist'))
+  const psychometricians = employees.filter(e => e.role === 'psychometrician' || (e.extra_roles || []).includes('psychometrician'))
   const set = (k) => (e) => {
     const val = e.target.value
     setF((s) => {
@@ -103,6 +119,8 @@ function StudentAdmissionForm({ onSaved, onClose }) {
       const data = await api.admin.createPatient({
         parent_email: email,
         parent_password: password,
+        treating_psychologist_id: f.treating_psychologist_id || null,
+        treating_psychometrician_id: f.treating_psychometrician_id || null,
         child: {
           first_name: f.firstName,
           middle_name: f.middleName,
@@ -401,6 +419,40 @@ function StudentAdmissionForm({ onSaved, onClose }) {
               {opt.label}
             </label>
           ))}
+        </div>
+
+        <FormHeading numeral="">Staff Assignments</FormHeading>
+        <div className="space-y-2 mt-2">
+          <BlankField label="Assigned Psychologist">
+            <select
+              className={`${blankInput} bg-transparent text-[12.5px] cursor-pointer`}
+              value={f.treating_psychologist_id}
+              onChange={set('treating_psychologist_id')}
+              disabled={loadingEmployees}
+            >
+              <option value="">Unassigned</option>
+              {psychologists.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+          </BlankField>
+          <BlankField label="Assigned Psychometrician">
+            <select
+              className={`${blankInput} bg-transparent text-[12.5px] cursor-pointer`}
+              value={f.treating_psychometrician_id}
+              onChange={set('treating_psychometrician_id')}
+              disabled={loadingEmployees}
+            >
+              <option value="">Unassigned</option>
+              {psychometricians.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+          </BlankField>
         </div>
 
 

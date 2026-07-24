@@ -17,6 +17,7 @@ function FormShell({
   onClose,
   actions,
   multiPage = false,
+  inline = false,
   children,
 }) {
   useEffect(() => {
@@ -56,10 +57,14 @@ function FormShell({
       : [children]
     : null
 
-  return createPortal(
+  const renderShell = (
     <div
       id="form-portal"
-      className="fixed inset-0 z-50 flex flex-col bg-slate-950/60 backdrop-blur-sm print:static print:bg-white"
+      className={
+        inline
+          ? 'relative flex flex-col bg-[#F5F1FA] h-full w-full overflow-y-auto print:static print:bg-white'
+          : 'fixed inset-0 z-50 flex flex-col bg-slate-950/60 backdrop-blur-sm print:static print:bg-white'
+      }
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -260,9 +265,14 @@ function FormShell({
           ) : null}
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   )
+
+  if (inline) {
+    return renderShell
+  }
+
+  return createPortal(renderShell, document.body)
 }
 
 export default FormShell

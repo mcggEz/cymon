@@ -26,7 +26,27 @@ function requireRole(...roles) {
 router.use(requireAuth, requireRole('psychologist', 'speech_therapist', 'occupational_therapist', 'admin', 'psychometrician'));
 
 const name = patientName;
-const inClinic = (rows, clinic) => (rows || []).filter((r) => r.patients && r.patients.clinic_id === clinic);
+const inClinic = (rows, clinic, profile) => {
+  if (!rows) return [];
+  return rows.filter((r) => {
+    if (!r.patients || r.patients.clinic_id !== clinic) return false;
+    if (!profile) return true;
+    const roles = [profile.role, ...(profile.extra_roles || [])];
+    if (roles.includes('admin')) return true;
+    let matched = false;
+    let checkedAny = false;
+    if (roles.includes('psychologist')) {
+      checkedAny = true;
+      if (r.patients.treating_psychologist_id === profile.id) matched = true;
+    }
+    if (roles.includes('psychometrician')) {
+      checkedAny = true;
+      if (r.patients.treating_psychometrician_id === profile.id) matched = true;
+    }
+    if (!checkedAny) return true;
+    return matched;
+  });
+};
 const PRIORITY_LABEL = { high: 'High Priority', normal: 'Medium Priority', low: 'Low Priority' };
 
 router.get('/approvals', async (req, res, next) => {
@@ -35,13 +55,13 @@ router.get('/approvals', async (req, res, next) => {
     const [{ data, error }, { data: subsData, error: subsError }] = await Promise.all([
       supabase
         .from('assessment_reports')
-        .select('id, patient_id, title, document_type_code, report_type, priority, created_at, patients(id, first_name, middle_name, last_name, clinic_id)')
+        .select('id, patient_id, title, document_type_code, report_type, priority, created_at, patients(id, first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .eq('status', 'ready_for_review')
         .neq('report_type', 'behavioral')
         .order('created_at', { ascending: false }),
       supabase
         .from('assessment_submissions')
-        .select('id, status, total_score, max_score, submitted_at, respondent_name, patients(id, first_name, middle_name, last_name, clinic_id), assessment_templates(id, title, document_type_code)')
+        .select('id, status, total_score, max_score, submitted_at, respondent_name, answers, template_id, patients(id, first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id), assessment_templates(id, title, document_type_code)')
         .order('created_at', { ascending: false })
     ]);
 
@@ -49,22 +69,27 @@ router.get('/approvals', async (req, res, next) => {
     if (subsError) return next(subsError);
 
     res.json({
-      reports: inClinic(data, req.profile.clinic_id).map((r) => ({
+      reports: inClinic(data, req.profile.clinic_id, req.profile).map((r) => ({
         id: r.id,
         patient_id: r.patient_id,
         name: name(r.patients),
+        title: r.title,
+        report_type: r.report_type,
+        status: 'ready_for_review',
         type: `${r.title}${r.document_type_code ? ` (${r.document_type_code.replace('CMPS:SE-', '')})` : ''}`,
         date: r.created_at,
         priority: PRIORITY_LABEL[r.priority] || 'Medium Priority',
       })),
-      submissions: inClinic(subsData || [], req.profile.clinic_id).map((s) => ({
+      submissions: inClinic(subsData || [], req.profile.clinic_id, req.profile).map((s) => ({
         id: s.id,
         patient_id: s.patients?.id,
+        template_id: s.template_id,
         student_name: s.patients ? `${s.patients.first_name} ${s.patients.last_name}` : 'Student',
         assessment_name: s.assessment_templates ? `${s.assessment_templates.title} (${s.assessment_templates.document_type_code})` : 'Standard Test',
         submitted_by: s.respondent_name || 'Psychometrician',
         date: s.submitted_at || s.created_at,
         status: s.status,
+        answers: s.answers,
         score: s.total_score !== null ? `${s.total_score}/${s.max_score}` : '—'
       })),
     });
@@ -124,12 +149,22 @@ router.post('/assessments/grant-permission', async (req, res, next) => {
 router.get('/roster', async (req, res, next) => {
   if (!ensureConfigured(res)) return;
   try {
-    const { data, error } = await supabase
+    let q = supabase
       .from('patients')
-      .select('id, first_name, middle_name, last_name, allow_journal_entry, clinical_profiles(support_level, milestone_progress, chief_complaint, working_diagnosis, updated_at)')
+      .select('id, first_name, middle_name, last_name, allow_journal_entry, treating_psychologist_id, treating_psychometrician_id, clinical_profiles(support_level, milestone_progress, chief_complaint, working_diagnosis, updated_at)')
       .eq('clinic_id', req.profile.clinic_id)
-      .is('deleted_at', null)
-      .order('first_name', { ascending: true });
+      .is('deleted_at', null);
+
+    const roles = [req.profile.role, ...(req.profile.extra_roles || [])];
+    if (!roles.includes('admin')) {
+      if (roles.includes('psychologist')) {
+        q = q.eq('treating_psychologist_id', req.profile.id);
+      } else if (roles.includes('psychometrician')) {
+        q = q.eq('treating_psychometrician_id', req.profile.id);
+      }
+    }
+
+    const { data, error } = await q.order('first_name', { ascending: true });
     if (error) return next(error);
     res.json({
       clients: (data || []).map((p) => {
@@ -151,14 +186,47 @@ router.get('/roster', async (req, res, next) => {
   }
 });
 
-async function clinicPatients(clinicId) {
-  const { data } = await supabase
+async function clinicPatients(clinicId, profile) {
+  let q = supabase
     .from('patients')
-    .select('id, first_name, middle_name, last_name, allow_journal_entry')
+    .select('id, first_name, middle_name, last_name, allow_journal_entry, treating_psychologist_id, treating_psychometrician_id')
     .eq('clinic_id', clinicId)
-    .is('deleted_at', null)
-    .order('first_name', { ascending: true });
+    .is('deleted_at', null);
+
+  if (profile) {
+    const roles = [profile.role, ...(profile.extra_roles || [])];
+    if (!roles.includes('admin')) {
+      if (roles.includes('psychologist')) {
+        q = q.eq('treating_psychologist_id', profile.id);
+      } else if (roles.includes('psychometrician')) {
+        q = q.eq('treating_psychometrician_id', profile.id);
+      }
+    }
+  }
+
+  const { data } = await q.order('first_name', { ascending: true });
   return (data || []).map((p) => ({ id: p.id, name: patientName(p), allow_journal_entry: p.allow_journal_entry || false }));
+}
+
+async function authorizePatient(patientId, profile) {
+  const { data: pt, error } = await supabase
+    .from('patients')
+    .select('id, clinic_id, caregiver_id, first_name, treating_psychologist_id, treating_psychometrician_id')
+    .eq('id', patientId)
+    .maybeSingle();
+  if (error || !pt || pt.clinic_id !== profile.clinic_id) {
+    throw new Error('Patient not found');
+  }
+  const roles = [profile.role, ...(profile.extra_roles || [])];
+  if (!roles.includes('admin')) {
+    if (roles.includes('psychologist') && pt.treating_psychologist_id !== profile.id) {
+      throw new Error('Patient is not assigned to you');
+    }
+    if (roles.includes('psychometrician') && pt.treating_psychometrician_id !== profile.id) {
+      throw new Error('Patient is not assigned to you');
+    }
+  }
+  return pt;
 }
 
 router.get('/mainstreaming', async (req, res, next) => {
@@ -167,13 +235,13 @@ router.get('/mainstreaming', async (req, res, next) => {
     const [{ data, error }, patients] = await Promise.all([
       supabase
         .from('mainstreaming_assessments')
-        .select('id, readiness_score, status, evaluated_on, patient_id, patients(first_name, middle_name, last_name, clinic_id, clinical_profiles(support_level))')
+        .select('id, readiness_score, status, evaluated_on, patient_id, patients(first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id, clinical_profiles(support_level))')
         .order('evaluated_on', { ascending: false }),
-      clinicPatients(req.profile.clinic_id),
+      clinicPatients(req.profile.clinic_id, req.profile),
     ]);
     if (error) return next(error);
     res.json({
-      students: inClinic(data, req.profile.clinic_id).map((m) => ({
+      students: inClinic(data, req.profile.clinic_id, req.profile).map((m) => ({
         id: m.id,
         patient_id: m.patient_id,
         name: name(m.patients),
@@ -197,13 +265,11 @@ router.post('/mainstreaming', async (req, res, next) => {
     if (status !== undefined && !['not_ready', 'approaching', 'ready'].includes(status)) {
       return res.status(400).json({ error: 'Status must be not_ready, approaching, or ready' });
     }
-    const { data: pt } = await supabase
-      .from('patients')
-      .select('id, clinic_id')
-      .eq('id', patient_id)
-      .maybeSingle();
-    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
     const { data, error } = await supabase
       .from('mainstreaming_assessments')
@@ -229,13 +295,13 @@ router.get('/interventions', async (req, res, next) => {
     const [{ data, error }, patients] = await Promise.all([
       supabase
         .from('interventions')
-        .select('id, title, plan_date, procedure_count, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .select('id, title, plan_date, procedure_count, status, patients(first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .order('plan_date', { ascending: false }),
-      clinicPatients(req.profile.clinic_id),
+      clinicPatients(req.profile.clinic_id, req.profile),
     ]);
     if (error) return next(error);
     res.json({
-      items: inClinic(data, req.profile.clinic_id).map((i) => ({
+      items: inClinic(data, req.profile.clinic_id, req.profile).map((i) => ({
         id: i.id,
         name: name(i.patients),
         title: i.title,
@@ -259,13 +325,11 @@ router.post('/interventions', async (req, res, next) => {
     if (status !== undefined && !['planned', 'in_progress', 'completed'].includes(status)) {
       return res.status(400).json({ error: 'Status must be planned, in_progress, or completed' });
     }
-    const { data: pt } = await supabase
-      .from('patients')
-      .select('id, clinic_id')
-      .eq('id', patient_id)
-      .maybeSingle();
-    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
     const { data, error } = await supabase
       .from('interventions')
@@ -292,14 +356,14 @@ router.get('/progress', async (req, res, next) => {
     const [{ data, error }, patients] = await Promise.all([
       supabase
         .from('assessment_reports')
-        .select('id, patient_id, title, period, trend, status, patients(first_name, middle_name, last_name, clinic_id)')
+        .select('id, patient_id, title, period, trend, status, patients(first_name, middle_name, last_name, clinic_id, treating_psychologist_id, treating_psychometrician_id)')
         .eq('report_type', 'progress_summary')
         .order('created_at', { ascending: false }),
-      clinicPatients(req.profile.clinic_id),
+      clinicPatients(req.profile.clinic_id, req.profile),
     ]);
     if (error) return next(error);
     res.json({
-      items: inClinic(data, req.profile.clinic_id).map((r) => ({
+      items: inClinic(data, req.profile.clinic_id, req.profile).map((r) => ({
         id: r.id,
         patient_id: r.patient_id,
         name: name(r.patients),
@@ -320,13 +384,11 @@ router.post('/progress', async (req, res, next) => {
   try {
     const { id, patient_id, title, period, trend, status } = req.body || {};
     if (!patient_id || !title) return res.status(400).json({ error: 'Patient and title are required' });
-    const { data: pt } = await supabase
-      .from('patients')
-      .select('id, clinic_id')
-      .eq('id', patient_id)
-      .maybeSingle();
-    if (!pt || pt.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let pt;
+    try {
+      pt = await authorizePatient(patient_id, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
     
     let result;
@@ -431,13 +493,11 @@ router.patch('/roster/:patientId', async (req, res, next) => {
       return res.status(400).json({ error: 'Nothing to update' });
     }
 
-    const { data: patient } = await supabase
-      .from('patients')
-      .select('id, clinic_id, caregiver_id, first_name')
-      .eq('id', req.params.patientId)
-      .maybeSingle();
-    if (!patient || patient.clinic_id !== req.profile.clinic_id) {
-      return res.status(404).json({ error: 'Patient not found' });
+    let patient;
+    try {
+      patient = await authorizePatient(req.params.patientId, req.profile);
+    } catch (authErr) {
+      return res.status(403).json({ error: authErr.message });
     }
 
     const upd = { patient_id: patient.id };

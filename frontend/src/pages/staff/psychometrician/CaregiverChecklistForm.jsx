@@ -176,7 +176,7 @@ function RemarksTable({ title, items }) {
 
 const respondentBox = 'flex items-center gap-1.5 text-sm text-slate-800'
 
-function CaregiverChecklistForm({ onClose, readOnly = false }) {
+function CaregiverChecklistForm({ onClose, readOnly = false, inline = false }) {
   return (
     <FormShell
       title="Caregiver Behavioral Observation Checklist"
@@ -184,6 +184,7 @@ function CaregiverChecklistForm({ onClose, readOnly = false }) {
       confidential={false}
       onClose={onClose}
       multiPage={true}
+      inline={inline}
     >
       <fieldset disabled={readOnly} className="space-y-4">
         <BlankField label="Date" labelClassName="w-32" className="mt-1 max-w-md" />
